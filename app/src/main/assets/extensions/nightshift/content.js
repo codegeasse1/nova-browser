@@ -1,7 +1,1 @@
-(function(){
-  var css = 'html{filter:invert(1) hue-rotate(180deg) contrast(.9) saturate(.85) !important;background:#0e0d16}img,video,picture,canvas,[style*="background-image"]{filter:invert(1) hue-rotate(180deg) !important}';
-  var s = document.createElement('style');
-  s.setAttribute('data-nova-ext','nightshift');
-  s.textContent = css;
-  document.documentElement.appendChild(s);
-})();
+KGZ1bmN0aW9uKCl7CiAgdmFyIGNzcyA9ICdodG1se2ZpbHRlcjppbnZlcnQoMSkgaHVlLXJvdGF0ZSgxODBkZWcpIGNvbnRyYXN0KC45KSBzYXR1cmF0ZSguODUpICFpbXBvcnRhbnQ7YmFja2dyb3VuZDojMGUwZDE2fWltZyx2aWRlbyxwaWN0dXJlLGNhbnZhcyxbc3R5bGUqPSJiYWNrZ3JvdW5kLWltYWdlIl17ZmlsdGVyOmludmVydCgxKSBodWUtcm90YXRlKDE4MGRlZykgIWltcG9ydGFudH0nOwogIHZhciBzID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnc3R5bGUnKTsKICBzLnNldEF0dHJpYnV0ZSgnZGF0YS1ub3ZhLWV4dCcsJ25pZ2h0c2hpZnQnKTsKICBzLnRleHRDb250ZW50ID0gY3NzOwogIGRvY3VtZW50LmRvY3VtZW50RWxlbWVudC5hcHBlbmRDaGlsZChzKTsKfSkoKTsK
