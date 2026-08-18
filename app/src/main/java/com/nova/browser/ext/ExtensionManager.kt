@@ -62,6 +62,10 @@ object ExtensionManager {
         }
     }
 
+    private fun voidOp(result: GeckoResult<*>, what: String) {
+        result.accept({}, { t -> Log.w("Nova", "$what: ${t?.message}") })
+    }
+
     fun attach() {
         safe {
             controller().setPromptDelegate(object : WebExtensionController.PromptDelegate {
@@ -101,7 +105,7 @@ object ExtensionManager {
                     if (ext != null) {
                         live[id] = ext
                         if (id in Store.disabledExtensions()) {
-                            runCatching { controller().disable(ext, WebExtensionController.EnableSource.USER) }
+                            voidOp(controller().disable(ext, WebExtensionController.EnableSource.USER), "disable built-in $id")
                         }
                         if (id == SHIELD_ID) attachShieldBridge(ext)
                         refresh()
@@ -178,7 +182,8 @@ object ExtensionManager {
         val ext = live[SHIELD_ID] ?: return
         safe {
             val src = WebExtensionController.EnableSource.USER
-            if (on) controller().enable(ext, src) else controller().disable(ext, src)
+            if (on) voidOp(controller().enable(ext, src), "enable shield")
+            else voidOp(controller().disable(ext, src), "disable shield")
         }
     }
 
@@ -362,7 +367,8 @@ object ExtensionManager {
         val liveExt = live[ext.id] ?: return
         safe {
             val src = WebExtensionController.EnableSource.USER
-            if (enabled) controller().enable(liveExt, src) else controller().disable(liveExt, src)
+            if (enabled) voidOp(controller().enable(liveExt, src), "enable ${ext.id}")
+            else voidOp(controller().disable(liveExt, src), "disable ${ext.id}")
         }
     }
 

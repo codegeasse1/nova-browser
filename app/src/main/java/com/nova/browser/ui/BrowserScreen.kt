@@ -35,6 +35,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.DesktopWindows
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Extension
@@ -44,6 +45,7 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PrivacyTip
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Share
@@ -377,12 +379,14 @@ private fun ToolbarArea(
     onAddBookmark: () -> Unit,
 ) {
     val context = LocalContext.current
+    var previousText by remember { mutableStateOf<String?>(null) }
 
     val submit = {
         val q = addressText.trim()
         if (q.isNotEmpty()) BrowserCore.navigate(q)
         setAddressEditing(false)
         setAddressText("")
+        previousText = null
         context.hideKeyboard()
     }
 
@@ -420,6 +424,7 @@ private fun ToolbarArea(
                 setText = setAddressText,
                 onGo = submit,
                 onShieldClick = onShieldClick,
+                onEditStart = { previousText = it },
             )
 
             Spacer(Modifier.width(8.dp))
@@ -514,6 +519,26 @@ private fun ToolbarArea(
                 setAddressText("")
             })
         }
+
+        LaunchedEffect(tab?.url) {
+            previousText = null
+        }
+
+        if (addressEditing && previousText != null) {
+            Spacer(Modifier.height(6.dp))
+            PreviousSearchRow(
+                previous = previousText!!,
+                onCopy = {
+                    val cm = context.getSystemService(android.content.ClipboardManager::class.java)
+                    runCatching { cm?.setPrimaryClip(android.content.ClipData.newPlainText("link", previousText ?: "")) }
+                    android.widget.Toast.makeText(context, "Link copied", android.widget.Toast.LENGTH_SHORT).show()
+                },
+                onRestore = {
+                    previousText?.let { setAddressText(it) }
+                    previousText = null
+                },
+            )
+        }
     }
 }
 
@@ -526,6 +551,7 @@ private fun RowScope.AddressBar(
     setText: (String) -> Unit,
     onGo: () -> Unit,
     onShieldClick: () -> Unit,
+    onEditStart: (String?) -> Unit = {},
 ) {
     if (editing) {
         val focusRequester = remember { FocusRequester() }
@@ -537,6 +563,7 @@ private fun RowScope.AddressBar(
             onValueChange = setText,
             modifier = Modifier
                 .weight(1f)
+                .height(42.dp)
                 .focusRequester(focusRequester),
             placeholder = { Text("Search or type a URL") },
             leadingIcon = { Icon(Icons.Rounded.Search, null) },
@@ -546,12 +573,14 @@ private fun RowScope.AddressBar(
                 }
             },
             singleLine = true,
-            shape = RoundedCornerShape(26.dp),
+            shape = RoundedCornerShape(21.dp),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
+                focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
             keyboardActions = KeyboardActions(onGo = {
@@ -562,16 +591,18 @@ private fun RowScope.AddressBar(
         )
     } else {
         Surface(
-            shape = RoundedCornerShape(26.dp),
+            shape = RoundedCornerShape(21.dp),
             color = MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).height(42.dp),
             onClick = {
+                val prev = text.ifBlank { null } ?: if (tab != null && !tab.isStartPage) tab.url else null
+                onEditStart(prev)
                 setText("")
                 setEditing(true)
             },
         ) {
             Row(
-                Modifier.heightIn(min = 44.dp).padding(horizontal = 14.dp),
+                Modifier.fillMaxSize().padding(horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 val onPage = tab != null && !tab.isStartPage
@@ -615,6 +646,48 @@ private fun RowScope.AddressBar(
 }
 
 private data class Sugg(val primary: String, val secondary: String?, val url: String?, val isSearch: Boolean)
+
+@Composable
+private fun PreviousSearchRow(previous: String, onCopy: () -> Unit, onRestore: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+    ) {
+        Row(
+            Modifier.padding(start = 14.dp, end = 4.dp, top = 2.dp, bottom = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Rounded.Restore,
+                "Previous",
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.width(8.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "Last entry",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    previous,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            IconButton(onClick = onCopy) {
+                Icon(Icons.Rounded.ContentCopy, "Copy", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            IconButton(onClick = onRestore) {
+                Icon(Icons.AutoMirrored.Rounded.ArrowForward, "Restore", Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+            }
+        }
+    }
+}
 
 @Composable
 private fun SuggestionsList(query: String, onPick: (String, String, Boolean) -> Unit) {

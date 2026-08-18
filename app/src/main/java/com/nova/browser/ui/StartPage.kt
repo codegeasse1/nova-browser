@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.PrivacyTip
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -110,26 +111,39 @@ fun StartPage(
 
             if (showCrash && initialCrash != null) {
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(14.dp),
                     color = MaterialTheme.colorScheme.errorContainer,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Column(Modifier.padding(14.dp)) {
-                        Text(
-                            "Nova crashed earlier",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
+                    Row(
+                        Modifier.padding(start = 14.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Rounded.Warning,
+                            null,
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
                         )
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            initialCrash.lineSequence().firstOrNull() ?: "Unknown error",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Spacer(Modifier.height(6.dp))
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Nova crashed earlier",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                            val first = initialCrash.lineSequence().firstOrNull()?.trim()
+                            if (!first.isNullOrBlank()) {
+                                Text(
+                                    first,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
                         TextButton(onClick = {
                             App.clearCrashLog()
                             showCrash = false
@@ -152,9 +166,9 @@ fun StartPage(
             Text(dateText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(26.dp))
             Surface(
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(25.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp),
                 onClick = onSearchClick,
             ) {
                 Row(Modifier.padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {

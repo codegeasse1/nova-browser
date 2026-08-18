@@ -125,13 +125,21 @@ object App {
         crashHandlerInstalled = true
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            runCatching {
-                val f = File(context.filesDir, "crashlog.txt")
-                val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
-                val entry = "[$stamp] $throwable\n${Log.getStackTraceString(throwable)}\n\n"
-                f.appendText(entry)
+            if (throwable is org.mozilla.geckoview.GeckoResult.UncaughtException) {
+                runCatching {
+                    val f = File(context.filesDir, "geckoresult.log")
+                    val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
+                    f.appendText("[$stamp] $throwable\n")
+                }
+            } else {
+                runCatching {
+                    val f = File(context.filesDir, "crashlog.txt")
+                    val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
+                    val entry = "[$stamp] $throwable\n${Log.getStackTraceString(throwable)}\n\n"
+                    f.appendText(entry)
+                }
+                previous?.uncaughtException(thread, throwable)
             }
-            previous?.uncaughtException(thread, throwable)
         }
     }
 
