@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.net.URI
+import java.util.LinkedHashMap
 import java.util.Locale
 
 object AdBlocker {
@@ -67,8 +68,13 @@ object AdBlocker {
     }
 
     private val parseLock = Any()
+    private val cacheLock = Any()
+    private val cache = object : LinkedHashMap<String, Boolean>(128, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Boolean>?): Boolean = size > 512
+    }
 
     private fun clearRules() {
+        synchronized(cacheLock) { cache.clear() }
         exceptions.clear()
         hostRules.clear()
         exactRules.clear()
@@ -200,6 +206,20 @@ object AdBlocker {
         if (!ready || url.isBlank()) return false
         if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("about:") || url.startsWith("chrome:") || url.startsWith("resource:")) return false
 
+        val key = "$url\u0000$pageUrl"
+        synchronized(cacheLock) {
+            cache[key]?.let { return it }
+        }
+
+        val result = computeBlock(url, pageUrl)
+
+        synchronized(cacheLock) {
+            cache[key] = result
+        }
+        return result
+    }
+
+    private fun computeBlock(url: String, pageUrl: String): Boolean {
         val host = hostOf(url) ?: return false
         val pageHost = hostOf(pageUrl) ?: host
         val thirdParty = host != pageHost &&

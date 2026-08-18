@@ -563,7 +563,6 @@ private fun RowScope.AddressBar(
             onValueChange = setText,
             modifier = Modifier
                 .weight(1f)
-                .height(42.dp)
                 .focusRequester(focusRequester),
             placeholder = { Text("Search or type a URL") },
             leadingIcon = { Icon(Icons.Rounded.Search, null) },
@@ -573,7 +572,7 @@ private fun RowScope.AddressBar(
                 }
             },
             singleLine = true,
-            shape = RoundedCornerShape(21.dp),
+            shape = RoundedCornerShape(28.dp),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -591,9 +590,9 @@ private fun RowScope.AddressBar(
         )
     } else {
         Surface(
-            shape = RoundedCornerShape(21.dp),
+            shape = RoundedCornerShape(24.dp),
             color = MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier.weight(1f).height(42.dp),
+            modifier = Modifier.weight(1f).height(48.dp),
             onClick = {
                 val prev = text.ifBlank { null } ?: if (tab != null && !tab.isStartPage) tab.url else null
                 onEditStart(prev)

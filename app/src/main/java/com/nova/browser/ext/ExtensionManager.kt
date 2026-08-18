@@ -2,6 +2,8 @@ package com.nova.browser.ext
 
 import android.content.Context
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -18,6 +20,7 @@ import org.mozilla.geckoview.WebExtensionController
 import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.util.concurrent.Executors
 import java.util.zip.ZipInputStream
 
 data class ExtensionUi(
@@ -37,6 +40,9 @@ object ExtensionManager {
     var openAmoSearch by mutableStateOf<String?>(null)
 
     private val live = HashMap<String, WebExtension>()
+
+    private val blockThread = Executors.newSingleThreadExecutor { r -> Thread(r, "nova-adblock").apply { isDaemon = true } }
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private const val NATIVE_APP = "nova"
     const val SHIELD_ID = "nova-shield@nova.browser"
@@ -127,17 +133,21 @@ object ExtensionManager {
                 val url = message.optString("url", "")
                 val pageUrl = message.optString("pageUrl", "")
                 val tabId = message.optInt("tabId", -1)
-                val blocked = runCatching { AdBlocker.shouldBlock(url, pageUrl) }.getOrDefault(false)
-                if (blocked) {
-                    safe {
-                        val target = BrowserCore.tabs.firstOrNull { it.id == tabId }
-                        val id = target?.id ?: BrowserCore.activeTab?.id ?: -1
-                        if (id > 0) BrowserCore.reportBlocked(id, 1)
+                val result = GeckoResult<Any>()
+                blockThread.execute {
+                    val blocked = runCatching { AdBlocker.shouldBlock(url, pageUrl) }.getOrDefault(false)
+                    if (blocked && tabId > 0) {
+                        mainHandler.post {
+                            safe {
+                                val target = BrowserCore.tabs.firstOrNull { it.id == tabId }
+                                val id = target?.id ?: BrowserCore.activeTab?.id ?: -1
+                                if (id > 0) BrowserCore.reportBlocked(id, 1)
+                            }
+                        }
                     }
+                    result.complete(JSONObject().put("block", blocked) as Any)
                 }
-                val result = JSONObject()
-                result.put("block", blocked)
-                return GeckoResult.fromValue<Any>(result)
+                return result
             }
         }, NATIVE_APP)
     }
