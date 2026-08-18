@@ -25,6 +25,11 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Install Android SDK 37
+        run: |
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platforms;android-37" "build-tools;37.0.0"
+
       - name: Build debug APK
         run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug
 
