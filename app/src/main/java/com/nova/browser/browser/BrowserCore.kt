@@ -175,7 +175,7 @@ object BrowserCore {
                 runCatching {
                     session.settings.displayMode =
                         if (fullScreen) GeckoSessionSettings.DISPLAY_MODE_FULLSCREEN else GeckoSessionSettings.DISPLAY_MODE_BROWSER
-                    setFullscreen(fullScreen)
+                    setFullscreenUiState(fullScreen)
                 }
             }
 
@@ -412,7 +412,7 @@ object BrowserCore {
         }
     }
 
-    fun setFullscreen(on: Boolean) {
+    fun setFullscreenUiState(on: Boolean) {
         if (fullscreen == on) return
         fullscreen = on
         runCatching {
@@ -426,7 +426,7 @@ object BrowserCore {
                 session.settings.displayMode = GeckoSessionSettings.DISPLAY_MODE_BROWSER
             }
         }
-        setFullscreen(false)
+        setFullscreenUiState(false)
     }
 
     fun reportBlocked(tabId: Int, n: Int = 1) {
