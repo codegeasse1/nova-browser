@@ -60,6 +60,7 @@ object App {
         cb.safeBrowsing(if (Store.safeBrowsing) ContentBlocking.SafeBrowsing.DEFAULT else ContentBlocking.SafeBrowsing.NONE)
         val builder = GeckoRuntimeSettings.Builder()
             .contentBlocking(cb.build())
+            .crashHandler(NovaCrashHandler::class.java)
         val dns = dnsSettings()
         if (dns != null) {
             builder.trustedRecursiveResolverMode(dns.first)

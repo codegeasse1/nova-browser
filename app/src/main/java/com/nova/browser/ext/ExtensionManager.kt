@@ -219,47 +219,49 @@ object ExtensionManager {
             val m = Regex("/(?:firefox/)?addon/([^/?]+)").find(trimmed)
             if (m != null) "https://addons.mozilla.org/firefox/downloads/latest/${m.groupValues[1]}/" else trimmed
         } else trimmed
-        val ok = runCatching {
-            controller().install(target).accept({ ext ->
-                safe {
-                    if (ext != null) {
+        if (!target.startsWith("http")) {
+            busy = false
+            message = "That doesn't look like an add-on link."
+            onDone(false)
+            return
+        }
+        val dir = File(context.filesDir, "extension-downloads")
+        if (!dir.exists()) dir.mkdirs()
+        val file = File(dir, "addon.xpi")
+        Thread {
+            try {
+                val conn = java.net.URL(target).openConnection() as java.net.HttpURLConnection
+                conn.instanceFollowRedirects = true
+                conn.connectTimeout = 15000
+                conn.readTimeout = 30000
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android) Gecko/154.0 Firefox/154.0")
+                val code = conn.responseCode
+                if (code != 200) throw Exception("server returned HTTP $code")
+                val len = conn.contentLengthLong
+                if (len > 60L * 1024 * 1024) throw Exception("add-on file is too large")
+                conn.inputStream.use { input -> file.outputStream().use { out -> input.copyTo(out) } }
+                if (file.length() < 1000) throw Exception("file is not a valid add-on")
+                mainHandler.post {
+                    safe { installFile(context, file, onDone) }
+                }
+            } catch (e: Exception) {
+                runCatching { file.delete() }
+                mainHandler.post {
+                    safe {
                         busy = false
-                        live[ext.id] = ext
-                        val name = runCatching { ext.metaData.name?.ifBlank { ext.id } }.getOrDefault(ext.id) ?: ext.id
-                        message = "Installed \"$name\""
-                        Store.setExtensionEnabled(ext.id, true)
-                        refresh()
-                        onDone(true)
-                    } else {
-                        busy = false
-                        message = "Could not install add-on"
+                        message = "Download failed: ${e.message ?: "unknown error"}"
                         onDone(false)
                     }
                 }
-            }, { t ->
-                safe {
-                    busy = false
-                    message = "Could not install add-on: ${t?.message ?: "unknown error"}"
-                    onDone(false)
-                }
-            })
-        }
-        if (ok.isFailure) {
-            safe {
-                busy = false
-                message = "Could not install add-on: ${ok.exceptionOrNull()?.message}"
-                onDone(false)
             }
+        }.apply {
+            isDaemon = true
+            name = "nova-addon-download"
+            start()
         }
     }
 
-    private fun installBytes(context: Context, bytes: ByteArray, filename: String, onDone: (Boolean) -> Unit) {
-        val dir = File(context.filesDir, "extension-imports")
-        if (!dir.exists()) dir.mkdirs()
-        val extName = if (filename.substringAfterLast('.', "").lowercase() == "xpi") "import.xpi" else "import.zip"
-        val file = File(dir, extName)
-        file.writeBytes(bytes)
-        busy = true
+    private fun installFile(context: Context, file: File, onDone: (Boolean) -> Unit) {
         message = null
         safe {
             controller().install(Uri.fromFile(file).toString()).accept({ ext ->
@@ -286,6 +288,17 @@ object ExtensionManager {
                 }
             })
         }
+    }
+
+    private fun installBytes(context: Context, bytes: ByteArray, filename: String, onDone: (Boolean) -> Unit) {
+        val dir = File(context.filesDir, "extension-imports")
+        if (!dir.exists()) dir.mkdirs()
+        val extName = if (filename.substringAfterLast('.', "").lowercase() == "xpi") "import.xpi" else "import.zip"
+        val file = File(dir, extName)
+        file.writeBytes(bytes)
+        busy = true
+        message = null
+        installFile(context, file, onDone)
     }
 
     /**
