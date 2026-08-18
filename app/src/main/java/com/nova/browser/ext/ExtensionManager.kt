@@ -196,7 +196,7 @@ object ExtensionManager {
             val m = Regex("/(?:firefox/)?addon/([^/?]+)").find(trimmed)
             if (m != null) "https://addons.mozilla.org/firefox/downloads/latest/${m.groupValues[1]}/" else trimmed
         } else trimmed
-        safe {
+        val ok = runCatching {
             controller().install(target).accept({ ext ->
                 safe {
                     if (ext != null) {
@@ -220,10 +220,13 @@ object ExtensionManager {
                     onDone(false)
                 }
             })
-        }.onFailure {
-            busy = false
-            message = "Could not install add-on: ${it.message}"
-            onDone(false)
+        }
+        if (ok.isFailure) {
+            safe {
+                busy = false
+                message = "Could not install add-on: ${ok.exceptionOrNull()?.message}"
+                onDone(false)
+            }
         }
     }
 
