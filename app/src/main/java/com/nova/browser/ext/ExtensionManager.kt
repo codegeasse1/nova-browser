@@ -201,9 +201,9 @@ object ExtensionManager {
         try {
             val zipBytes = stripCrxHeader(bytes)
             val zipEntries = readZipEntries(zipBytes)
-            val manifestText = zipEntries["manifest.json"]
+            val manifestRaw = zipEntries["manifest.json"]
                 ?: throw Exception("manifest.json not found — not a valid extension package")
-            val manifest = JSONObject(manifestText)
+            val manifest = JSONObject(String(manifestRaw, Charsets.UTF_8))
 
             val hasContentScripts = manifest.optJSONArray("content_scripts") != null
             if (!hasContentScripts) {
