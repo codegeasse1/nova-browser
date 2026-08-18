@@ -102,13 +102,14 @@ object BrowserCore {
 
             override fun onLocationChange(
                 session: GeckoSession,
-                url: String,
+                url: String?,
                 perms: MutableList<GeckoSession.PermissionDelegate.ContentPermission>,
                 hasUserGesture: Boolean,
             ) {
+                val u = url ?: return
                 runCatching {
-                    patch(tabId) { copy(url = url, secure = url.startsWith("https://")) }
-                    offerStoreInstall(url)
+                    patch(tabId) { copy(url = u, secure = u.startsWith("https://")) }
+                    offerStoreInstall(u)
                 }
             }
 
@@ -128,7 +129,7 @@ object BrowserCore {
                 return GeckoResult.fromValue(newSession)
             }
 
-            override fun onLoadError(session: GeckoSession, uri: String, error: WebRequestError): GeckoResult<String>? {
+            override fun onLoadError(session: GeckoSession, uri: String?, error: WebRequestError): GeckoResult<String>? {
                 runCatching { patch(tabId) { copy(progress = 100) } }
                 return null
             }
