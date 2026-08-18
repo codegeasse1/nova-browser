@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -25,29 +25,8 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Ensure SDK 37 + extension platform
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          ls "$ANDROID_HOME/platforms" || true
-          echo "--- platforms after install ---"
-          ls "$ANDROID_HOME/platforms" || true
-          echo "--- extensions after install ---"
-          ls "$ANDROID_HOME/extensions" 2>/dev/null || echo "no extensions dir"
-
       - name: Build debug APK
         run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug
-
-      - name: Inspect geckoview aar metadata
-        if: always()
-        run: |
-          for d in $HOME/.gradle/caches/modules-2/files-2.1/org.mozilla.geckoview/geckoview/154.0.20260814215756/*/; do
-            find "$d" -name "*.aar" | while read aar; do
-              echo "=== AAR: $aar"
-              unzip -p "$aar" META-INF/com/android/build/gradle/aar-metadata.properties 2>/dev/null || echo "(no metadata entry)"
-            done
-          done
-          echo "--- AGP resolved platforms ---"
-          ls "$ANDROID_HOME/platforms" | grep -E "android-37" || true
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -55,3 +34,9 @@ jobs:
           name: nova-browser-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Attach APK to v3.0 release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload v3.0 app/build/outputs/apk/debug/*.apk --clobber
