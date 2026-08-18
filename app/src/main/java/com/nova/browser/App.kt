@@ -53,11 +53,14 @@ object App {
         runCatching {
             val cb = ContentBlocking.Settings.Builder()
             when (Store.adblockLevel) {
-                "off" -> cb.setAntiTracking(0)
-                "strict" -> cb.setEnhancedTrackingProtectionCategory(ContentBlocking.EtpCategory.STRICT)
-                else -> cb.setEnhancedTrackingProtectionCategory(ContentBlocking.EtpCategory.STANDARD)
+                "off" -> {
+                    cb.antiTracking(0)
+                    cb.enhancedTrackingProtectionCategory(ContentBlocking.EtpCategory.CUSTOM)
+                }
+                "strict" -> cb.enhancedTrackingProtectionCategory(ContentBlocking.EtpCategory.STRICT)
+                else -> cb.enhancedTrackingProtectionCategory(ContentBlocking.EtpCategory.STANDARD)
             }
-            cb.setSafeBrowsing(if (Store.safeBrowsing) ContentBlocking.SafeBrowsing.DEFAULT else ContentBlocking.SafeBrowsing.NONE)
+            cb.safeBrowsing(if (Store.safeBrowsing) ContentBlocking.SafeBrowsing.DEFAULT else ContentBlocking.SafeBrowsing.NONE)
             val settings = GeckoRuntimeSettings.Builder()
                 .contentBlocking(cb.build())
                 .build()

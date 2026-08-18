@@ -11,11 +11,11 @@ import com.nova.browser.App
 import com.nova.browser.browser.BrowserCore
 import com.nova.browser.engine.AdBlocker
 import com.nova.browser.store.Store
-import org.mozilla.gecko.util.GeckoBundle
 import org.mozilla.geckoview.AllowOrDeny
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.WebExtension
 import org.mozilla.geckoview.WebExtensionController
+import org.json.JSONObject
 import java.io.File
 
 data class ExtensionUi(
@@ -78,34 +78,36 @@ object ExtensionManager {
         val folder = id.removeSuffix("@nova.browser")
         controller().ensureBuiltIn("resource://android/assets/extensions/$folder/", id)
             .accept({ ext ->
-                live[id] = ext
-                if (id == SHIELD_ID) attachShieldBridge(ext)
-                refresh()
+                if (ext != null) {
+                    live[id] = ext
+                    if (id == SHIELD_ID) attachShieldBridge(ext)
+                    refresh()
+                }
             }, { t ->
-                Log.w("Nova", "Could not load built-in extension $id: ${t.message}")
+                Log.w("Nova", "Could not load built-in extension $id: ${t?.message}")
             })
     }
 
     private fun attachShieldBridge(ext: WebExtension) {
         ext.setMessageDelegate(object : WebExtension.MessageDelegate {
             override fun onMessage(
-                nativeApp: String?,
-                message: Any?,
-                sender: WebExtension.MessageSender?,
-            ): GeckoResult<Any?>? {
-                if (message !is GeckoBundle) return null
-                val url = message.getString("url") ?: ""
-                val pageUrl = message.getString("pageUrl") ?: ""
-                val tabId = message.getInt("tabId", -1)
+                nativeApp: String,
+                message: Any,
+                sender: WebExtension.MessageSender,
+            ): GeckoResult<Any>? {
+                if (message !is JSONObject) return null
+                val url = message.optString("url", "")
+                val pageUrl = message.optString("pageUrl", "")
+                val tabId = message.optInt("tabId", -1)
                 val blocked = runCatching { AdBlocker.shouldBlock(url, pageUrl) }.getOrDefault(false)
                 if (blocked) {
                     val target = BrowserCore.tabs.firstOrNull { it.id == tabId }
                     val id = target?.id ?: BrowserCore.activeTab?.id ?: -1
                     if (id > 0) BrowserCore.reportBlocked(id, 1)
                 }
-                val bundle = GeckoBundle(1)
-                bundle.putBoolean("block", blocked)
-                return GeckoResult.fromValue<Any?>(bundle)
+                val result = JSONObject()
+                result.put("block", blocked)
+                return GeckoResult.fromValue<Any>(result)
             }
         }, NATIVE_APP)
     }
@@ -117,16 +119,16 @@ object ExtensionManager {
                     live.clear()
                     extensions.clear()
                     val disabled = Store.disabledExtensions()
-                    for (ext in list) {
+                    for (ext in list ?: emptyList()) {
                         live[ext.id] = ext
                         val md = ext.metaData
-                        val name = md.name.ifBlank { ext.id }
+                        val name = md.name?.ifBlank { ext.id } ?: ext.id
                         val perms = md.requiredPermissions?.toList() ?: emptyList()
                         extensions.add(
                             ExtensionUi(
                                 id = ext.id,
                                 name = name,
-                                version = md.version.ifBlank { "1.0" },
+                                version = md.version?.ifBlank { "1.0" } ?: "1.0",
                                 description = md.description ?: "",
                                 enabled = ext.id !in disabled,
                                 isBuiltIn = ext.isBuiltIn,
@@ -137,7 +139,7 @@ object ExtensionManager {
                     extensions.sortBy { it.name.lowercase() }
                 }
             }, { t ->
-                Log.w("Nova", "Could not list extensions: ${t.message}")
+                Log.w("Nova", "Could not list extensions: ${t?.message}")
             })
         }
     }
@@ -166,16 +168,22 @@ object ExtensionManager {
         } else trimmed
         runCatching {
             controller().install(target).accept({ ext ->
-                busy = false
-                live[ext.id] = ext
-                val md = ext.metaData
-                message = "Installed \"${md.name.ifBlank { ext.id }}\""
-                Store.setExtensionEnabled(ext.id, true)
-                refresh()
-                onDone(true)
+                if (ext != null) {
+                    busy = false
+                    live[ext.id] = ext
+                    val md = ext.metaData
+                    message = "Installed \"${md.name?.ifBlank { ext.id } ?: ext.id}\""
+                    Store.setExtensionEnabled(ext.id, true)
+                    refresh()
+                    onDone(true)
+                } else {
+                    busy = false
+                    message = "Could not install add-on"
+                    onDone(false)
+                }
             }, { t ->
                 busy = false
-                message = "Could not install add-on: ${t.message}"
+                message = "Could not install add-on: ${t?.message}"
                 onDone(false)
             })
         }.onFailure {
@@ -197,16 +205,22 @@ object ExtensionManager {
             val file = File(dir, "import.xpi")
             file.writeBytes(bytes)
             controller().install(Uri.fromFile(file).toString()).accept({ ext ->
-                busy = false
-                live[ext.id] = ext
-                val md = ext.metaData
-                message = "Installed \"${md.name.ifBlank { ext.id }}\""
-                Store.setExtensionEnabled(ext.id, true)
-                refresh()
-                onDone(true)
+                if (ext != null) {
+                    busy = false
+                    live[ext.id] = ext
+                    val md = ext.metaData
+                    message = "Installed \"${md.name?.ifBlank { ext.id } ?: ext.id}\""
+                    Store.setExtensionEnabled(ext.id, true)
+                    refresh()
+                    onDone(true)
+                } else {
+                    busy = false
+                    message = "Could not install add-on"
+                    onDone(false)
+                }
             }, { t ->
                 busy = false
-                message = "Could not install add-on: ${t.message}"
+                message = "Could not install add-on: ${t?.message}"
                 onDone(false)
             })
         } catch (e: Exception) {
@@ -242,7 +256,7 @@ object ExtensionManager {
                     if (i >= 0) extensions.removeAt(i)
                     message = "Uninstalled \"${ext.name}\""
                 }, { t ->
-                    message = "Could not uninstall: ${t.message}"
+                    message = "Could not uninstall: ${t?.message}"
                 })
             }
         } else {

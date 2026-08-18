@@ -17,6 +17,7 @@ import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
 import org.mozilla.geckoview.GeckoView
+import org.mozilla.geckoview.WebRequestError
 import org.mozilla.geckoview.WebResponse
 
 data class StoreOffer(val kind: String, val key: String, val name: String)
@@ -32,7 +33,7 @@ object BrowserCore {
     var fullscreen by mutableStateOf(false)
 
     private val sessions = HashMap<Int, GeckoSession>()
-    private val sessionLoads = HashMap<Int, String>()
+    private val sessionLoads = HashMap<Int, String?>()
     private var geckoView: GeckoView? = null
     private var nextId = 1
 
@@ -94,20 +95,20 @@ object BrowserCore {
     private fun configureDelegates(session: GeckoSession, tabId: Int) {
         session.navigationDelegate = object : GeckoSession.NavigationDelegate {
             override fun onLoadRequest(session: GeckoSession, request: GeckoSession.NavigationDelegate.LoadRequest): GeckoResult<AllowOrDeny>? {
-                val uri = request.uri ?: return null
-                return if (handleExternalUrl(uri, request.isMainFrame)) GeckoResult.deny() else null
+                val uri = request.uri
+                val isMainFrame = request.target == GeckoSession.NavigationDelegate.TARGET_WINDOW_CURRENT
+                return if (handleExternalUrl(uri, isMainFrame)) GeckoResult.deny() else null
             }
 
             override fun onLocationChange(
                 session: GeckoSession,
-                url: String?,
-                perms: MutableList<GeckoSession.PermissionDelegate.ContentPermission>?,
-                hasUserGesture: Boolean?,
+                url: String,
+                perms: MutableList<GeckoSession.PermissionDelegate.ContentPermission>,
+                hasUserGesture: Boolean,
             ) {
-                val u = url ?: return
                 runCatching {
-                    patch(tabId) { copy(url = u, secure = u.startsWith("https://")) }
-                    offerStoreInstall(u)
+                    patch(tabId) { copy(url = url, secure = url.startsWith("https://")) }
+                    offerStoreInstall(url)
                 }
             }
 
@@ -119,16 +120,17 @@ object BrowserCore {
                 runCatching { patch(tabId) { copy(canGoForward = canGoForward) } }
             }
 
-            override fun onNewSession(session: GeckoSession, uri: String?): GeckoResult<GeckoSession>? {
+            override fun onNewSession(session: GeckoSession, uri: String): GeckoResult<GeckoSession>? {
                 val tab = tabs.firstOrNull { it.id == tabId }
-                val index = newTab(url = uri ?: "", isPrivate = tab?.isPrivate == true)
+                val index = newTab(url = uri, isPrivate = tab?.isPrivate == true)
                 val newTabId = tabs[index].id
                 val newSession = sessionFor(newTabId, autoLoad = false)
                 return GeckoResult.fromValue(newSession)
             }
 
-            override fun onLoadError(session: GeckoSession, uri: String?, error: Int, category: Int) {
+            override fun onLoadError(session: GeckoSession, uri: String, error: WebRequestError): GeckoResult<String>? {
                 runCatching { patch(tabId) { copy(progress = 100) } }
+                return null
             }
         }
 
@@ -212,10 +214,10 @@ object BrowserCore {
         session.permissionDelegate = object : GeckoSession.PermissionDelegate {
             override fun onAndroidPermissionsRequest(
                 session: GeckoSession,
-                permissions: Array<String>,
+                permissions: Array<String>?,
                 callback: GeckoSession.PermissionDelegate.Callback,
             ) {
-                App.requestAndroidPermissions(permissions.toList()) { granted ->
+                App.requestAndroidPermissions(permissions?.toList() ?: emptyList()) { granted ->
                     if (granted) callback.grant() else callback.reject()
                 }
             }
