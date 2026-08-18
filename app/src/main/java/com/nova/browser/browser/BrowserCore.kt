@@ -207,6 +207,22 @@ object BrowserCore {
                     if (i >= 0) closeTab(i)
                 }
             }
+
+            override fun onCrash(session: GeckoSession) {
+                runCatching {
+                    val url = tabs.firstOrNull { it.id == tabId }?.url ?: "about:blank"
+                    patch(tabId) { copy(progress = 100, title = "Page crashed") }
+                    lastShieldNotice = "The page crashed — reloading…"
+                    session.loadUri(url)
+                }
+            }
+
+            override fun onKill(session: GeckoSession) {
+                runCatching {
+                    patch(tabId) { copy(progress = 100, title = "Page was killed") }
+                    lastShieldNotice = "The system stopped this page — reload to try again."
+                }
+            }
         }
 
         session.contentBlockingDelegate = object : ContentBlocking.Delegate {

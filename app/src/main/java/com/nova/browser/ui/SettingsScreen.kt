@@ -45,7 +45,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nova.browser.App
 import com.nova.browser.browser.BrowserCore
-import com.nova.browser.engine.AdBlocker
 import com.nova.browser.ext.ExtensionManager
 import com.nova.browser.store.Store
 
@@ -58,7 +57,6 @@ fun SettingsScreen(onBack: () -> Unit, onOpenExtensions: () -> Unit, onOpenDownl
     var quickAccess by remember { mutableStateOf(Store.quickAccessEnabled) }
     var blockedOpen by remember { mutableStateOf(false) }
     var allowedOpen by remember { mutableStateOf(false) }
-    val context = androidx.compose.ui.platform.LocalContext.current
 
     Column(
         Modifier
@@ -86,7 +84,6 @@ fun SettingsScreen(onBack: () -> Unit, onOpenExtensions: () -> Unit, onOpenDownl
                     ) { v ->
                         Store.adblockLevel = v
                         ExtensionManager.setShieldEnabled(v != "off")
-                        AdBlocker.applyLevel(context)
                         BrowserCore.applyShieldToAll()
                         note = if (v == "off") "Ad blocking is now off. Reload pages to apply." else "Ad blocking updated for all tabs. Reload pages to apply."
                     }
@@ -291,8 +288,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenExtensions: () -> Unit, onOpenDownl
             title = "Blocked domains",
             hint = "Sites on this list are always blocked, even outside ad lists.",
             domains = Store.blockedDomains(),
-            onAdd = { Store.addBlockedDomain(it); AdBlocker.reload() },
-            onRemove = { Store.removeBlockedDomain(it); AdBlocker.reload() },
+            onAdd = { Store.addBlockedDomain(it) },
+            onRemove = { Store.removeBlockedDomain(it) },
             onDismiss = { blockedOpen = false },
         )
     }
@@ -301,8 +298,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenExtensions: () -> Unit, onOpenDownl
             title = "Allowed domains",
             hint = "Sites on this list are never blocked, even when ad blocking is on.",
             domains = Store.whitelistedDomains(),
-            onAdd = { Store.addWhitelistedDomain(it); AdBlocker.reload() },
-            onRemove = { Store.removeWhitelistedDomain(it); AdBlocker.reload() },
+            onAdd = { Store.addWhitelistedDomain(it) },
+            onRemove = { Store.removeWhitelistedDomain(it) },
             onDismiss = { allowedOpen = false },
         )
     }

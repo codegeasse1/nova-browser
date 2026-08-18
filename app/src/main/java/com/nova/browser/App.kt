@@ -5,10 +5,10 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
 import android.webkit.ValueCallback
-import com.nova.browser.engine.AdBlocker
 import com.nova.browser.ext.ExtensionManager
 import com.nova.browser.store.Store
 import org.mozilla.geckoview.ContentBlocking
+import org.mozilla.geckoview.GeckoPreferenceController
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoRuntimeSettings
 import org.mozilla.geckoview.GeckoSession
@@ -42,7 +42,6 @@ object App {
         installCrashHandler()
         Store.init(context)
         if (Store.autoClearHistory) Store.clearHistory()
-        AdBlocker.init(context)
         com.nova.browser.browser.Downloads.restore()
         createGeckoRuntime()
         ExtensionManager.attach()
@@ -81,9 +80,20 @@ object App {
         geckoCreated = true
         runCatching {
             geckoRuntime = GeckoRuntime.create(context, buildSettings())
+            applyStabilityPrefs()
             Log.i("Nova", "GeckoRuntime created (dns=${Store.dnsMode})")
         }.onFailure { t ->
             Log.e("Nova", "GeckoRuntime creation failed", t)
+        }
+    }
+
+    private fun applyStabilityPrefs() {
+        runCatching {
+            GeckoPreferenceController.setGeckoPref(
+                "media.hardware-video-decoding.enabled",
+                false,
+                GeckoPreferenceController.PREF_BRANCH_USER,
+            ).accept({}, { t -> Log.w("Nova", "Could not set media pref: ${t?.message}") })
         }
     }
 
@@ -93,6 +103,7 @@ object App {
             com.nova.browser.browser.BrowserCore.closeAllSessions()
             geckoCreated = false
             geckoRuntime = GeckoRuntime.create(context, buildSettings())
+            applyStabilityPrefs()
             ExtensionManager.attach()
             com.nova.browser.browser.BrowserCore.reopenActiveSession()
             Log.i("Nova", "GeckoRuntime recreated (dns=${Store.dnsMode})")

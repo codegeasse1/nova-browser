@@ -90,7 +90,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.nova.browser.browser.BrowserCore
 import com.nova.browser.browser.TabState
-import com.nova.browser.engine.AdBlocker
 import com.nova.browser.ext.ExtensionManager
 import com.nova.browser.store.Store
 import kotlinx.coroutines.delay
@@ -843,7 +842,6 @@ private fun ShieldPanel(tab: TabState?) {
                     val host = tab?.host
                     if (!host.isNullOrBlank()) {
                         Store.addBlockedDomain(host)
-                        AdBlocker.reload()
                         BrowserCore.reload()
                         BrowserCore.lastShieldNotice = "\"$host\" added to blocked domains. Reloading…"
                     }
@@ -857,7 +855,6 @@ private fun ShieldPanel(tab: TabState?) {
                     val host = tab?.host
                     if (!host.isNullOrBlank()) {
                         Store.addWhitelistedDomain(host)
-                        AdBlocker.reload()
                         BrowserCore.reload()
                         BrowserCore.lastShieldNotice = "\"$host\" added to allowed domains. Reloading…"
                     }
