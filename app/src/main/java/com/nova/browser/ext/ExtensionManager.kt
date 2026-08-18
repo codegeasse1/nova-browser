@@ -3,8 +3,10 @@ package com.nova.browser.ext
 import android.content.Context
 import android.net.Uri
 import android.webkit.WebView
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.nova.browser.store.Store
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -201,8 +203,7 @@ object ExtensionManager {
             val zipEntries = readZipEntries(zipBytes)
             val manifestText = zipEntries["manifest.json"]
                 ?: throw Exception("manifest.json not found — not a valid extension package")
-            val manifest = runCatching { JSONObject(manifestText) }.getOrNull()
-                ?: throw Exception("invalid manifest.json")
+            val manifest = JSONObject(manifestText)
 
             val hasContentScripts = manifest.optJSONArray("content_scripts") != null
             if (!hasContentScripts) {

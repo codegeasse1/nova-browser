@@ -142,6 +142,14 @@ object Downloads {
         return File(dir, filename)
     }
 
+    private fun save(context: Context, name: String, data: ByteArray): Boolean =
+        runCatching {
+            val out = fileFor(context, name) ?: return@runCatching false
+            if (!out.parentFile.exists()) out.parentFile.mkdirs()
+            out.writeBytes(data)
+            true
+        }.getOrDefault(false)
+
     private fun persist() {
         val list = items.map {
             JSONObject()
