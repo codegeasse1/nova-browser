@@ -1,7 +1,6 @@
 package com.nova.browser.ui
 
 import android.content.Intent
-import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -138,7 +137,9 @@ fun SettingsScreen(onBack: () -> Unit, onOpenExtensions: () -> Unit, onOpenDownl
                 ) {
                     ButtonRow("Open Private DNS settings", Icons.Rounded.Dns) {
                         runCatching {
-                            context.startActivity(Intent(Settings.ACTION_PRIVATE_DNS_SETTINGS))
+                            context.startActivity(Intent("android.settings.PRIVATE_DNS_SETTINGS"))
+                        }.onFailure {
+                            note = "Private DNS needs Android 9+ with a network connection."
                         }
                     }
                 }
