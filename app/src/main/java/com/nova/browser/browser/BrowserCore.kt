@@ -32,6 +32,7 @@ object BrowserCore {
     var lastDownloadMessage by mutableStateOf<String?>(null)
     var pendingExternalIntent by mutableStateOf<String?>(null)
     var lastShieldNotice by mutableStateOf<String?>(null)
+    var pendingExtensionInstall by mutableStateOf<Pair<String, String>?>(null)
 
     private val webViews = HashMap<Int, WebView>()
     private var nextId = 1
@@ -225,6 +226,21 @@ object BrowserCore {
                 }
             }
         })
+
+        view.addJavascriptInterface(StoreBridge(view), "NovaAndroid")
+    }
+
+    private class StoreBridge(private val view: WebView) {
+        @android.webkit.JavascriptInterface
+        fun installFromStore(id: String, name: String) {
+            runCatching {
+                val host = runCatching { Uri.parse(view.url ?: "").host ?: "" }.getOrDefault("")
+                if (host != "chromewebstore.google.com") return
+                if (Regex("[a-p]{32}").matches(id)) {
+                    pendingExtensionInstall = id to name
+                }
+            }
+        }
     }
 
     private fun handleUrl(view: WebView, url: String, isMainFrame: Boolean): Boolean {

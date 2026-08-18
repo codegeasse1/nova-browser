@@ -104,6 +104,7 @@ fun BrowserApp() {
     var shieldOpen by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
     var snackMsg by remember { mutableStateOf<String?>(null) }
+    var extInstall by remember { mutableStateOf<Pair<String, String>?>(null) }
 
     val darkTheme = when (Store.theme) {
         "dark" -> true
@@ -123,6 +124,10 @@ fun BrowserApp() {
             BrowserCore.pendingExternalIntent?.let {
                 snackMsg = "No app found to open \"$it\""
                 BrowserCore.pendingExternalIntent = null
+            }
+            BrowserCore.pendingExtensionInstall?.let {
+                extInstall = it
+                BrowserCore.pendingExtensionInstall = null
             }
             delay(500)
         }
@@ -178,6 +183,29 @@ fun BrowserApp() {
                 NovaScreen.HISTORY -> ManagerScreens.HistoryScreen(onBack = { screen = NovaScreen.BROWSER })
                 NovaScreen.DOWNLOADS -> ManagerScreens.DownloadsScreen(onBack = { screen = NovaScreen.BROWSER })
             }
+        }
+
+        extInstall?.let { (id, name) ->
+            val displayName = name.removeSuffix(" - Chrome Web Store").trim().ifBlank { id }
+            AlertDialog(
+                onDismissRequest = { extInstall = null },
+                title = { Text("Install extension?") },
+                text = {
+                    Text(
+                        "Install \"$displayName\" from the Chrome Web Store into Nova?\n\n" +
+                            "Content-script extensions work fully. Extensions that need background pages or popups may not function.",
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        ExtensionManager.installFromChromeStore(context, id)
+                        extInstall = null
+                    }) { Text("Install") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { extInstall = null }) { Text("Cancel") }
+                },
+            )
         }
     }
 }
