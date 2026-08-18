@@ -275,8 +275,9 @@ object BrowserCore {
                 audio: Array<GeckoSession.PermissionDelegate.MediaSource>?,
                 callback: GeckoSession.PermissionDelegate.MediaCallback,
             ) {
-                val chosen = video?.firstOrNull() ?: audio?.firstOrNull()
-                if (chosen != null) callback.grant(chosen) else callback.reject()
+                val v = video?.firstOrNull()
+                val a = audio?.firstOrNull()
+                if (v != null || a != null) callback.grant(v, a) else callback.reject()
             }
         }
     }

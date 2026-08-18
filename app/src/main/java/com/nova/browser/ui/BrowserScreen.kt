@@ -83,6 +83,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.nova.browser.browser.BrowserCore
 import com.nova.browser.browser.TabState
+import com.nova.browser.ext.ExtensionManager
 import com.nova.browser.store.Store
 import kotlinx.coroutines.delay
 import org.mozilla.geckoview.GeckoView
@@ -165,7 +166,8 @@ fun BrowserApp() {
 
 private fun Context.hideKeyboard() {
     val imm = getSystemService(InputMethodManager::class.java)
-    imm.hideSoftInputFromWindow(0, 0)
+    val windowToken = (this as? android.app.Activity)?.currentFocus?.windowToken
+    imm.hideSoftInputFromWindow(windowToken, 0)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
