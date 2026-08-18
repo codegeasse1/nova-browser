@@ -76,7 +76,7 @@ fun ExtensionsScreen(onBack: () -> Unit) {
                 Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         "Nova runs on Android's Chromium engine (the same Blink + V8 engine as Chrome).\n\n" +
-                            "• Direct install: open any extension on chromewebstore.google.com inside Nova and tap \"Add to Chrome\" — it installs straight into Nova.\n" +
+                            "• Direct install: open any extension on chromewebstore.google.com inside Nova — an \"Install in Nova?\" banner appears and installs it with one tap.\n" +
                             "• Background-page extensions (password managers, real uBlock, popups) can't run on WebView — only a full Chromium fork like Kiwi can, which needs a desktop-class build farm.\n" +
                             "• Firefox/AMO add-ons download and auto-install as .xpi packages too.\n" +
                             "• Content scripts (dark mode, readability, text tools, some blockers) work fully on every site.",

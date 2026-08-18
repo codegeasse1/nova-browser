@@ -32,7 +32,8 @@ object BrowserCore {
     var lastDownloadMessage by mutableStateOf<String?>(null)
     var pendingExternalIntent by mutableStateOf<String?>(null)
     var lastShieldNotice by mutableStateOf<String?>(null)
-    var pendingExtensionInstall by mutableStateOf<Pair<String, String>?>(null)
+    var storeOffer by mutableStateOf<Pair<String, String>?>(null)
+    private var lastStoreOfferId = ""
 
     private val webViews = HashMap<Int, WebView>()
     private var nextId = 1
@@ -114,6 +115,7 @@ object BrowserCore {
             override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
                 runCatching {
                     val id = view.tag as? Int ?: return
+                    if (storeOffer != null) storeOffer = null
                     patch(id) {
                         copy(url = url, title = "", progress = 0, secure = url.startsWith("https://"), blocked = 0)
                     }
@@ -147,6 +149,7 @@ object BrowserCore {
                         Store.addHistory(title.ifBlank { url }, url)
                     }
                     ExtensionManager.injectInto(view, url)
+                    offerStoreInstall(url)
                 }
             }
 
@@ -207,6 +210,16 @@ object BrowserCore {
                     }
                 }
             }
+
+            override fun onShowCustomView(view: android.view.View?, callback: CustomViewCallback?) {
+                runCatching {
+                    if (view != null && callback != null) App.activity?.showFullscreenView(view, callback)
+                }
+            }
+
+            override fun onHideCustomView() {
+                runCatching { App.activity?.hideFullscreenView() }
+            }
         }
 
         view.setDownloadListener(DownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
@@ -226,20 +239,21 @@ object BrowserCore {
                 }
             }
         })
-
-        view.addJavascriptInterface(StoreBridge(view), "NovaAndroid")
     }
 
-    private class StoreBridge(private val view: WebView) {
-        @android.webkit.JavascriptInterface
-        fun installFromStore(id: String, name: String) {
-            runCatching {
-                val host = runCatching { Uri.parse(view.url ?: "").host ?: "" }.getOrDefault("")
-                if (host != "chromewebstore.google.com") return
-                if (Regex("[a-p]{32}").matches(id)) {
-                    pendingExtensionInstall = id to name
-                }
+    private fun offerStoreInstall(url: String) {
+        runCatching {
+            val host = runCatching { Uri.parse(url).host ?: "" }.getOrDefault("")
+            if (host != "chromewebstore.google.com") return
+            val m = Regex("/detail/([^/]+)/([a-p]{32})").find(url) ?: return
+            val id = m.groupValues[2]
+            if (id == lastStoreOfferId) return
+            lastStoreOfferId = id
+            val slug = m.groupValues[1]
+            val name = slug.split('-', '_').joinToString(" ") { part ->
+                part.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
             }
+            storeOffer = id to name
         }
     }
 
