@@ -25,6 +25,21 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Ensure SDK 37 + extension platform
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" || true
+          sdkmanager --install "platforms;android-37" "extensions;android37;1" || {
+            echo "--- sdkmanager list (extensions) ---"
+            sdkmanager --list | grep -i "extensions;android" | head -30 || true
+            echo "--- retry without extension ---"
+            sdkmanager --install "platforms;android-37" || true
+          }
+          echo "--- platforms after install ---"
+          ls "$ANDROID_HOME/platforms" || true
+          echo "--- extensions after install ---"
+          ls "$ANDROID_HOME/extensions" 2>/dev/null || echo "no extensions dir"
+
       - name: Build debug APK
         run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug
 
