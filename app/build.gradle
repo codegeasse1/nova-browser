@@ -11,8 +11,8 @@ android {
         applicationId "com.nova.browser"
         minSdk 26
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "2.0"
         multiDexEnabled true
     }
 
@@ -47,4 +47,6 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.9.0'
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+    implementation 'org.mozilla.geckoview:geckoview-nightly:156.0.20260818092026'
 }

@@ -1,40 +1,34 @@
-# Nova Browser
+# Nova Browser 2.0
 
-A lightweight Android browser with **Chrome-extension support** — install extensions from
-`.zip`/`.crx` files and they run: content scripts, background pages, storage, messaging
-and popups. Kiwi-style extension loading, without the multi-GB Chromium build.
+A modern, feature-rich Android browser built on **GeckoView** (Mozilla's engine — the same engine behind
+Quetta Browser and Firefox for Android), with a Material-3 Compose UI.
 
 ## Features
 
-- Tabs (up to 12), address bar with Google/DuckDuckGo/Bing search, back/forward/reload
-- Bookmarks, history, private browsing, homepage + search-engine settings
-- **Extensions screen**: install from `.zip`/`.crx`, enable/disable, open popup, remove
-- Extension runtime (subset of the Chrome APIs):
-  - `chrome.runtime` (`id`, `sendMessage`, `onMessage`)
-  - `chrome.storage.local` / `sync` (`get` / `set` / `remove` / `clear`)
-  - `chrome.tabs` (`query`, `create`, `update`, `getCurrent`)
-  - `chrome.action` / `browserAction` (`setBadgeText`)
-  - Content scripts matched with Chrome host-match patterns, injected at
-    `document_start` / `document_idle`, with `js` + `css`
-  - MV2 background pages (and MV3 service workers approximated as background scripts)
-- Bundled sample extension to try it instantly: **Extensions → Load sample**
+- **Real browser engine** — GeckoView (nightly channel), not a WebView wrapper. Full web platform support,
+  modern rendering, independent content-process sandboxing.
+- **WebExtension support** — install real Firefox/WebExtensions:
+  - from **addons.mozilla.org** directly inside the browser (install prompts auto-confirmed),
+  - from local **.zip / .crx / .xpi files** via the file picker,
+  - a bundled sample extension is pre-installed.
+- **Ad blocking / Enhanced Tracking Protection** — blocks ads, trackers, analytics, social, cryptominers and
+  fingerprinters via GeckoView content blocking; per-site shield toggle in the toolbar; live blocked-count stats.
+- **DNS over HTTPS** — automatic (fallback) or strict modes, with selectable provider (Mozilla / Cloudflare / NextDNS).
+- **Modern UI** — Material 3, dark/light/system themes, gradient start page with live clock, speed-dial tiles,
+  pill address bar with suggestions, grid tab switcher, animated progress.
+- **Private (incognito) mode** — distinct theme, private sessions.
+- Tabs, bookmarks, history, downloads, external-link handling, search-engine choice.
 
-## Building
+## Notes
 
-`./gradlew assembleDebug` — the APK lands in `app/build/outputs/apk/debug/`.
+- DoH and ad-block **level** changes take effect on the next app launch (GeckoView runtime setting);
+  the per-site shield toggle works instantly.
+- Chrome Web Store extensions can't be installed from Google's store (GeckoView runs WebExtensions, not Chrome
+  extensions) — but many popular extensions are available on AMO or as .zip/.crx files you can import.
+- Built by GitHub Actions on the `build` branch; the debug APK is the `nova-browser-debug-apk` artifact.
 
-## Extension compatibility
+## Build
 
-This runs a **lightweight extension runtime** on top of Android's WebView — it is not the full
-Chromium extension engine. Simple extensions (content-script tweaks, storage-based options,
-badges, simple background logic) work well. Complex MV3 extensions (service workers,
-`webRequest` blocking, devtools, NPAPI/PPAPI, heavy permissions) will not work.
-
-## How the extension runtime works
-
-1. Every WebView gets a `novaBridge` JavascriptInterface.
-2. A small `chrome.*` shim is injected before each extension's scripts run.
-3. Content scripts are injected into pages at `document_start`/`document_idle` when the URL
-   matches the extension's `content_scripts.matches`.
-4. Background pages run in a hidden WebView; messages route through the bridge; storage is
-   JSON files in the app's data directory.
+```bash
+./gradlew assembleDebug   # APK at app/build/outputs/apk/debug/
+```

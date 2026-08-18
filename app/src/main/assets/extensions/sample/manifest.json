@@ -1,0 +1,26 @@
+{
+  "manifest_version": 2,
+  "name": "Nova Sample",
+  "version": "1.0",
+  "description": "A tiny demo extension: adds a browser-action button with a popup that toggles a dark-mode filter on the current page.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "nova-sample@nova.browser"
+    }
+  },
+  "permissions": ["tabs", "activeTab"],
+  "browser_action": {
+    "default_title": "Nova Sample",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ]
+}

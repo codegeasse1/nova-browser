@@ -2,19 +2,31 @@ package com.nova.browser.ui
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -22,165 +34,146 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
-import com.nova.browser.ext.ExtManifest
-import com.nova.browser.ext.ExtRuntime
-import com.nova.browser.ext.InstalledExtension
+import com.nova.browser.browser.BrowserCore
+import com.nova.browser.ext.ExtensionManager
+import com.nova.browser.ext.ExtensionUi
+import com.nova.browser.store.Store
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ExtensionsScreen(runtime: ExtRuntime) {
-    val exts = remember { mutableStateOf(runtime.manager.list()) }
-    var popupExt by remember { mutableStateOf<ExtManifest?>(null) }
-
-    fun reload() {
-        exts.value = runtime.manager.list()
+fun ExtensionsScreen(onBack: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) ExtensionManager.installFromFile(context, uri)
     }
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) {
-            runtime.manager.installFromUri(uri)
-            reload()
-        }
-    }
-
-    Column(Modifier.fillMaxSize()) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Button(onClick = { launcher.launch(arrayOf("*/*")) }) {
-                Text("Install from .zip / .crx", fontSize = 12.sp)
-            }
-            OutlinedButton(onClick = {
-                runtime.manager.installSample()
-                reload()
-            }) {
-                Text("Load sample", fontSize = 12.sp)
-            }
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .navigationBarsPadding(),
+    ) {
+        HeaderRow(title = "Extensions", onBack = onBack)
+        if (ExtensionManager.busy) {
+            LinearProgressIndicator(progress = Float.NaN, modifier = Modifier.fillMaxWidth())
         }
         LazyColumn(
-            Modifier.fillMaxSize(),
+            modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (exts.value.isEmpty()) {
-                item {
+            item {
+                Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "No extensions installed yet.\nTap \"Install from .zip / .crx\" to pick an extension archive, or \"Load sample\" to try the bundled one.",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 18.sp
+                        "Nova runs real Firefox/WebExtensions (MV2 & MV3).\n\n" +
+                            "• Browse to addons.mozilla.org and tap \"Add to Firefox\" to install.\n" +
+                            "• Or install a .zip / .crx / .xpi file with \"Install from file\".\n" +
+                            "• Chrome Web Store blocks direct downloads on other browsers, but most popular " +
+                            "extensions are on AMO or downloadable as .zip packages.",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(16.dp),
                     )
                 }
             }
-            itemsIndexed(exts.value) { _, ext ->
-                ExtCard(ext, runtime, { reload() }, { popupExt = ext.manifest })
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Button(
+                        onClick = { BrowserCore.newTab("https://addons.mozilla.org/android/") },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(Icons.Rounded.Public, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Get add-ons")
+                    }
+                    OutlinedButton(
+                        onClick = { picker.launch(arrayOf("application/zip", "application/x-xpinstall", "application/x-chrome-extension", "application/octet-stream", "*/*")) },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(Icons.Rounded.Add, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Install file")
+                    }
+                }
+            }
+            if (ExtensionManager.extensions.isEmpty()) {
+                item {
+                    EmptyState("No extensions installed", "Install one from the add-on store or from a file.")
+                }
+            } else {
+                items(ExtensionManager.extensions, key = { it.id }) { ext ->
+                    ExtCard(ext)
+                }
             }
         }
-    }
-
-    popupExt?.let { mf ->
-        ExtensionPopup(mf, runtime) { popupExt = null }
     }
 }
 
 @Composable
-private fun ExtCard(
-    ext: InstalledExtension,
-    runtime: ExtRuntime,
-    reload: () -> Unit,
-    onPopup: () -> Unit
-) {
+private fun ExtCard(ext: ExtensionUi) {
     Surface(
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth()
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(12.dp)) {
+        Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(ext.manifest.name, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                    Text(
-                        "v${ext.manifest.version}" +
-                            (if (ext.manifest.manifestVersion >= 3) " · MV3 (partial)" else " · MV2") +
-                            (runtime.badgeText(ext.manifest.id)?.let { " · badge: $it" } ?: ""),
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = ext.enabled,
-                    onCheckedChange = { on ->
-                        runtime.manager.setEnabled(ext.manifest.id, on)
-                        if (on) runtime.ensureBackground(ext.manifest)
-                        else runtime.destroyBackground(ext.manifest.id)
-                        reload()
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(ext.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        if (ext.isBuiltIn) {
+                            Spacer(Modifier.width(8.dp))
+                            Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.primaryContainer) {
+                                Text(
+                                    "Bundled",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                )
+                            }
+                        }
                     }
-                )
+                    Text("v${ext.version}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked = ext.enabled, onCheckedChange = { ExtensionManager.setEnabled(ext, it) })
             }
-            if (ext.manifest.description.isNotBlank()) {
-                Text(
-                    ext.manifest.description,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 16.sp,
-                    modifier = Modifier.padding(top = 6.dp)
-                )
+            if (ext.description.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
+                Text(ext.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Row(
-                Modifier.padding(top = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (ext.manifest.popup != null) {
-                    OutlinedButton(onClick = onPopup, modifier = Modifier.heightIn(min = 32.dp)) {
-                        Text("Open popup", fontSize = 12.sp)
+            if (ext.permissions.isNotEmpty()) {
+                Spacer(Modifier.height(10.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ext.permissions.take(4).forEach { perm ->
+                        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceVariant) {
+                            Text(
+                                perm,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    if (ext.permissions.size > 4) {
+                        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceVariant) {
+                            Text(
+                                "+${ext.permissions.size - 4}",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
-                TextButton(onClick = {
-                    runtime.manager.remove(ext.manifest.id)
-                    runtime.destroyBackground(ext.manifest.id)
-                    reload()
-                }) {
-                    Text("Remove", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
-                }
             }
-        }
-    }
-}
-
-@Composable
-private fun ExtensionPopup(mf: ExtManifest, runtime: ExtRuntime, onClose: () -> Unit) {
-    val html = remember(mf.id) { runtime.buildPopupHtml(mf) }
-    val wv = remember(mf.id) { runtime.makeExtensionWebView() }
-
-    LaunchedEffect(mf.id) {
-        html?.let { wv.loadDataWithBaseURL("file://${mf.dir}/", it, "text/html", "utf-8", null) }
-    }
-
-    Dialog(onDismissRequest = onClose) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.fillMaxWidth().heightIn(min = 220.dp, max = 480.dp)
-        ) {
-            Box(Modifier.fillMaxWidth().padding(8.dp)) {
-                if (html != null) {
-                    AndroidView(
-                        factory = { wv },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp, max = 460.dp)
-                    )
-                } else {
-                    Text("This extension has no popup.", Modifier.padding(16.dp))
+            if (!ext.isBuiltIn) {
+                Spacer(Modifier.height(6.dp))
+                TextButton(onClick = { ExtensionManager.uninstall(ext) }) {
+                    Text("Uninstall", color = MaterialTheme.colorScheme.error)
                 }
             }
         }

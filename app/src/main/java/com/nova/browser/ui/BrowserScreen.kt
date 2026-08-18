@@ -1,46 +1,68 @@
 package com.nova.browser.ui
 
+import android.content.Context
+import android.content.Intent
+import android.view.inputmethod.InputMethodManager
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.Bookmarks
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.PrivacyTip
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.StarBorder
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Tab
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,249 +71,564 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.nova.browser.browser.BrowserCore
-import com.nova.browser.ext.ExtRuntime
+import com.nova.browser.browser.TabState
 import com.nova.browser.store.Store
+import kotlinx.coroutines.delay
+import org.mozilla.geckoview.GeckoView
 
-private val NAV_ITEMS = listOf(
-    "web" to "Tabs",
-    "extensions" to "Extensions",
-    "bookmarks" to "Bookmarks",
-    "history" to "History",
-    "settings" to "Settings"
-)
+enum class NovaScreen { BROWSER, TABS, EXTENSIONS, SETTINGS, BOOKMARKS, HISTORY }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BrowserApp(initialUrl: String?) {
+fun BrowserApp() {
     val context = LocalContext.current
-    val store = remember { Store(context.applicationContext) }
-    val runtime = remember { ExtRuntime(context.applicationContext, store) }
-    val core = remember { BrowserCore(context.applicationContext, store, runtime) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    var screen by remember { mutableStateOf(NovaScreen.BROWSER) }
+    var addressEditing by remember { mutableStateOf(false) }
+    var addressText by remember { mutableStateOf("") }
+    var shieldOpen by remember { mutableStateOf(false) }
+    var menuOpen by remember { mutableStateOf(false) }
+    var snackMsg by remember { mutableStateOf<String?>(null) }
 
-    var screen by remember { mutableStateOf("web") }
+    val darkTheme = when (Store.theme) {
+        "dark" -> true
+        "light" -> false
+        else -> isSystemInDarkTheme()
+    }
+    val incognito = BrowserCore.activeTab?.isPrivate == true
 
     LaunchedEffect(Unit) {
-        if (!initialUrl.isNullOrBlank()) core.navigate(initialUrl)
+        if (BrowserCore.tabs.isEmpty()) BrowserCore.newTab()
     }
 
-    Column(Modifier.fillMaxSize()) {
-        if (screen == "web") {
-            AddressBar(core, store)
-            TabStrip(core)
-        } else {
-            val title = NAV_ITEMS.firstOrNull { it.first == screen }?.second ?: ""
-            Text(
-                title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp)
-            )
+    LaunchedEffect(Unit) {
+        while (true) {
+            BrowserCore.lastDownloadMessage?.let { snackMsg = it; BrowserCore.lastDownloadMessage = null }
+            ExtensionManager.message?.let { snackMsg = it; ExtensionManager.message = null }
+            BrowserCore.pendingExternalIntent?.let {
+                snackMsg = "No app found to open \"$it\""
+                BrowserCore.pendingExternalIntent = null
+            }
+            delay(500)
         }
-        Box(Modifier.weight(1f).fillMaxWidth()) {
+    }
+
+    LaunchedEffect(snackMsg) {
+        snackMsg?.let {
+            snackbarHostState.showSnackbar(it)
+            snackMsg = null
+        }
+    }
+
+    NovaTheme(incognito = incognito, darkTheme = darkTheme) {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+        ) { _ ->
             when (screen) {
-                "extensions" -> ExtensionsScreen(runtime)
-                "bookmarks" -> BookmarksScreen(store, core) { screen = "web" }
-                "history" -> HistoryScreen(store, core) { screen = "web" }
-                "settings" -> SettingsScreen(core, store)
-                else -> WebSurface(core, store)
-            }
-        }
-        NavigationBar {
-            NAV_ITEMS.forEach { (key, label) ->
-                NavigationBarItem(
-                    selected = screen == key,
-                    onClick = { screen = key },
-                    icon = {
-                        val icon = when (key) {
-                            "extensions" -> Icons.Rounded.Extension
-                            "bookmarks" -> Icons.Rounded.Bookmarks
-                            "history" -> Icons.Rounded.History
-                            "settings" -> Icons.Rounded.Settings
-                            else -> Icons.Rounded.Language
-                        }
-                        Icon(icon, label)
-                    },
-                    label = { Text(label, fontSize = 10.sp) }
+                NovaScreen.BROWSER -> BrowserShell(
+                    addressEditing = addressEditing,
+                    setAddressEditing = { addressEditing = it },
+                    addressText = addressText,
+                    setAddressText = { addressText = it },
+                    shieldOpen = shieldOpen,
+                    setShieldOpen = { shieldOpen = it },
+                    menuOpen = menuOpen,
+                    setMenuOpen = { menuOpen = it },
+                    onOpenTabs = { screen = NovaScreen.TABS },
+                    onOpenExtensions = { screen = NovaScreen.EXTENSIONS },
+                    onOpenSettings = { screen = NovaScreen.SETTINGS },
+                    onOpenBookmarks = { screen = NovaScreen.BOOKMARKS },
+                    onOpenHistory = { screen = NovaScreen.HISTORY },
                 )
+                NovaScreen.TABS -> TabSwitcherScreen(onClose = { screen = NovaScreen.BROWSER })
+                NovaScreen.EXTENSIONS -> ExtensionsScreen(onBack = { screen = NovaScreen.BROWSER })
+                NovaScreen.SETTINGS -> SettingsScreen(onBack = { screen = NovaScreen.BROWSER }, onOpenExtensions = { screen = NovaScreen.EXTENSIONS })
+                NovaScreen.BOOKMARKS -> ManagerScreens.BookmarksScreen(onBack = { screen = NovaScreen.BROWSER })
+                NovaScreen.HISTORY -> ManagerScreens.HistoryScreen(onBack = { screen = NovaScreen.BROWSER })
             }
         }
     }
 }
 
-@Composable
-private fun AddressBar(core: BrowserCore, store: Store) {
-    val url = core.urlBarText
-    val activeUrl = core.activeTab?.url ?: ""
-    val bookmarked = activeUrl.isNotBlank() && store.isBookmarked(activeUrl)
+private fun Context.hideKeyboard() {
+    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    imm.hideSoftInputFromWindow(0, 0)
+}
 
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = { core.goBack() }, enabled = core.canGoBack()) {
-            Icon(Icons.Rounded.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onSurface)
-        }
-        IconButton(onClick = { core.goForward() }, enabled = core.canGoForward()) {
-            Icon(Icons.Rounded.ArrowForward, "Forward", tint = MaterialTheme.colorScheme.onSurface)
-        }
-        IconButton(onClick = { core.reload() }) {
-            Icon(Icons.Rounded.Refresh, "Reload", tint = MaterialTheme.colorScheme.onSurface)
-        }
-        OutlinedTextField(
-            value = url,
-            onValueChange = { core.setUrlBar(it) },
-            modifier = Modifier.weight(1f).height(44.dp),
-            singleLine = true,
-            placeholder = { Text("Search or enter address", fontSize = 13.sp) },
-            textStyle = MaterialTheme.typography.bodyMedium,
-            shape = RoundedCornerShape(22.dp),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-            keyboardActions = KeyboardActions(onGo = { core.navigate(url) })
+@Composable
+private fun BrowserShell(
+    addressEditing: Boolean,
+    setAddressEditing: (Boolean) -> Unit,
+    addressText: String,
+    setAddressText: (String) -> Unit,
+    shieldOpen: Boolean,
+    setShieldOpen: (Boolean) -> Unit,
+    menuOpen: Boolean,
+    setMenuOpen: (Boolean) -> Unit,
+    onOpenTabs: () -> Unit,
+    onOpenExtensions: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenBookmarks: () -> Unit,
+    onOpenHistory: () -> Unit,
+) {
+    val context = LocalContext.current
+    val tab = BrowserCore.activeTab
+    val loading = (tab?.progress ?: 0) in 1..99
+    var showBookmarkDialog by remember { mutableStateOf(false) }
+
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        ToolbarArea(
+            tab = tab,
+            addressEditing = addressEditing,
+            setAddressEditing = setAddressEditing,
+            addressText = addressText,
+            setAddressText = setAddressText,
+            menuOpen = menuOpen,
+            setMenuOpen = setMenuOpen,
+            onOpenTabs = onOpenTabs,
+            onOpenBookmarks = onOpenBookmarks,
+            onOpenHistory = onOpenHistory,
+            onAddBookmark = { showBookmarkDialog = true },
         )
-        IconButton(onClick = {
-            if (bookmarked) store.removeBookmark(activeUrl)
-            else store.addBookmark(activeUrl, core.activeTab?.title ?: activeUrl)
-        }) {
-            Icon(
-                if (bookmarked) Icons.Rounded.Star else Icons.Rounded.StarBorder,
-                "Bookmark",
-                tint = if (bookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+
+        if (loading) {
+            LinearProgressIndicator(
+                progress = (tab?.progress ?: 0) / 100f,
+                modifier = Modifier.fillMaxWidth().height(2.dp),
             )
         }
+
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            val current = BrowserCore.activeTab
+            if (current != null) {
+                if (current.isStartPage) {
+                    StartPage(
+                        onSearchClick = {
+                            setAddressText("")
+                            setAddressEditing(true)
+                        },
+                        onOpenTabs = onOpenTabs,
+                        onOpenExtensions = onOpenExtensions,
+                        onOpenSettings = onOpenSettings,
+                        onOpenBookmarks = onOpenBookmarks,
+                        onOpenHistory = onOpenHistory,
+                        onOpenPrivate = { BrowserCore.newTab(isPrivate = true) },
+                    )
+                } else {
+                    GeckoHost(current)
+                }
+            }
+        }
+
+        BottomBar(tab = tab, onOpenTabs = onOpenTabs)
+    }
+
+    if (shieldOpen) {
+        ModalBottomSheet(onDismissRequest = { setShieldOpen(false) }) {
+            ShieldPanel(tab)
+        }
+    }
+
+    if (showBookmarkDialog && tab != null && tab.url.isNotBlank()) {
+        val title = tab.title.ifBlank { tab.host }
+        val url = tab.url
+        val already = Store.isBookmarked(url)
+        AlertDialog(
+            onDismissRequest = { showBookmarkDialog = false },
+            title = { Text(if (already) "Remove bookmark?" else "Add bookmark") },
+            text = { Text("$title\n$url") },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (already) Store.removeBookmark(url) else Store.addBookmark(title, url)
+                    showBookmarkDialog = false
+                    context.hideKeyboard()
+                }) { Text(if (already) "Remove" else "Add") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBookmarkDialog = false }) { Text("Cancel") }
+            },
+        )
     }
 }
 
 @Composable
-private fun TabStrip(core: BrowserCore) {
-    LazyRow(
-        Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        itemsIndexed(core.tabs) { index, tab ->
-            val selected = index == core.activeIndex
+private fun ToolbarArea(
+    tab: TabState?,
+    addressEditing: Boolean,
+    setAddressEditing: (Boolean) -> Unit,
+    addressText: String,
+    setAddressText: (String) -> Unit,
+    menuOpen: Boolean,
+    setMenuOpen: (Boolean) -> Unit,
+    onOpenTabs: () -> Unit,
+    onOpenBookmarks: () -> Unit,
+    onOpenHistory: () -> Unit,
+    onAddBookmark: () -> Unit,
+) {
+    val context = LocalContext.current
+
+    val submit = {
+        val q = addressText.trim()
+        if (q.isNotEmpty()) BrowserCore.navigate(q)
+        setAddressEditing(false)
+        setAddressText("")
+        context.hideKeyboard()
+    }
+
+    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(start = 8.dp, end = 8.dp, top = 6.dp, bottom = 6.dp)
+                .heightIn(min = 52.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Surface(
-                modifier = Modifier.clickable { core.switchTo(index) },
-                shape = RoundedCornerShape(18.dp),
-                color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
-                else MaterialTheme.colorScheme.surfaceVariant
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                onClick = onOpenTabs,
             ) {
                 Row(
-                    Modifier.padding(start = 12.dp, end = 4.dp, top = 5.dp, bottom = 5.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        if (tab.url == BrowserCore.NEW_TAB) "New tab" else (tab.title.takeIf { it.isNotBlank() } ?: tab.url).take(14),
-                        fontSize = 12.sp,
-                        maxLines = 1
+                    Icon(Icons.Rounded.Tab, contentDescription = "Tabs", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.width(4.dp))
+                    Text("${BrowserCore.tabs.size}", style = MaterialTheme.typography.labelMedium)
+                }
+            }
+
+            Spacer(Modifier.width(8.dp))
+
+            AddressBar(
+                tab = tab,
+                editing = addressEditing,
+                setEditing = setAddressEditing,
+                text = addressText,
+                setText = setAddressText,
+                onGo = submit,
+            )
+
+            Spacer(Modifier.width(8.dp))
+
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                onClick = onAddBookmark,
+            ) {
+                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Rounded.Bookmark,
+                        contentDescription = "Bookmark",
+                        tint = if (tab != null && Store.isBookmarked(tab.url)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    IconButton(
-                        onClick = { core.closeTab(index) },
-                        modifier = Modifier.size(22.dp)
-                    ) {
-                        Icon(Icons.Rounded.Close, "Close tab", modifier = Modifier.size(14.dp))
+                }
+            }
+
+            Spacer(Modifier.width(4.dp))
+
+            Box {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    onClick = { setMenuOpen(true) },
+                ) {
+                    Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Rounded.MoreVert, contentDescription = "Menu", tint = MaterialTheme.colorScheme.onSurface)
                     }
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { setMenuOpen(false) }) {
+                    DropdownMenuItem(
+                        text = { Text("Bookmarks") },
+                        leadingIcon = { Icon(Icons.Rounded.Bookmark, null) },
+                        onClick = { setMenuOpen(false); onOpenBookmarks() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("History") },
+                        leadingIcon = { Icon(Icons.Rounded.History, null) },
+                        onClick = { setMenuOpen(false); onOpenHistory() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Extensions") },
+                        leadingIcon = { Icon(Icons.Rounded.Extension, null) },
+                        onClick = { setMenuOpen(false); onOpenExtensions() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("New private tab") },
+                        leadingIcon = { Icon(Icons.Rounded.PrivacyTip, null) },
+                        onClick = { setMenuOpen(false); BrowserCore.newTab(isPrivate = true) },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Share") },
+                        leadingIcon = { Icon(Icons.Rounded.Share, null) },
+                        onClick = {
+                            setMenuOpen(false)
+                            tab?.let {
+                                if (it.url.isNotBlank()) {
+                                    val send = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, it.url)
+                                    }
+                                    runCatching { context.startActivity(Intent.createChooser(send, "Share link")) }
+                                }
+                            }
+                        },
+                    )
                 }
             }
         }
-        item {
-            Surface(
-                modifier = Modifier.clickable { core.openNewTab(null) },
-                shape = RoundedCornerShape(18.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant
-            ) {
-                Icon(
-                    Icons.Rounded.Add, "New tab",
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp).size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
+
+        if (addressEditing && addressText.isNotBlank()) {
+            SuggestionsList(query = addressText, onPick = { label, url, isSearch ->
+                val context2 = LocalContext.current
+                context2.hideKeyboard()
+                setAddressEditing(false)
+                if (isSearch) BrowserCore.navigate(label) else BrowserCore.navigate(url)
+                setAddressText("")
+            })
         }
     }
 }
 
 @Composable
-private fun WebSurface(core: BrowserCore, store: Store) {
-    val active = core.activeTab
-    Box(Modifier.fillMaxSize()) {
-        if (active == null || active.url == BrowserCore.NEW_TAB) {
-            NewTabPage(core, store)
-        } else {
-            AndroidView(factory = { core.container }, modifier = Modifier.fillMaxSize())
-            if (active.progress in 1 until 100) {
-                LinearProgressIndicator(
-                    progress = { active.progress / 100f },
-                    modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun NewTabPage(core: BrowserCore, store: Store) {
-    var search by remember { mutableStateOf("") }
-    val activeId = core.activeTab?.id ?: -1
-    val recent = remember(activeId) { store.loadHistory(20) }
-
-    Column(
-        Modifier.fillMaxSize().padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(Modifier.height(36.dp))
-        Text(
-            "Nova Browser",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(Modifier.height(18.dp))
-        OutlinedTextField(
-            value = search,
-            onValueChange = { search = it },
-            modifier = Modifier.fillMaxWidth(),
+private fun RowScope.AddressBar(
+    tab: TabState?,
+    editing: Boolean,
+    setEditing: (Boolean) -> Unit,
+    text: String,
+    setText: (String) -> Unit,
+    onGo: () -> Unit,
+) {
+    if (editing) {
+        val focusRequester = remember { FocusRequester() }
+        val focusManager = LocalFocusManager.current
+        val context = LocalContext.current
+        LaunchedEffect(Unit) { focusRequester.requestFocus() }
+        TextField(
+            value = text,
+            onValueChange = setText,
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester),
+            placeholder = { Text("Search or type a URL") },
+            leadingIcon = { Icon(Icons.Rounded.Search, null) },
+            trailingIcon = {
+                if (text.isNotEmpty()) {
+                    IconButton(onClick = { setText("") }) { Icon(Icons.Rounded.Close, "Clear") }
+                }
+            },
             singleLine = true,
-            placeholder = { Text("Search or enter address", fontSize = 13.sp) },
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(26.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+            ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
-            keyboardActions = KeyboardActions(onGo = { core.navigate(search) })
+            keyboardActions = KeyboardActions(onGo = {
+                focusManager.clearFocus()
+                context.hideKeyboard()
+                onGo()
+            }),
         )
-        Spacer(Modifier.height(14.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedButton(onClick = { core.navigate("google.com") }) { Text("Google") }
-            OutlinedButton(onClick = { core.navigate("youtube.com") }) { Text("YouTube") }
-            OutlinedButton(onClick = { core.navigate("wikipedia.org") }) { Text("Wikipedia") }
-            OutlinedButton(onClick = { core.navigate("github.com") }) { Text("GitHub") }
+    } else {
+        Surface(
+            shape = RoundedCornerShape(26.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.weight(1f),
+            onClick = {
+                setText(tab?.url?.takeIf { !it.isBlank() } ?: "")
+                setEditing(true)
+            },
+        ) {
+            Row(
+                Modifier.heightIn(min = 44.dp).padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                when {
+                    tab == null || tab.isStartPage -> Icon(Icons.Rounded.Search, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    tab.secure -> Icon(Icons.Rounded.Lock, "Secure", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                    else -> Icon(Icons.Rounded.Shield, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = when {
+                        tab == null || tab.isStartPage -> "Search or type URL"
+                        tab.host.isNotBlank() -> tab.host
+                        else -> tab.url
+                    },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (tab == null || tab.isStartPage) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                )
+            }
         }
-        Spacer(Modifier.height(26.dp))
-        if (recent.isNotEmpty()) {
-            Text("Recent", style = MaterialTheme.typography.titleSmall, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(6.dp))
-            LazyColumn(Modifier.fillMaxWidth()) {
-                itemsIndexed(recent.take(15)) { _, e ->
-                    Row(
-                        Modifier.fillMaxWidth()
-                            .clickable { core.navigate(e.url) }
-                            .padding(vertical = 7.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Rounded.History, null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Column(Modifier.padding(start = 10.dp)) {
-                            Text(e.title, fontSize = 13.sp, maxLines = 1)
-                            Text(e.url, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+    }
+}
+
+private data class Sugg(val primary: String, val secondary: String?, val url: String?, val isSearch: Boolean)
+
+@Composable
+private fun SuggestionsList(query: String, onPick: (String, String, Boolean) -> Unit) {
+    if (query.isBlank()) return
+    val suggestions = remember(query) {
+        buildList {
+            add(Sugg("Search for \"$query\"", null, null, true))
+            Store.history()
+                .filter { it.second.contains(query, true) || it.first.contains(query, true) }
+                .take(4)
+                .forEach { add(Sugg(it.first, it.second, it.second, false)) }
+            Store.bookmarks()
+                .filter { it.second.contains(query, true) || it.first.contains(query, true) }
+                .take(3)
+                .forEach { add(Sugg(it.first, it.second, it.second, false)) }
+        }
+    }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 6.dp,
+    ) {
+        Column(Modifier.padding(vertical = 4.dp)) {
+            suggestions.forEach { s ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { onPick(s.primary, s.url ?: s.primary, s.isSearch) }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        if (s.isSearch) Icons.Rounded.Search else Icons.Rounded.History,
+                        null,
+                        Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(s.primary, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
+                        if (!s.secondary.isNullOrBlank()) {
+                            Text(
+                                s.secondary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun GeckoHost(tab: TabState) {
+    AndroidView(
+        modifier = Modifier.fillMaxSize(),
+        factory = { ctx -> GeckoView(ctx) },
+        update = { gv ->
+            if (gv.session != tab.session) {
+                runCatching { gv.releaseSession() }
+                gv.setSession(tab.session)
+            }
+        },
+    )
+}
+
+@Composable
+private fun BottomBar(tab: TabState?, onOpenTabs: () -> Unit) {
+    Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .height(60.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(enabled = tab?.canGoBack == true, onClick = { BrowserCore.back() }, modifier = Modifier.weight(1f)) {
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back")
+            }
+            IconButton(enabled = tab?.canGoForward == true, onClick = { BrowserCore.forward() }, modifier = Modifier.weight(1f)) {
+                Icon(Icons.AutoMirrored.Rounded.ArrowForward, "Forward")
+            }
+            IconButton(onClick = { BrowserCore.goHome() }, modifier = Modifier.weight(1f)) {
+                Icon(Icons.Rounded.Home, "Home")
+            }
+            IconButton(onClick = { BrowserCore.reload() }, modifier = Modifier.weight(1f)) {
+                Icon(Icons.Rounded.Refresh, "Reload")
+            }
+            IconButton(onClick = { BrowserCore.newTab() }, modifier = Modifier.weight(1f)) {
+                Icon(Icons.Rounded.Add, "New tab")
+            }
+            Surface(
+                shape = CircleShape,
+                color = if (tab?.isPrivate == true) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                onClick = onOpenTabs,
+            ) {
+                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.Tab, "Tabs", tint = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+            Spacer(Modifier.width(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun ShieldPanel(tab: TabState?) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .navigationBarsPadding()
+            .padding(bottom = 24.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.Shield, null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(8.dp))
+            Column {
+                Text("Nova Shield", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    tab?.host ?: "Start page",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column {
+                Text("Tracking & ad blocking", style = MaterialTheme.typography.bodyLarge)
+                Text("Blocked on this page: ${tab?.blocked ?: 0}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Switch(
+                checked = tab?.shield == true,
+                onCheckedChange = { BrowserCore.toggleShield() },
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        Text(
+            "Uses Firefox Enhanced Tracking Protection lists (ads, trackers, analytics, social, cryptominers, fingerprinters).",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
