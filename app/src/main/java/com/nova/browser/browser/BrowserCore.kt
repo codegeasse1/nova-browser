@@ -33,7 +33,6 @@ object BrowserCore {
     var pendingExternalIntent by mutableStateOf<String?>(null)
     var lastShieldNotice by mutableStateOf<String?>(null)
     var storeOffer by mutableStateOf<Pair<String, String>?>(null)
-    private var lastStoreOfferId = ""
 
     private val webViews = HashMap<Int, WebView>()
     private var nextId = 1
@@ -126,6 +125,8 @@ object BrowserCore {
                 runCatching {
                     val id = view.tag as? Int ?: return
                     patch(id) { copy(url = url, secure = url.startsWith("https://")) }
+                    val tab = tabs.firstOrNull { it.id == id }
+                    if (tab?.desktopSite == true && url.startsWith("http")) injectDesktopViewport(view)
                 }
             }
 
@@ -149,6 +150,7 @@ object BrowserCore {
                         Store.addHistory(title.ifBlank { url }, url)
                     }
                     ExtensionManager.injectInto(view, url)
+                    if (tab.desktopSite && url.startsWith("http")) injectDesktopViewport(view)
                     offerStoreInstall(url)
                 }
             }
@@ -244,16 +246,43 @@ object BrowserCore {
     private fun offerStoreInstall(url: String) {
         runCatching {
             val host = runCatching { Uri.parse(url).host ?: "" }.getOrDefault("")
-            if (host != "chromewebstore.google.com") return
+            val isStore = host == "chromewebstore.google.com" || host == "newebstore.google.com" || host.endsWith(".chromewebstore.google.com") || host.endsWith(".newebstore.google.com")
+            if (!isStore) return
             val m = Regex("/detail/([^/]+)/([a-p]{32})").find(url) ?: return
             val id = m.groupValues[2]
-            if (id == lastStoreOfferId) return
-            lastStoreOfferId = id
+            if (storeOffer?.first == id) return
             val slug = m.groupValues[1]
             val name = slug.split('-', '_').joinToString(" ") { part ->
                 part.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
             }
             storeOffer = id to name
+        }
+    }
+
+    private fun injectDesktopViewport(view: WebView) {
+        runCatching {
+            view.evaluateJavascript(
+                """(function(){
+                    function setVp(){
+                        var head = document.head || document.documentElement;
+                        if (!head) return false;
+                        var content = 'width=1024, initial-scale=1.0';
+                        var existing = document.querySelector('meta[name="viewport"]');
+                        if (existing) { existing.setAttribute('content', content); }
+                        else {
+                            var m = document.createElement('meta');
+                            m.setAttribute('name', 'viewport');
+                            m.setAttribute('content', content);
+                            head.appendChild(m);
+                        }
+                        return true;
+                    }
+                    if (!setVp() && document.readyState !== 'complete') {
+                        document.addEventListener('DOMContentLoaded', setVp);
+                    }
+                })()""",
+                null,
+            )
         }
     }
 
@@ -382,6 +411,8 @@ object BrowserCore {
         patch(tab.id) { copy(desktopSite = next) }
         webViews[tab.id]?.let { view ->
             view.settings.userAgentString = if (next) DESKTOP_UA else ""
+            view.settings.useWideViewPort = true
+            view.settings.loadWithOverviewMode = !next
             view.reload()
         }
     }

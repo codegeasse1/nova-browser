@@ -6,6 +6,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,7 +57,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -213,97 +213,111 @@ private fun BrowserShell(
     val loading = (tab?.progress ?: 0) in 1..99
     var showBookmarkDialog by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ToolbarArea(
-            tab = tab,
-            addressEditing = addressEditing,
-            setAddressEditing = setAddressEditing,
-            addressText = addressText,
-            setAddressText = setAddressText,
-            menuOpen = menuOpen,
-            setMenuOpen = setMenuOpen,
-            onOpenTabs = onOpenTabs,
-            onOpenBookmarks = onOpenBookmarks,
-            onOpenHistory = onOpenHistory,
-            onOpenExtensions = onOpenExtensions,
-            onOpenDownloads = onOpenDownloads,
-            onShieldClick = { setShieldOpen(true) },
-            onAddBookmark = { showBookmarkDialog = true },
-        )
-
-        if (loading) {
-            LinearProgressIndicator(
-                progress = (tab?.progress ?: 0) / 100f,
-                modifier = Modifier.fillMaxWidth().height(2.dp),
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            ToolbarArea(
+                tab = tab,
+                addressEditing = addressEditing,
+                setAddressEditing = setAddressEditing,
+                addressText = addressText,
+                setAddressText = setAddressText,
+                menuOpen = menuOpen,
+                setMenuOpen = setMenuOpen,
+                onOpenTabs = onOpenTabs,
+                onOpenBookmarks = onOpenBookmarks,
+                onOpenHistory = onOpenHistory,
+                onOpenExtensions = onOpenExtensions,
+                onOpenDownloads = onOpenDownloads,
+                onShieldClick = { setShieldOpen(true) },
+                onAddBookmark = { showBookmarkDialog = true },
             )
-        }
 
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            val current = BrowserCore.activeTab
-            if (current != null) {
-                if (current.isStartPage) {
-                    StartPage(
-                        onSearchClick = {
-                            setAddressText("")
-                            setAddressEditing(true)
-                        },
-                        onOpenTabs = onOpenTabs,
-                        onOpenExtensions = onOpenExtensions,
-                        onOpenSettings = onOpenSettings,
-                        onOpenBookmarks = onOpenBookmarks,
-                        onOpenHistory = onOpenHistory,
-                        onOpenDownloads = onOpenDownloads,
-                        onOpenPrivate = { BrowserCore.newTab(isPrivate = true) },
-                    )
-                } else {
-                    WebHost(current)
-                }
+            if (loading) {
+                LinearProgressIndicator(
+                    progress = (tab?.progress ?: 0) / 100f,
+                    modifier = Modifier.fillMaxWidth().height(2.dp),
+                )
             }
 
-            BrowserCore.storeOffer?.let { (id, name) ->
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shadowElevation = 8.dp,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                ) {
-                    Row(
-                        Modifier.padding(start = 16.dp, end = 6.dp, top = 8.dp, bottom = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                val current = BrowserCore.activeTab
+                if (current != null) {
+                    if (current.isStartPage) {
+                        StartPage(
+                            onSearchClick = {
+                                setAddressText("")
+                                setAddressEditing(true)
+                            },
+                            onOpenTabs = onOpenTabs,
+                            onOpenExtensions = onOpenExtensions,
+                            onOpenSettings = onOpenSettings,
+                            onOpenBookmarks = onOpenBookmarks,
+                            onOpenHistory = onOpenHistory,
+                            onOpenDownloads = onOpenDownloads,
+                            onOpenPrivate = { BrowserCore.newTab(isPrivate = true) },
+                        )
+                    } else {
+                        WebHost(current)
+                    }
+                }
+
+                BrowserCore.storeOffer?.let { (id, name) ->
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        shadowElevation = 8.dp,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(10.dp),
                     ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                "Install \"$name\" in Nova?",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Text(
-                                "From the Chrome Web Store",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                        Row(
+                            Modifier.padding(start = 16.dp, end = 6.dp, top = 8.dp, bottom = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    "Install \"$name\" in Nova?",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    "From the Chrome Web Store",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            TextButton(onClick = {
+                                ExtensionManager.installFromChromeStore(context, id)
+                                BrowserCore.storeOffer = null
+                            }) { Text("Install", fontWeight = FontWeight.Bold) }
+                            TextButton(onClick = { BrowserCore.storeOffer = null }) { Text("Not now") }
                         }
-                        TextButton(onClick = {
-                            ExtensionManager.installFromChromeStore(context, id)
-                            BrowserCore.storeOffer = null
-                        }) { Text("Install", fontWeight = FontWeight.Bold) }
-                        TextButton(onClick = { BrowserCore.storeOffer = null }) { Text("Not now") }
                     }
                 }
             }
+
+            BottomBar(tab = tab, onOpenTabs = onOpenTabs)
         }
 
-        BottomBar(tab = tab, onOpenTabs = onOpenTabs)
-    }
-
-    if (shieldOpen) {
-        ModalBottomSheet(onDismissRequest = { setShieldOpen(false) }) {
-            ShieldPanel(tab)
+        if (shieldOpen) {
+            val interactionSource = remember { MutableInteractionSource() }
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f))
+                    .clickable(interactionSource = interactionSource, indication = null) { setShieldOpen(false) },
+            )
+            Surface(
+                shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 8.dp,
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+            ) {
+                ShieldPanel(tab)
+            }
         }
     }
 
