@@ -125,23 +125,25 @@ object ExtensionManager {
 
     fun injectInto(view: WebView, url: String) {
         if (url.isBlank() || !url.startsWith("http")) return
-        synchronized(extensions) {
-            for (ext in extensions) {
-                if (!ext.enabled) continue
-                for (cs in ext.contentScripts) {
-                    val ok = cs.matches.isEmpty() || cs.matches.any { it.matches(url) }
-                    if (!ok) continue
-                    cs.css.forEach { cssFile ->
-                        val css = readAssetOrFile(ext, cssFile) ?: return@forEach
-                        view.evaluateJavascript(
-                            "(function(){var s=document.createElement('style');s.setAttribute('data-nova-ext','${ext.id}');s.textContent=" +
-                                JSONObject.quote(css) +
-                                ";document.documentElement.appendChild(s);})()", null,
-                        )
-                    }
-                    cs.js.forEach { jsFile ->
-                        val js = readAssetOrFile(ext, jsFile) ?: return@forEach
-                        view.evaluateJavascript("(function(){\n" + js + "\n})()", null)
+        runCatching {
+            synchronized(extensions) {
+                for (ext in extensions) {
+                    if (!ext.enabled) continue
+                    for (cs in ext.contentScripts) {
+                        val ok = cs.matches.isEmpty() || cs.matches.any { it.matches(url) }
+                        if (!ok) continue
+                        cs.css.forEach { cssFile ->
+                            val css = readAssetOrFile(ext, cssFile) ?: return@forEach
+                            view.evaluateJavascript(
+                                "(function(){var s=document.createElement('style');s.setAttribute('data-nova-ext','${ext.id}');s.textContent=" +
+                                    JSONObject.quote(css) +
+                                    ";document.documentElement.appendChild(s);})()", null,
+                            )
+                        }
+                        cs.js.forEach { jsFile ->
+                            val js = readAssetOrFile(ext, jsFile) ?: return@forEach
+                            view.evaluateJavascript("(function(){\n" + js + "\n})()", null)
+                        }
                     }
                 }
             }

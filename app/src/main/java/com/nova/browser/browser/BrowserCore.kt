@@ -86,57 +86,67 @@ object BrowserCore {
 
         view.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                return handleUrl(view, request.url.toString(), request.isForMainFrame)
+                return runCatching { handleUrl(view, request.url.toString(), request.isForMainFrame) }.getOrDefault(false)
             }
 
             override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-                return handleUrl(view, url, true)
+                return runCatching { handleUrl(view, url, true) }.getOrDefault(false)
             }
 
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
-                val id = view.tag as? Int ?: return null
-                val tab = tabs.firstOrNull { it.id == id } ?: return null
-                if (!tab.shield) return null
-                val url = request.url.toString()
-                if (AdBlocker.shouldBlock(url, view.url ?: "")) {
-                    patch(id) { copy(blocked = blocked + 1) }
-                    totalBlocked += 1
-                    return WebResourceResponse("text/plain", "utf-8", ByteArrayInputStream(ByteArray(0)))
-                }
-                return null
+                return runCatching {
+                    val id = view.tag as? Int ?: return null
+                    val tab = tabs.firstOrNull { it.id == id } ?: return null
+                    if (!tab.shield) return null
+                    val url = request.url.toString()
+                    if (AdBlocker.shouldBlock(url, view.url ?: "")) {
+                        view.post {
+                            patch(id) { copy(blocked = blocked + 1) }
+                            totalBlocked += 1
+                        }
+                        return WebResourceResponse("text/plain", "utf-8", ByteArrayInputStream(ByteArray(0)))
+                    }
+                    null
+                }.getOrNull()
             }
 
             override fun onPageStarted(view: WebView, url: String, favicon: android.graphics.Bitmap?) {
-                val id = view.tag as? Int ?: return
-                patch(id) {
-                    copy(url = url, title = "", progress = 0, secure = url.startsWith("https://"), blocked = 0)
+                runCatching {
+                    val id = view.tag as? Int ?: return
+                    patch(id) {
+                        copy(url = url, title = "", progress = 0, secure = url.startsWith("https://"), blocked = 0)
+                    }
                 }
             }
 
             override fun onPageCommitVisible(view: WebView, url: String) {
-                val id = view.tag as? Int ?: return
-                patch(id) { copy(url = url, secure = url.startsWith("https://")) }
+                runCatching {
+                    val id = view.tag as? Int ?: return
+                    patch(id) { copy(url = url, secure = url.startsWith("https://")) }
+                }
             }
 
             override fun onPageFinished(view: WebView, url: String) {
-                val id = view.tag as? Int ?: return
-                val tab = tabs.firstOrNull { it.id == id } ?: return
-                val title = view.title ?: ""
-                val secure = url.startsWith("https://")
-                patch(id) {
-                    copy(
-                        url = url,
-                        title = title,
-                        progress = 100,
-                        secure = secure,
-                        canGoBack = view.canGoBack(),
-                        canGoForward = view.canGoForward(),
-                    )
+                runCatching {
+                    val id = view.tag as? Int ?: return
+                    val tab = tabs.firstOrNull { it.id == id } ?: return
+                    val title = view.title ?: ""
+                    val secure = url.startsWith("https://")
+                    patch(id) {
+                        copy(
+                            url = url,
+                            title = title,
+                            progress = 100,
+                            secure = secure,
+                            canGoBack = view.canGoBack(),
+                            canGoForward = view.canGoForward(),
+                        )
+                    }
+                    if (!tab.isPrivate && url.startsWith("http")) {
+                        Store.addHistory(title.ifBlank { url }, url)
+                    }
+                    ExtensionManager.injectInto(view, url)
                 }
-                if (!tab.isPrivate && url.startsWith("http")) {
-                    Store.addHistory(title.ifBlank { url }, url)
-                }
-                ExtensionManager.injectInto(view, url)
             }
 
             override fun onReceivedError(
@@ -144,22 +154,28 @@ object BrowserCore {
                 request: WebResourceRequest,
                 error: android.webkit.WebResourceError,
             ) {
-                if (request.isForMainFrame) {
-                    val id = view.tag as? Int ?: return
-                    patch(id) { copy(progress = 100) }
+                runCatching {
+                    if (request.isForMainFrame) {
+                        val id = view.tag as? Int ?: return
+                        patch(id) { copy(progress = 100) }
+                    }
                 }
             }
         }
 
         view.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView, newProgress: Int) {
-                val id = view.tag as? Int ?: return
-                patch(id) { copy(progress = newProgress) }
+                runCatching {
+                    val id = view.tag as? Int ?: return
+                    patch(id) { copy(progress = newProgress) }
+                }
             }
 
             override fun onReceivedTitle(view: WebView, title: String) {
-                val id = view.tag as? Int ?: return
-                patch(id) { copy(title = title) }
+                runCatching {
+                    val id = view.tag as? Int ?: return
+                    patch(id) { copy(title = title) }
+                }
             }
 
             override fun onShowFileChooser(
@@ -167,39 +183,45 @@ object BrowserCore {
                 filePathCallback: ValueCallback<Array<Uri>>?,
                 fileChooserParams: FileChooserParams?,
             ): Boolean {
-                App.filePathCallback = filePathCallback
-                App.activity?.openFileChooser()
+                runCatching {
+                    App.filePathCallback = filePathCallback
+                    App.activity?.openFileChooser()
+                }
                 return true
             }
 
             override fun onPermissionRequest(request: PermissionRequest) {
-                request.grant(request.resources)
+                runCatching { request.grant(request.resources) }
             }
 
             override fun onGeolocationPermissionsShowPrompt(
                 origin: String,
                 callback: GeolocationPermissions.Callback,
             ) {
-                App.requestAndroidPermissions(
-                    listOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION),
-                ) { granted ->
-                    callback.invoke(origin, granted, false)
+                runCatching {
+                    App.requestAndroidPermissions(
+                        listOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION),
+                    ) { granted ->
+                        callback.invoke(origin, granted, false)
+                    }
                 }
             }
         }
 
         view.setDownloadListener(DownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
-            val lower = url.lowercase()
-            val isExt =
-                lower.endsWith(".crx") ||
-                    lower.endsWith(".xpi") ||
-                    contentDisposition?.contains(".xpi", ignoreCase = true) == true ||
-                    lower.endsWith(".zip") && url.contains("extension")
-            if (isExt) {
-                ExtensionManager.installFromUrl(App.context, url)
-            } else {
-                Downloads.start(App.context, url, userAgent, contentDisposition, mimetype, contentLength) { msg ->
-                    lastDownloadMessage = msg
+            runCatching {
+                val lower = url.lowercase()
+                val isExt =
+                    lower.endsWith(".crx") ||
+                        lower.endsWith(".xpi") ||
+                        contentDisposition?.contains(".xpi", ignoreCase = true) == true ||
+                        lower.endsWith(".zip") && url.contains("extension")
+                if (isExt) {
+                    ExtensionManager.installFromUrl(App.context, url)
+                } else {
+                    Downloads.start(App.context, url, userAgent, contentDisposition, mimetype, contentLength) { msg ->
+                        lastDownloadMessage = msg
+                    }
                 }
             }
         })
@@ -265,7 +287,7 @@ object BrowserCore {
         val url = interpret(input) ?: return
         patch(tab.id) { copy(url = url) }
         val wv = webViews[tab.id]
-        if (wv != null) wv.loadUrl(url) else attachView(App.context, tab.id)
+        if (wv != null) wv.loadUrl(url) else attachView(App.activity ?: App.context, tab.id)
     }
 
     fun loadInTab(index: Int, input: String) {
@@ -274,7 +296,7 @@ object BrowserCore {
         activate(index)
         patch(tab.id) { copy(url = url) }
         val wv = webViews[tab.id]
-        if (wv != null) wv.loadUrl(url) else attachView(App.context, tab.id)
+        if (wv != null) wv.loadUrl(url) else attachView(App.activity ?: App.context, tab.id)
     }
 
     fun interpret(raw: String): String? {

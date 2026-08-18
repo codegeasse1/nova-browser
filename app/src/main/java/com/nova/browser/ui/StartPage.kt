@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.nova.browser.App
 import com.nova.browser.browser.BrowserCore
 import com.nova.browser.store.Store
 import kotlinx.coroutines.delay
@@ -75,6 +76,8 @@ fun StartPage(
     var dateText by remember { mutableStateOf(dateText()) }
     val dials = remember { mutableStateOf(Store.speedDials()) }
     var showAdd by remember { mutableStateOf(false) }
+    val initialCrash = remember { App.lastCrash() }
+    var showCrash by remember { mutableStateOf(initialCrash != null) }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -104,6 +107,40 @@ fun StartPage(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.height(48.dp))
+
+            if (showCrash && initialCrash != null) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(Modifier.padding(14.dp)) {
+                        Text(
+                            "Nova crashed earlier",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            initialCrash.lineSequence().firstOrNull() ?: "Unknown error",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        TextButton(onClick = {
+                            App.clearCrashLog()
+                            showCrash = false
+                        }) {
+                            Text("Got it", color = MaterialTheme.colorScheme.onErrorContainer)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(18.dp))
+            }
+
             Text("Nova", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
             Text(
                 "Powerful · Private · Extensible",
