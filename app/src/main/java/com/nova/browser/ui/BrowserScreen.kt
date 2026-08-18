@@ -3,6 +3,7 @@ package com.nova.browser.ui
 import android.content.Context
 import android.content.Intent
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -31,8 +32,10 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bookmark
-import androidx.compose.material.icons.rounded.BookmarkBorder
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.DesktopWindows
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Home
@@ -66,6 +69,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -86,9 +90,8 @@ import com.nova.browser.browser.TabState
 import com.nova.browser.ext.ExtensionManager
 import com.nova.browser.store.Store
 import kotlinx.coroutines.delay
-import org.mozilla.geckoview.GeckoView
 
-enum class NovaScreen { BROWSER, TABS, EXTENSIONS, SETTINGS, BOOKMARKS, HISTORY }
+enum class NovaScreen { BROWSER, TABS, EXTENSIONS, SETTINGS, BOOKMARKS, HISTORY, DOWNLOADS }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -132,6 +135,19 @@ fun BrowserApp() {
         }
     }
 
+    BackHandler {
+        when {
+            addressEditing -> {
+                addressEditing = false
+                addressText = ""
+                context.hideKeyboard()
+            }
+            screen != NovaScreen.BROWSER -> screen = NovaScreen.BROWSER
+            BrowserCore.activeTab?.canGoBack == true -> BrowserCore.back()
+            else -> (context as? android.app.Activity)?.moveTaskToBack(true)
+        }
+    }
+
     NovaTheme(incognito = incognito, darkTheme = darkTheme) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -153,12 +169,14 @@ fun BrowserApp() {
                     onOpenSettings = { screen = NovaScreen.SETTINGS },
                     onOpenBookmarks = { screen = NovaScreen.BOOKMARKS },
                     onOpenHistory = { screen = NovaScreen.HISTORY },
+                    onOpenDownloads = { screen = NovaScreen.DOWNLOADS },
                 )
                 NovaScreen.TABS -> TabSwitcherScreen(onClose = { screen = NovaScreen.BROWSER })
                 NovaScreen.EXTENSIONS -> ExtensionsScreen(onBack = { screen = NovaScreen.BROWSER })
-                NovaScreen.SETTINGS -> SettingsScreen(onBack = { screen = NovaScreen.BROWSER }, onOpenExtensions = { screen = NovaScreen.EXTENSIONS })
+                NovaScreen.SETTINGS -> SettingsScreen(onBack = { screen = NovaScreen.BROWSER }, onOpenExtensions = { screen = NovaScreen.EXTENSIONS }, onOpenDownloads = { screen = NovaScreen.DOWNLOADS })
                 NovaScreen.BOOKMARKS -> ManagerScreens.BookmarksScreen(onBack = { screen = NovaScreen.BROWSER })
                 NovaScreen.HISTORY -> ManagerScreens.HistoryScreen(onBack = { screen = NovaScreen.BROWSER })
+                NovaScreen.DOWNLOADS -> ManagerScreens.DownloadsScreen(onBack = { screen = NovaScreen.BROWSER })
             }
         }
     }
@@ -186,6 +204,7 @@ private fun BrowserShell(
     onOpenSettings: () -> Unit,
     onOpenBookmarks: () -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenDownloads: () -> Unit,
 ) {
     val context = LocalContext.current
     val tab = BrowserCore.activeTab
@@ -205,6 +224,8 @@ private fun BrowserShell(
             onOpenBookmarks = onOpenBookmarks,
             onOpenHistory = onOpenHistory,
             onOpenExtensions = onOpenExtensions,
+            onOpenDownloads = onOpenDownloads,
+            onShieldClick = { setShieldOpen(true) },
             onAddBookmark = { showBookmarkDialog = true },
         )
 
@@ -229,10 +250,11 @@ private fun BrowserShell(
                         onOpenSettings = onOpenSettings,
                         onOpenBookmarks = onOpenBookmarks,
                         onOpenHistory = onOpenHistory,
+                        onOpenDownloads = onOpenDownloads,
                         onOpenPrivate = { BrowserCore.newTab(isPrivate = true) },
                     )
                 } else {
-                    GeckoHost(current)
+                    WebHost(current)
                 }
             }
         }
@@ -282,6 +304,8 @@ private fun ToolbarArea(
     onOpenBookmarks: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenExtensions: () -> Unit,
+    onOpenDownloads: () -> Unit,
+    onShieldClick: () -> Unit,
     onAddBookmark: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -327,6 +351,7 @@ private fun ToolbarArea(
                 text = addressText,
                 setText = setAddressText,
                 onGo = submit,
+                onShieldClick = onShieldClick,
             )
 
             Spacer(Modifier.width(8.dp))
@@ -359,6 +384,16 @@ private fun ToolbarArea(
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { setMenuOpen(false) }) {
                     DropdownMenuItem(
+                        text = { Text("Desktop site") },
+                        leadingIcon = { Icon(Icons.Rounded.DesktopWindows, null) },
+                        trailingIcon = {
+                            if (tab?.desktopSite == true) {
+                                Icon(Icons.Rounded.Check, "On", tint = MaterialTheme.colorScheme.primary)
+                            }
+                        },
+                        onClick = { setMenuOpen(false); BrowserCore.toggleDesktopSite() },
+                    )
+                    DropdownMenuItem(
                         text = { Text("Bookmarks") },
                         leadingIcon = { Icon(Icons.Rounded.Bookmark, null) },
                         onClick = { setMenuOpen(false); onOpenBookmarks() },
@@ -367,6 +402,11 @@ private fun ToolbarArea(
                         text = { Text("History") },
                         leadingIcon = { Icon(Icons.Rounded.History, null) },
                         onClick = { setMenuOpen(false); onOpenHistory() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Downloads") },
+                        leadingIcon = { Icon(Icons.Rounded.Download, null) },
+                        onClick = { setMenuOpen(false); onOpenDownloads() },
                     )
                     DropdownMenuItem(
                         text = { Text("Extensions") },
@@ -417,6 +457,7 @@ private fun RowScope.AddressBar(
     text: String,
     setText: (String) -> Unit,
     onGo: () -> Unit,
+    onShieldClick: () -> Unit,
 ) {
     if (editing) {
         val focusRequester = remember { FocusRequester() }
@@ -465,12 +506,21 @@ private fun RowScope.AddressBar(
                 Modifier.heightIn(min = 44.dp).padding(horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                when {
-                    tab == null || tab.isStartPage -> Icon(Icons.Rounded.Search, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    tab.secure -> Icon(Icons.Rounded.Lock, "Secure", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
-                    else -> Icon(Icons.Rounded.Shield, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                val onPage = tab != null && !tab.isStartPage
+                val secTint = if (tab?.secure == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                Box(
+                    Modifier
+                        .then(if (onPage) Modifier.clickable(onClick = onShieldClick) else Modifier)
+                        .padding(end = 8.dp)
+                        .size(20.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    when {
+                        tab == null || tab.isStartPage -> Icon(Icons.Rounded.Search, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        tab.secure -> Icon(Icons.Rounded.Lock, "Secure — tap for site settings", Modifier.size(16.dp), tint = secTint)
+                        else -> Icon(Icons.Rounded.Shield, "Not secure — tap for site settings", Modifier.size(16.dp), tint = secTint)
+                    }
                 }
-                Spacer(Modifier.width(8.dp))
                 Text(
                     text = when {
                         tab == null || tab.isStartPage -> "Search or type URL"
@@ -494,7 +544,7 @@ private fun SuggestionsList(query: String, onPick: (String, String, Boolean) -> 
     if (query.isBlank()) return
     val suggestions = remember(query) {
         buildList {
-            add(Sugg("Search for \"$query\"", null, null, true))
+            add(Sugg("Search for \"$query\"", null, query, true))
             Store.history()
                 .filter { it.second.contains(query, true) || it.first.contains(query, true) }
                 .take(4)
@@ -545,17 +595,13 @@ private fun SuggestionsList(query: String, onPick: (String, String, Boolean) -> 
 }
 
 @Composable
-private fun GeckoHost(tab: TabState) {
-    AndroidView(
-        modifier = Modifier.fillMaxSize(),
-        factory = { ctx -> GeckoView(ctx) },
-        update = { gv ->
-            if (gv.session != tab.session) {
-                runCatching { gv.releaseSession() }
-                gv.setSession(tab.session)
-            }
-        },
-    )
+private fun WebHost(tab: TabState) {
+    key(tab.id) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx -> BrowserCore.attachView(ctx, tab.id) },
+        )
+    }
 }
 
 @Composable
@@ -631,9 +677,15 @@ private fun ShieldPanel(tab: TabState?) {
         }
         Spacer(Modifier.height(12.dp))
         Text(
-            "Uses Firefox Enhanced Tracking Protection lists (ads, trackers, analytics, social, cryptominers, fingerprinters).",
+            "Powered by the EasyList, EasyPrivacy and (in Strict mode) annoyance lists — the same community lists used by uBlock Origin.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        Spacer(Modifier.height(16.dp))
+        TextButton(onClick = { BrowserCore.reload() }) {
+            Icon(Icons.Rounded.Refresh, null, Modifier.size(18.dp))
+            Spacer(Modifier.width(6.dp))
+            Text("Reload page to apply")
+        }
     }
 }

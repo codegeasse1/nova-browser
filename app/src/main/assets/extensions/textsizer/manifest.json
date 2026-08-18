@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Text Sizer",
+  "version": "1.0.0",
+  "description": "Enlarges page text to 112% for easier reading.",
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "css": [
+        "content.css"
+      ]
+    }
+  ]
+}

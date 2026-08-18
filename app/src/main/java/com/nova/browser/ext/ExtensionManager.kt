@@ -2,24 +2,25 @@ package com.nova.browser.ext
 
 import android.content.Context
 import android.net.Uri
-import androidx.compose.runtime.getValue
+import android.webkit.WebView
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import com.nova.browser.App
+import com.nova.browser.store.Store
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import org.mozilla.geckoview.AllowOrDeny
-import org.mozilla.geckoview.GeckoResult
-import org.mozilla.geckoview.WebExtension
-import org.mozilla.geckoview.WebExtensionController
 import java.io.File
+import java.security.MessageDigest
 import java.util.zip.ZipInputStream
 
+data class ContentScript(
+    val matches: List<Regex>,
+    val js: List<String>,
+    val css: List<String>,
+)
+
 data class ExtensionUi(
-    val webExtension: WebExtension,
     val id: String,
     val name: String,
     val version: String,
@@ -27,6 +28,7 @@ data class ExtensionUi(
     val enabled: Boolean,
     val isBuiltIn: Boolean,
     val permissions: List<String>,
+    val contentScripts: List<ContentScript> = emptyList(),
 )
 
 object ExtensionManager {
@@ -34,106 +36,134 @@ object ExtensionManager {
     var busy by mutableStateOf(false)
     var message by mutableStateOf<String?>(null)
 
-    private val controller: WebExtensionController get() = App.runtime.webExtensionController
+    private val io = CoroutineScope(Dispatchers.IO)
 
     fun attach() {
-        controller.setPromptDelegate(object : WebExtensionController.PromptDelegate {
-            override fun onInstallPromptRequest(
-                extension: WebExtension,
-                permissions: Array<String>,
-                origins: Array<String>,
-                dataCollectionPermissions: Array<String>,
-            ): GeckoResult<WebExtension.PermissionPromptResponse>? =
-                GeckoResult.fromValue(WebExtension.PermissionPromptResponse(true, true, true))
-
-            override fun onUpdatePrompt(
-                extension: WebExtension,
-                newPermissions: Array<String>,
-                newOrigins: Array<String>,
-                newDataCollectionPermissions: Array<String>,
-            ): GeckoResult<AllowOrDeny>? = GeckoResult.fromValue(AllowOrDeny.ALLOW)
-
-            override fun onOptionalPrompt(
-                extension: WebExtension,
-                newPermissions: Array<String>,
-                newOrigins: Array<String>,
-                newDataCollectionPermissions: Array<String>,
-            ): GeckoResult<AllowOrDeny>? = GeckoResult.fromValue(AllowOrDeny.ALLOW)
-        })
-
-        controller.setAddonManagerDelegate(object : WebExtensionController.AddonManagerDelegate {
-            override fun onInstalled(extension: WebExtension) = refresh()
-            override fun onUninstalled(extension: WebExtension) = refresh()
-            override fun onEnabled(extension: WebExtension) = refresh()
-            override fun onDisabled(extension: WebExtension) = refresh()
-            override fun onInstallationFailed(extension: WebExtension?, installException: WebExtension.InstallException) {
-                message = "Extension install failed: ${installException.message ?: "unknown error"}"
-            }
-        })
-
-        controller.ensureBuiltIn("resource://android/assets/extensions/sample/", "nova-sample@nova.browser")
-            .accept({ refresh() }, { message = "Bundled sample extension unavailable" })
-        refresh()
+        loadInstalled()
     }
 
     fun refresh() {
-        controller.list().accept(
-            { list ->
-                extensions.clear()
-                for (ext in list.orEmpty()) extensions.add(toUi(ext))
-            },
-            { _ -> },
-        )
+        loadInstalled()
     }
 
-    private fun toUi(ext: WebExtension): ExtensionUi {
-        val md = ext.metaData
-        return ExtensionUi(
-            webExtension = ext,
-            id = ext.id,
-            name = (md.name ?: "").ifBlank { ext.id },
-            version = md.version,
-            description = md.description ?: "",
-            enabled = md.enabled,
-            isBuiltIn = ext.isBuiltIn,
-            permissions = (md.requiredPermissions.toList() + md.requiredOrigins.toList()).distinct(),
-        )
+    fun loadInstalled() {
+        val context = com.nova.browser.App.context
+        val list = mutableListOf<ExtensionUi>()
+        val disabled = Store.disabledExtensions()
+
+        runCatching {
+            val assets = context.assets.list("extensions") ?: emptyArray()
+            assets.forEach { dir ->
+                val builtIn = readExtension(context.assets.open("extensions/$dir/manifest.json").bufferedReader().use { it.readText() }, dir, isBuiltIn = true)
+                if (builtIn != null) list.add(builtIn)
+            }
+        }
+
+        val extRoot = File(context.filesDir, "extensions")
+        runCatching {
+            extRoot.listFiles()?.forEach { dir ->
+                if (dir.isDirectory) {
+                    val mf = File(dir, "manifest.json")
+                    if (mf.exists()) {
+                        val ext = readExtension(mf.readText(), dir.name, isBuiltIn = false)
+                        if (ext != null) list.add(ext)
+                    }
+                }
+            }
+        }
+
+        synchronized(extensions) {
+            extensions.clear()
+            extensions.addAll(list.map { if (it.id in disabled) it.copy(enabled = false) else it })
+        }
     }
 
-    fun installFromFile(context: Context, uri: Uri, onDone: (Boolean) -> Unit = {}) {
+    private fun readExtension(jsonText: String, id: String, isBuiltIn: Boolean): ExtensionUi? {
+        val json = runCatching { JSONObject(jsonText) }.getOrNull() ?: return null
+        val name = json.optString("name", id)
+        val version = json.optString("version", "1.0")
+        val description = json.optString("description", "")
+        val permissions = (json.optJSONArray("permissions")?.let { arr ->
+            (0 until arr.length()).mapNotNull { arr.optString(it).takeIf { s -> s.isNotBlank() } }
+        } ?: emptyList()).distinct()
+
+        val scripts = mutableListOf<ContentScript>()
+        json.optJSONArray("content_scripts")?.let { arr ->
+            for (i in 0 until arr.length()) {
+                val cs = arr.optJSONObject(i) ?: continue
+                val matches = (cs.optJSONArray("matches")?.let { m ->
+                    (0 until m.length()).mapNotNull { patternToRegex(m.optString(it)) }
+                } ?: emptyList())
+                val js = (cs.optJSONArray("js")?.let { m -> (0 until m.length()).mapNotNull { m.optString(it) } } ?: emptyList())
+                val css = (cs.optJSONArray("css")?.let { m -> (0 until m.length()).mapNotNull { m.optString(it) } } ?: emptyList())
+                if (js.isNotEmpty() || css.isNotEmpty()) {
+                    scripts.add(ContentScript(matches, js, css))
+                }
+            }
+        }
+        return ExtensionUi(id, name, version, description, enabled = true, isBuiltIn = isBuiltIn, permissions = permissions, contentScripts = scripts)
+    }
+
+    private fun patternToRegex(p: String): Regex? {
+        if (p == "<all_urls>") return Regex("^[a-z][a-z0-9+.-]*://", RegexOption.IGNORE_CASE)
+        val m = Regex("^(\\*|https|http|file|ftp)://(\\*|[^/]+)(/.*)?$").find(p) ?: return null
+        val scheme = if (m.groupValues[1] == "*") "[a-z][a-z0-9+.-]*" else Regex.escape(m.groupValues[1])
+        val hostRaw = m.groupValues[2]
+        val hostRe = if (hostRaw == "*") {
+            "[^/]*"
+        } else {
+            hostRaw.split(".").joinToString("\\.") { seg ->
+                if (seg == "*") "(?:[^./]+\\.)?" else Regex.escape(seg)
+            }
+        }
+        val path = m.groupValues[3] ?: "/"
+        val pathRe = path.replace("*", ".*")
+        return runCatching { Regex("^$scheme://$hostRe$pathRe", RegexOption.IGNORE_CASE) }.getOrNull()
+    }
+
+    fun injectInto(view: WebView, url: String) {
+        if (url.isBlank() || !url.startsWith("http")) return
+        synchronized(extensions) {
+            for (ext in extensions) {
+                if (!ext.enabled) continue
+                for (cs in ext.contentScripts) {
+                    val ok = cs.matches.isEmpty() || cs.matches.any { it.matches(url) }
+                    if (!ok) continue
+                    cs.css.forEach { cssFile ->
+                        val css = readAssetOrFile(ext, cssFile) ?: return@forEach
+                        view.evaluateJavascript(
+                            "(function(){var s=document.createElement('style');s.setAttribute('data-nova-ext','${ext.id}');s.textContent=" +
+                                JSONObject.quote(css) +
+                                ";document.documentElement.appendChild(s);})()", null,
+                        )
+                    }
+                    cs.js.forEach { jsFile ->
+                        val js = readAssetOrFile(ext, jsFile) ?: return@forEach
+                        view.evaluateJavascript("(function(){\n" + js + "\n})()", null)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun readAssetOrFile(ext: ExtensionUi, name: String): String? {
+        val context = com.nova.browser.App.context
+        if (ext.isBuiltIn) {
+            return runCatching { context.assets.open("extensions/${ext.id}/$name").bufferedReader().use { it.readText() } }.getOrNull()
+        }
+        val file = File(File(context.filesDir, "extensions"), "${ext.id}/$name")
+        return if (file.exists()) runCatching { file.readText() }.getOrNull() else null
+    }
+
+    fun installFromUri(context: Context, uri: Uri, onDone: (Boolean) -> Unit = {}) {
         if (busy) return
         busy = true
         message = null
-        CoroutineScope(Dispatchers.IO).launch {
+        io.launch {
             try {
-                val extId = "ext-" + System.currentTimeMillis().toString(36)
-                val tmp = File(context.cacheDir, "$extId.zip")
-                context.contentResolver.openInputStream(uri)?.use { ins ->
-                    tmp.outputStream().use { ous -> ins.copyTo(ous) }
-                } ?: throw Exception("could not read file")
-
-                val dir = File(context.filesDir, "extensions/$extId")
-                dir.mkdirs()
-                unzip(tmp, dir)
-                ensureManifest(dir, extId)
-
-                val result = controller.install(
-                    Uri.fromFile(dir).toString(),
-                    WebExtensionController.INSTALLATION_METHOD_FROM_FILE,
-                )
-                result.accept(
-                    { ext ->
-                        busy = false
-                        message = "Installed \"${ext?.metaData?.name ?: "extension"}\""
-                        refresh()
-                        onDone(true)
-                    },
-                    { e ->
-                        busy = false
-                        message = "Could not install extension: ${e?.message}"
-                        onDone(false)
-                    },
-                )
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    ?: throw Exception("could not read file")
+                installBytes(context, bytes, onDone)
             } catch (e: Exception) {
                 busy = false
                 message = "Import failed: ${e.message}"
@@ -142,67 +172,136 @@ object ExtensionManager {
         }
     }
 
-    fun uninstall(ext: ExtensionUi) {
-        controller.uninstall(ext.webExtension)
-            .accept({ refresh() }, { message = "Uninstall failed: ${it?.message}" })
-    }
-
-    fun setEnabled(ext: ExtensionUi, enabled: Boolean) {
-        if (enabled) {
-            controller.enable(ext.webExtension, WebExtensionController.EnableSource.USER)
-                .accept({ refresh() }, { message = "Enable failed: ${it?.message}" })
-        } else {
-            controller.disable(ext.webExtension, WebExtensionController.EnableSource.USER)
-                .accept({ refresh() }, { message = "Disable failed: ${it?.message}" })
+    fun installFromUrl(context: Context, url: String) {
+        if (busy) return
+        busy = true
+        message = null
+        io.launch {
+            try {
+                val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                conn.instanceFollowRedirects = true
+                conn.connectTimeout = 15000
+                conn.readTimeout = 30000
+                val code = conn.responseCode
+                if (code !in 200..299) throw Exception("HTTP $code")
+                val bytes = conn.inputStream.use { it.readBytes() }
+                installBytes(context, bytes) { ok ->
+                    if (!ok) message = "Could not install extension"
+                }
+            } catch (e: Exception) {
+                busy = false
+                message = "Could not fetch extension: ${e.message}"
+            }
         }
     }
 
-    fun allowInPrivateBrowsing(ext: ExtensionUi, allow: Boolean) {
-        controller.setAllowedInPrivateBrowsing(ext.webExtension, allow).accept({}, {})
+    private fun installBytes(context: Context, bytes: ByteArray, onDone: (Boolean) -> Unit) {
+        try {
+            val zipBytes = stripCrxHeader(bytes)
+            val zipEntries = readZipEntries(zipBytes)
+            val manifestText = zipEntries["manifest.json"]
+                ?: throw Exception("manifest.json not found — not a valid extension package")
+            val manifest = runCatching { JSONObject(manifestText) }.getOrNull()
+                ?: throw Exception("invalid manifest.json")
+
+            val hasContentScripts = manifest.optJSONArray("content_scripts") != null
+            if (!hasContentScripts) {
+                busy = false
+                message = "This extension has no content scripts — Nova only supports content-script extensions (the engine is Chromium/WebView)."
+                onDone(false)
+                return
+            }
+
+            val id = "ext-" + sha1(bytes).take(10)
+            val dir = File(context.filesDir, "extensions/$id")
+            dir.deleteRecursively()
+            dir.mkdirs()
+            for ((name, content) in zipEntries) {
+                if (name.contains("..")) continue
+                val out = File(dir, name)
+                out.parentFile?.mkdirs()
+                out.writeBytes(content)
+            }
+
+            busy = false
+            message = "Installed \"${manifest.optString("name", id)}\""
+            Store.setExtensionEnabled(id, true)
+            refresh()
+            onDone(true)
+        } catch (e: Exception) {
+            busy = false
+            message = "Could not install extension: ${e.message}"
+            onDone(false)
+        }
     }
 
-    private fun unzip(zip: File, dest: File) {
-        ZipInputStream(zip.inputStream().buffered()).use { zin ->
+    private fun readZipEntries(bytes: ByteArray): Map<String, ByteArray> {
+        val map = HashMap<String, ByteArray>()
+        ZipInputStream(bytes.inputStream().buffered()).use { zin ->
             var entry = zin.nextEntry
             while (entry != null) {
                 if (!entry.isDirectory) {
-                    val out = File(dest, entry.name)
-                    out.parentFile?.mkdirs()
-                    out.outputStream().use { ous -> zin.copyTo(ous, 4 * 1024 * 1024) }
+                    val name = entry.name
+                    val data = zin.readBytes()
+                    map[name] = data
                 }
                 zin.closeEntry()
                 entry = zin.nextEntry
             }
         }
-        val manifest = File(dest, "manifest.json")
-        if (!manifest.exists()) {
-            val sub = dest.listFiles()?.firstOrNull { it.isDirectory && File(it, "manifest.json").exists() }
-            if (sub != null) {
-                sub.copyRecursively(dest, overwrite = true)
-                sub.deleteRecursively()
-            } else {
-                throw Exception("manifest.json not found — not a valid extension package")
+        return map
+    }
+
+    private fun stripCrxHeader(bytes: ByteArray): ByteArray {
+        if (bytes.size < 12) return bytes
+        val magic = bytes[0] == 'C'.code.toByte() && bytes[1] == 'r'.code.toByte() && bytes[2] == '2'.code.toByte() && bytes[3] == '4'.code.toByte()
+        if (!magic) return bytes
+        val version = leInt(bytes, 4)
+        return when (version) {
+            2 -> {
+                if (bytes.size < 16) return bytes
+                val pubLen = leInt(bytes, 8)
+                val sigLen = leInt(bytes, 12)
+                val offset = 16 + pubLen + sigLen
+                if (offset >= bytes.size) bytes else bytes.copyOfRange(offset, bytes.size)
             }
+            3 -> {
+                if (bytes.size < 12) return bytes
+                val headerLen = leInt(bytes, 8)
+                val offset = 12 + headerLen
+                if (offset >= bytes.size) bytes else bytes.copyOfRange(offset, bytes.size)
+            }
+            else -> bytes
         }
     }
 
-    private fun ensureManifest(dir: File, extId: String) {
-        val manifestFile = File(dir, "manifest.json")
-        val json = runCatching { JSONObject(manifestFile.readText()) }
-            .getOrNull() ?: throw Exception("invalid manifest.json")
-        if (!json.has("manifest_version")) json.put("manifest_version", 2)
-        if (!json.has("name")) json.put("name", "Extension")
-        if (!json.has("version")) json.put("version", "1.0")
+    private fun leInt(bytes: ByteArray, at: Int): Int =
+        (bytes[at].toInt() and 0xFF) or
+            ((bytes[at + 1].toInt() and 0xFF) shl 8) or
+            ((bytes[at + 2].toInt() and 0xFF) shl 16) or
+            ((bytes[at + 3].toInt() and 0xFF) shl 24)
 
-        val apps = json.optJSONObject("applications")
-        val existingId = apps?.optJSONObject("gecko")?.optString("id").orEmpty()
-        if (existingId.isBlank()) {
-            val bs = json.optJSONObject("browser_specific_settings")
-                ?: JSONObject().also { json.put("browser_specific_settings", it) }
-            val gecko = bs.optJSONObject("gecko")
-                ?: JSONObject().also { bs.put("gecko", it) }
-            if (gecko.optString("id").isBlank()) gecko.put("id", "$extId@nova.browser")
+    private fun sha1(bytes: ByteArray): String {
+        val md = MessageDigest.getInstance("SHA-1")
+        return md.digest(bytes).joinToString("") { "%02x".format(it) }
+    }
+
+    fun setEnabled(ext: ExtensionUi, enabled: Boolean) {
+        Store.setExtensionEnabled(ext.id, enabled)
+        val i = extensions.indexOfFirst { it.id == ext.id }
+        if (i >= 0) extensions[i] = extensions[i].copy(enabled = enabled)
+    }
+
+    fun uninstall(ext: ExtensionUi) {
+        if (ext.isBuiltIn) {
+            message = "Bundled extensions can't be uninstalled (disable them instead)"
+            return
         }
-        manifestFile.writeText(json.toString(2))
+        val dir = File(com.nova.browser.App.context.filesDir, "extensions/${ext.id}")
+        runCatching { dir.deleteRecursively() }
+        Store.setExtensionEnabled(ext.id, false)
+        val i = extensions.indexOfFirst { it.id == ext.id }
+        if (i >= 0) extensions.removeAt(i)
+        message = "Uninstalled \"${ext.name}\""
     }
 }

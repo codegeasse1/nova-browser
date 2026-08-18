@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.PrivacyTip
@@ -67,6 +68,7 @@ fun StartPage(
     onOpenSettings: () -> Unit,
     onOpenBookmarks: () -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenDownloads: () -> Unit,
     onOpenPrivate: () -> Unit,
 ) {
     var timeText by remember { mutableStateOf(clockText()) }
@@ -158,6 +160,10 @@ fun StartPage(
                 QuickAction("Bookmarks", Icons.Rounded.Bookmark, Modifier.weight(1f), onOpenBookmarks)
                 QuickAction("History", Icons.Rounded.History, Modifier.weight(1f), onOpenHistory)
                 QuickAction("Extensions", Icons.Rounded.Extension, Modifier.weight(1f), onOpenExtensions)
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                QuickAction("Downloads", Icons.Rounded.Download, Modifier.weight(1f), onOpenDownloads)
                 QuickAction("Private", Icons.Rounded.PrivacyTip, Modifier.weight(1f), onOpenPrivate)
                 QuickAction("Settings", Icons.Rounded.Settings, Modifier.weight(1f), onOpenSettings)
             }

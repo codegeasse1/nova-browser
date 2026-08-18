@@ -4,7 +4,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -41,14 +40,13 @@ import androidx.compose.ui.unit.dp
 import com.nova.browser.browser.BrowserCore
 import com.nova.browser.ext.ExtensionManager
 import com.nova.browser.ext.ExtensionUi
-import com.nova.browser.store.Store
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ExtensionsScreen(onBack: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) ExtensionManager.installFromFile(context, uri)
+        if (uri != null) ExtensionManager.installFromUri(context, uri)
     }
 
     Column(
@@ -70,11 +68,12 @@ fun ExtensionsScreen(onBack: () -> Unit) {
             item {
                 Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        "Nova runs real Firefox/WebExtensions (MV2 & MV3).\n\n" +
-                            "• Browse to addons.mozilla.org and tap \"Add to Firefox\" to install.\n" +
-                            "• Or install a .zip / .crx / .xpi file with \"Install from file\".\n" +
-                            "• Chrome Web Store blocks direct downloads on other browsers, but most popular " +
-                            "extensions are on AMO or downloadable as .zip packages.",
+                        "Nova runs on Android's Chromium engine (the same Blink + V8 engine as Chrome).\n\n" +
+                            "• Content-script extensions install from .crx / .xpi / .zip packages.\n" +
+                            "• Chrome Web Store has no install flow on Android at all — even Chrome for Android can't \"Add to Chrome\".\n" +
+                            "• The add-ons store here installs by download: tap \"Add to Firefox\" on a page there and Nova auto-installs the package.\n" +
+                            "• Or grab any extension's .crx/.zip from its GitHub releases or sites like crxextractor.com and \"Install file\".\n\n" +
+                            "Extensions that need background pages or browser APIs won't run — content-script-only extensions work fully.",
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(16.dp),
                     )
@@ -83,7 +82,10 @@ fun ExtensionsScreen(onBack: () -> Unit) {
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Button(
-                        onClick = { BrowserCore.newTab("https://addons.mozilla.org/android/") },
+                        onClick = {
+                            BrowserCore.navigate("https://addons.mozilla.org/android/")
+                            onBack()
+                        },
                         modifier = Modifier.weight(1f),
                     ) {
                         Icon(Icons.Rounded.Public, null)

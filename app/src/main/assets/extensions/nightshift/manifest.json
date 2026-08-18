@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Night Shift",
+  "version": "1.0.0",
+  "description": "Dark mode for every website. Inverts page colors while keeping images and video natural.",
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Block Images",
+  "version": "1.0.0",
+  "description": "Hides all images and videos on every site for fast, data-light browsing.",
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "css": [
+        "content.css"
+      ]
+    }
+  ]
+}

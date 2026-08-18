@@ -33,7 +33,7 @@ object Store {
     fun addHistory(title: String, url: String) {
         val list = history().filter { it.second != url }.toMutableList()
         list.add(0, Triple(title.ifBlank { url }, url, System.currentTimeMillis()))
-        if (list.size > 200) list.subList(200, list.size).clear()
+        if (list.size > 300) list.subList(300, list.size).clear()
         saveTriples(KEY_HISTORY, list)
     }
 
@@ -69,8 +69,7 @@ object Store {
     }
 
     private const val KEY_ADBLOCK = "adblock_level"
-    private const val KEY_DOH = "doh_mode"
-    private const val KEY_DOH_PROVIDER = "doh_provider"
+    private const val KEY_SAFE_BROWSING = "safe_browsing"
     private const val KEY_SEARCH = "search_engine"
     private const val KEY_THEME = "theme"
 
@@ -78,14 +77,9 @@ object Store {
         get() = prefs.getString(KEY_ADBLOCK, "standard") ?: "standard"
         set(v) = prefs.edit().putString(KEY_ADBLOCK, v).apply()
 
-    var dohMode: String
-        get() = prefs.getString(KEY_DOH, "first") ?: "first"
-        set(v) = prefs.edit().putString(KEY_DOH, v).apply()
-
-    var dohProvider: String
-        get() = prefs.getString(KEY_DOH_PROVIDER, "https://mozilla.cloudflare-dns.com/dns-query")
-            ?: "https://mozilla.cloudflare-dns.com/dns-query"
-        set(v) = prefs.edit().putString(KEY_DOH_PROVIDER, v).apply()
+    var safeBrowsing: Boolean
+        get() = prefs.getBoolean(KEY_SAFE_BROWSING, true)
+        set(v) = prefs.edit().putBoolean(KEY_SAFE_BROWSING, v).apply()
 
     var searchEngine: String
         get() = prefs.getString(KEY_SEARCH, "google") ?: "google"
@@ -98,6 +92,34 @@ object Store {
     fun clearAllData() {
         prefs.edit().remove(KEY_BOOKMARKS).remove(KEY_HISTORY).remove(KEY_DIALS).apply()
     }
+
+    private const val KEY_EXT_DISABLED = "ext_disabled"
+
+    fun disabledExtensions(): Set<String> = prefs.getStringSet(KEY_EXT_DISABLED, emptySet()) ?: emptySet()
+
+    fun setExtensionEnabled(id: String, enabled: Boolean) {
+        val cur = disabledExtensions().toMutableSet()
+        if (enabled) cur.remove(id) else cur.add(id)
+        prefs.edit().putStringSet(KEY_EXT_DISABLED, cur).apply()
+    }
+
+    private const val KEY_DOWNLOADS = "downloads"
+
+    fun loadObjects(key: String): List<JSONObject> {
+        val raw = prefs.getString(key, null) ?: return emptyList()
+        return runCatching {
+            val arr = JSONArray(raw)
+            (0 until arr.length()).map { arr.getJSONObject(it) }
+        }.getOrDefault(emptyList())
+    }
+
+    fun saveObjects(key: String, list: List<JSONObject>) {
+        val arr = JSONArray()
+        list.forEach { arr.put(it) }
+        prefs.edit().putString(key, arr.toString()).apply()
+    }
+
+    const val KEY_DOWNLOADS_LIST = KEY_DOWNLOADS
 
     private fun loadPairs(key: String): List<Pair<String, String>> {
         val raw = prefs.getString(key, null) ?: return emptyList()

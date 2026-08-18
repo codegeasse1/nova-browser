@@ -1,5 +1,6 @@
 package com.nova.browser
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,6 +15,12 @@ class MainActivity : ComponentActivity() {
             App.finishAndroidPermissionRequest(result.values.all { it })
         }
 
+    private val filePicker =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            App.filePathCallback?.onReceiveValue(if (uri != null) arrayOf(uri) else null)
+            App.filePathCallback = null
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         App.activity = this
@@ -24,6 +31,10 @@ class MainActivity : ComponentActivity() {
 
     fun launchPermissionRequest(permissions: Array<String>) {
         permissionLauncher.launch(permissions)
+    }
+
+    fun openFileChooser() {
+        runCatching { filePicker.launch(arrayOf("*/*")) }
     }
 
     override fun onDestroy() {
