@@ -511,7 +511,7 @@ private fun RowScope.AddressBar(
                 Box(
                     Modifier
                         .then(if (onPage) Modifier.clickable(onClick = onShieldClick) else Modifier)
-                        .padding(end = 8.dp)
+                        .padding(end = 6.dp)
                         .size(20.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -520,6 +520,15 @@ private fun RowScope.AddressBar(
                         tab.secure -> Icon(Icons.Rounded.Lock, "Secure — tap for site settings", Modifier.size(16.dp), tint = secTint)
                         else -> Icon(Icons.Rounded.Shield, "Not secure — tap for site settings", Modifier.size(16.dp), tint = secTint)
                     }
+                }
+                if (onPage && (tab?.blocked ?: 0) > 0) {
+                    Text(
+                        "${tab!!.blocked}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(end = 4.dp),
+                    )
                 }
                 Text(
                     text = when {
@@ -673,6 +682,17 @@ private fun ShieldPanel(tab: TabState?) {
             Switch(
                 checked = tab?.shield == true,
                 onCheckedChange = { BrowserCore.toggleShield() },
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column {
+                Text("Desktop site", style = MaterialTheme.typography.bodyLarge)
+                Text("Loads the desktop version of pages", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Switch(
+                checked = tab?.desktopSite == true,
+                onCheckedChange = { BrowserCore.toggleDesktopSite() },
             )
         }
         Spacer(Modifier.height(12.dp))

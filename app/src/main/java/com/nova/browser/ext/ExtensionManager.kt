@@ -176,7 +176,7 @@ object ExtensionManager {
         }
     }
 
-    fun installFromUrl(context: Context, url: String) {
+    fun installFromUrl(context: Context, url: String, onDone: (Boolean) -> Unit = {}) {
         if (busy) return
         busy = true
         message = null
@@ -184,19 +184,38 @@ object ExtensionManager {
             try {
                 val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
                 conn.instanceFollowRedirects = true
-                conn.connectTimeout = 15000
-                conn.readTimeout = 30000
+                conn.connectTimeout = 20000
+                conn.readTimeout = 40000
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36")
+                conn.setRequestProperty("Accept", "*/*")
                 val code = conn.responseCode
+                if (code == 404) throw Exception("extension not found (check the store link or ID)")
                 if (code !in 200..299) throw Exception("HTTP $code")
                 val bytes = conn.inputStream.use { it.readBytes() }
-                installBytes(context, bytes) { ok ->
-                    if (!ok) message = "Could not install extension"
-                }
+                installBytes(context, bytes, onDone)
             } catch (e: Exception) {
                 busy = false
                 message = "Could not fetch extension: ${e.message}"
+                onDone(false)
             }
         }
+    }
+
+    fun chromeStoreIdFrom(input: String): String? {
+        val t = input.trim()
+        if (t.isBlank()) return null
+        return Regex("[a-p]{32}").find(t)?.value
+    }
+
+    fun installFromChromeStore(context: Context, input: String, onDone: (Boolean) -> Unit = {}) {
+        val id = chromeStoreIdFrom(input)
+        if (id == null) {
+            message = "No Chrome extension ID found — paste a store link (chromewebstore.google.com/detail/...) or the 32-character ID."
+            onDone(false)
+            return
+        }
+        val url = "https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx2,crx3&prodversion=136.0.0.0&x=id%3D$id%26uc"
+        installFromUrl(context, url, onDone)
     }
 
     private fun installBytes(context: Context, bytes: ByteArray, onDone: (Boolean) -> Unit) {

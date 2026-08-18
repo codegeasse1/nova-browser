@@ -1,5 +1,7 @@
 package com.nova.browser.ui
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Lock
@@ -37,6 +40,7 @@ import com.nova.browser.store.Store
 fun SettingsScreen(onBack: () -> Unit, onOpenExtensions: () -> Unit, onOpenDownloads: () -> Unit) {
     var note by remember { mutableStateOf<String?>(null) }
     var safeBrowsing by remember { mutableStateOf(Store.safeBrowsing) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Column(
         Modifier
@@ -55,7 +59,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenExtensions: () -> Unit, onOpenDownl
             item {
                 SettingBlock(
                     title = "Ad & tracker blocking",
-                    subtitle = "Blocks ads, trackers, analytics, social widgets, cryptominers and fingerprinters using the EasyList, EasyPrivacy and annoyance lists.",
+                    subtitle = "Blocks ads, trackers, analytics, social widgets, cryptominers and fingerprinters using the EasyList, EasyPrivacy and annoyance lists. Enabled by default — the number in the address bar is what it blocked on the current page.",
                 ) {
                     RadioRow(
                         options = listOf("Off", "Standard", "Strict"),
@@ -128,6 +132,19 @@ fun SettingsScreen(onBack: () -> Unit, onOpenExtensions: () -> Unit, onOpenDownl
             }
 
             item {
+                SettingBlock(
+                    title = "Secure DNS",
+                    subtitle = "Android's network stack doesn't let apps override DNS per-app, so Nova uses the OS-level Private DNS (DNS-over-TLS) when enabled. One tap opens the system settings.",
+                ) {
+                    ButtonRow("Open Private DNS settings", Icons.Rounded.Dns) {
+                        runCatching {
+                            context.startActivity(Intent(Settings.ACTION_PRIVATE_DNS_SETTINGS))
+                        }
+                    }
+                }
+            }
+
+            item {
                 ButtonRow("Extensions", Icons.Rounded.Extension, onOpenExtensions)
             }
 
@@ -142,9 +159,9 @@ fun SettingsScreen(onBack: () -> Unit, onOpenExtensions: () -> Unit, onOpenDownl
 
             item {
                 Text(
-                    "Nova Browser 2.0\n\n" +
+                    "Nova Browser 2.2\n\n" +
                         "Engine: Android System WebView — the Chromium (Blink + V8) engine that also powers Chrome on Android.\n" +
-                        "Ad blocking · Safe browsing · Content-script extensions · Private mode · Downloads · Desktop mode",
+                        "Ad blocking (EasyList) · Safe browsing · Chrome Web Store extension installs · Private mode · Downloads · Desktop mode · Secure DNS (system)",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,

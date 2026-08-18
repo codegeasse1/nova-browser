@@ -23,16 +23,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Public
+import androidx.compose.material.icons.rounded.Storefront
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +54,7 @@ fun ExtensionsScreen(onBack: () -> Unit) {
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) ExtensionManager.installFromUri(context, uri)
     }
+    var storeInput by remember { mutableStateOf("") }
 
     Column(
         Modifier
@@ -69,28 +76,64 @@ fun ExtensionsScreen(onBack: () -> Unit) {
                 Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         "Nova runs on Android's Chromium engine (the same Blink + V8 engine as Chrome).\n\n" +
-                            "• Content-script extensions install from .crx / .xpi / .zip packages.\n" +
-                            "• Chrome Web Store has no install flow on Android at all — even Chrome for Android can't \"Add to Chrome\".\n" +
-                            "• The add-ons store here installs by download: tap \"Add to Firefox\" on a page there and Nova auto-installs the package.\n" +
-                            "• Or grab any extension's .crx/.zip from its GitHub releases or sites like crxextractor.com and \"Install file\".\n\n" +
-                            "Extensions that need background pages or browser APIs won't run — content-script-only extensions work fully.",
+                            "• Chrome Web Store installs work for content-script extensions — paste any store link or extension ID below.\n" +
+                            "• Background-page extensions (password managers, real uBlock, popups) can't run on WebView — only a full Chromium fork like Kiwi can, which needs a desktop-class build farm.\n" +
+                            "• Firefox/AMO add-ons download and auto-install as .xpi packages too.\n" +
+                            "• Content scripts (dark mode, readability, text tools, some blockers) work fully on every site.",
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(16.dp),
                     )
                 }
             }
             item {
+                Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerHigh, modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Install from Chrome Web Store", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = storeInput,
+                            onValueChange = { storeInput = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text("Paste store link or 32-char extension ID") },
+                            singleLine = true,
+                            leadingIcon = { Icon(Icons.Rounded.Storefront, null) },
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Button(
+                            onClick = {
+                                val input = storeInput
+                                if (input.isNotBlank()) {
+                                    ExtensionManager.installFromChromeStore(context, input)
+                                    storeInput = ""
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(Icons.Rounded.Storefront, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Install")
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "Tip: open any extension page on chromewebstore.google.com in Nova, copy its link, and paste it here.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Button(
                         onClick = {
-                            BrowserCore.navigate("https://addons.mozilla.org/android/")
+                            BrowserCore.navigate("https://chromewebstore.google.com/")
                             onBack()
                         },
                         modifier = Modifier.weight(1f),
                     ) {
                         Icon(Icons.Rounded.Public, null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Get add-ons")
+                        Text("Web Store")
                     }
                     OutlinedButton(
                         onClick = { picker.launch(arrayOf("application/zip", "application/x-xpinstall", "application/x-chrome-extension", "application/octet-stream", "*/*")) },
@@ -104,7 +147,7 @@ fun ExtensionsScreen(onBack: () -> Unit) {
             }
             if (ExtensionManager.extensions.isEmpty()) {
                 item {
-                    EmptyState("No extensions installed", "Install one from the add-on store or from a file.")
+                    EmptyState("No extensions installed", "Install one from the Chrome Web Store, the add-on store, or a file.")
                 }
             } else {
                 items(ExtensionManager.extensions, key = { it.id }) { ext ->
