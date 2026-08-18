@@ -1,1 +1,79 @@
-cGFja2FnZSBjb20ubm92YS5icm93c2VyLnVpCgppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLmlzU3lzdGVtSW5EYXJrVGhlbWUKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UubWF0ZXJpYWwzLk1hdGVyaWFsVGhlbWUKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UubWF0ZXJpYWwzLmRhcmtDb2xvclNjaGVtZQppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5tYXRlcmlhbDMubGlnaHRDb2xvclNjaGVtZQppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5ydW50aW1lLkNvbXBvc2FibGUKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UudWkuZ3JhcGhpY3MuQ29sb3IKCnZhbCBOb3ZhUHVycGxlID0gQ29sb3IoMHhGRjhCNUNGNikKdmFsIE5vdmFJbmRpZ28gPSBDb2xvcigweEZGNjM2NkYxKQp2YWwgTm92YUN5YW4gPSBDb2xvcigweEZGMjJEM0VFKQp2YWwgTm92YVBpbmsgPSBDb2xvcigweEZGRUM0ODk5KQoKcHJpdmF0ZSB2YWwgRGFya0NvbG9ycyA9IGRhcmtDb2xvclNjaGVtZSgKICAgIHByaW1hcnkgPSBOb3ZhUHVycGxlLAogICAgb25QcmltYXJ5ID0gQ29sb3IuV2hpdGUsCiAgICBwcmltYXJ5Q29udGFpbmVyID0gQ29sb3IoMHhGRjNCMkQ2MyksCiAgICBvblByaW1hcnlDb250YWluZXIgPSBDb2xvcigweEZGRTlFMEZGKSwKICAgIHNlY29uZGFyeSA9IE5vdmFJbmRpZ28sCiAgICBvblNlY29uZGFyeSA9IENvbG9yLldoaXRlLAogICAgc2Vjb25kYXJ5Q29udGFpbmVyID0gQ29sb3IoMHhGRjJGMzQ2MCksCiAgICBvblNlY29uZGFyeUNvbnRhaW5lciA9IENvbG9yKDB4RkZERUUwRkYpLAogICAgdGVydGlhcnkgPSBOb3ZhQ3lhbiwKICAgIGJhY2tncm91bmQgPSBDb2xvcigweEZGMEUwRDE2KSwKICAgIG9uQmFja2dyb3VuZCA9IENvbG9yKDB4RkZFOUU5RjIpLAogICAgc3VyZmFjZSA9IENvbG9yKDB4RkYxNTE0MUYpLAogICAgb25TdXJmYWNlID0gQ29sb3IoMHhGRkU5RTlGMiksCiAgICBzdXJmYWNlVmFyaWFudCA9IENvbG9yKDB4RkYyMzIyMkYpLAogICAgb25TdXJmYWNlVmFyaWFudCA9IENvbG9yKDB4RkZDOUM4RDYpLAogICAgb3V0bGluZSA9IENvbG9yKDB4RkY4QTg4OTkpLAopCgpwcml2YXRlIHZhbCBMaWdodENvbG9ycyA9IGxpZ2h0Q29sb3JTY2hlbWUoCiAgICBwcmltYXJ5ID0gTm92YVB1cnBsZSwKICAgIG9uUHJpbWFyeSA9IENvbG9yLldoaXRlLAogICAgcHJpbWFyeUNvbnRhaW5lciA9IENvbG9yKDB4RkZFQURGRkYpLAogICAgb25QcmltYXJ5Q29udGFpbmVyID0gQ29sb3IoMHhGRjJDMUI0RiksCiAgICBzZWNvbmRhcnkgPSBOb3ZhSW5kaWdvLAogICAgc2Vjb25kYXJ5Q29udGFpbmVyID0gQ29sb3IoMHhGRkUwRTNGRiksCiAgICBvblNlY29uZGFyeUNvbnRhaW5lciA9IENvbG9yKDB4RkYxQTFGNEYpLAogICAgdGVydGlhcnkgPSBDb2xvcigweEZGMEU3NDkwKSwKICAgIGJhY2tncm91bmQgPSBDb2xvcigweEZGRjdGNkZDKSwKICAgIG9uQmFja2dyb3VuZCA9IENvbG9yKDB4RkYxQjFBMjIpLAogICAgc3VyZmFjZSA9IENvbG9yKDB4RkZGRkZGRkYpLAogICAgb25TdXJmYWNlID0gQ29sb3IoMHhGRjFCMUEyMiksCiAgICBzdXJmYWNlVmFyaWFudCA9IENvbG9yKDB4RkZFQkVBRjMpLAogICAgb25TdXJmYWNlVmFyaWFudCA9IENvbG9yKDB4RkY0RTRENUEpLAogICAgb3V0bGluZSA9IENvbG9yKDB4RkY3Njc0N0YpLAopCgpwcml2YXRlIHZhbCBJbmNvZ25pdG9Db2xvcnMgPSBkYXJrQ29sb3JTY2hlbWUoCiAgICBwcmltYXJ5ID0gQ29sb3IoMHhGRjlEOENGRiksCiAgICBvblByaW1hcnkgPSBDb2xvci5XaGl0ZSwKICAgIHByaW1hcnlDb250YWluZXIgPSBDb2xvcigweEZGM0EyRTVDKSwKICAgIG9uUHJpbWFyeUNvbnRhaW5lciA9IENvbG9yKDB4RkZFOEUwRkYpLAogICAgc2Vjb25kYXJ5ID0gQ29sb3IoMHhGRkIzOURGRiksCiAgICBiYWNrZ3JvdW5kID0gQ29sb3IoMHhGRjEyMEYxRCksCiAgICBvbkJhY2tncm91bmQgPSBDb2xvcigweEZGRjBFREZBKSwKICAgIHN1cmZhY2UgPSBDb2xvcigweEZGMUExNTI2KSwKICAgIG9uU3VyZmFjZSA9IENvbG9yKDB4RkZGMEVERkEpLAogICAgc3VyZmFjZVZhcmlhbnQgPSBDb2xvcigweEZGMkEyMzM3KSwKICAgIG9uU3VyZmFjZVZhcmlhbnQgPSBDb2xvcigweEZGQ0JDNEQ5KSwKICAgIG91dGxpbmUgPSBDb2xvcigweEZGOTY4RUFBKSwKKQoKQENvbXBvc2FibGUKZnVuIE5vdmFUaGVtZSgKICAgIGluY29nbml0bzogQm9vbGVhbiA9IGZhbHNlLAogICAgZGFya1RoZW1lOiBCb29sZWFuID0gaXNTeXN0ZW1JbkRhcmtUaGVtZSgpLAogICAgY29udGVudDogQENvbXBvc2FibGUgKCkgLT4gVW5pdCwKKSB7CiAgICB2YWwgY29sb3JzID0gd2hlbiB7CiAgICAgICAgaW5jb2duaXRvIC0+IEluY29nbml0b0NvbG9ycwogICAgICAgIGRhcmtUaGVtZSAtPiBEYXJrQ29sb3JzCiAgICAgICAgZWxzZSAtPiBMaWdodENvbG9ycwogICAgfQogICAgTWF0ZXJpYWxUaGVtZShjb2xvclNjaGVtZSA9IGNvbG9ycywgY29udGVudCA9IGNvbnRlbnQpCn0K
+package com.nova.browser.ui
+
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+
+val NovaPurple = Color(0xFF8B5CF6)
+val NovaIndigo = Color(0xFF6366F1)
+val NovaCyan = Color(0xFF22D3EE)
+val NovaPink = Color(0xFFEC4899)
+
+private val DarkColors = darkColorScheme(
+    primary = NovaPurple,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFF3B2D63),
+    onPrimaryContainer = Color(0xFFE9E0FF),
+    secondary = NovaIndigo,
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFF2F3460),
+    onSecondaryContainer = Color(0xFFDEE0FF),
+    tertiary = NovaCyan,
+    background = Color(0xFF0E0D16),
+    onBackground = Color(0xFFE9E9F2),
+    surface = Color(0xFF15141F),
+    onSurface = Color(0xFFE9E9F2),
+    surfaceVariant = Color(0xFF23222F),
+    onSurfaceVariant = Color(0xFFC9C8D6),
+    outline = Color(0xFF8A8899),
+)
+
+private val LightColors = lightColorScheme(
+    primary = NovaPurple,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFEADFFF),
+    onPrimaryContainer = Color(0xFF2C1B4F),
+    secondary = NovaIndigo,
+    secondaryContainer = Color(0xFFE0E3FF),
+    onSecondaryContainer = Color(0xFF1A1F4F),
+    tertiary = Color(0xFF0E7490),
+    background = Color(0xFFF7F6FC),
+    onBackground = Color(0xFF1B1A22),
+    surface = Color(0xFFFFFFFF),
+    onSurface = Color(0xFF1B1A22),
+    surfaceVariant = Color(0xFFEBEAF3),
+    onSurfaceVariant = Color(0xFF4E4D5A),
+    outline = Color(0xFF76747F),
+)
+
+private val IncognitoColors = darkColorScheme(
+    primary = Color(0xFF9D8CFF),
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFF3A2E5C),
+    onPrimaryContainer = Color(0xFFE8E0FF),
+    secondary = Color(0xFFB39DFF),
+    background = Color(0xFF120F1D),
+    onBackground = Color(0xFFF0EDFA),
+    surface = Color(0xFF1A1526),
+    onSurface = Color(0xFFF0EDFA),
+    surfaceVariant = Color(0xFF2A2337),
+    onSurfaceVariant = Color(0xFFCBC4D9),
+    outline = Color(0xFF968EAA),
+)
+
+@Composable
+fun NovaTheme(
+    incognito: Boolean = false,
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit,
+) {
+    val colors = when {
+        incognito -> IncognitoColors
+        darkTheme -> DarkColors
+        else -> LightColors
+    }
+    MaterialTheme(colorScheme = colors, content = content)
+}

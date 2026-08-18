@@ -1,1 +1,18 @@
-ewogICJtYW5pZmVzdF92ZXJzaW9uIjogMiwKICAibmFtZSI6ICJCbG9jayBJbWFnZXMiLAogICJ2ZXJzaW9uIjogIjEuMC4wIiwKICAiZGVzY3JpcHRpb24iOiAiSGlkZXMgYWxsIGltYWdlcyBhbmQgdmlkZW9zIG9uIGV2ZXJ5IHNpdGUgZm9yIGZhc3QsIGRhdGEtbGlnaHQgYnJvd3NpbmcuIiwKICAicGVybWlzc2lvbnMiOiBbIjxhbGxfdXJscz4iXSwKICAiY29udGVudF9zY3JpcHRzIjogWwogICAgewogICAgICAibWF0Y2hlcyI6IFsiPGFsbF91cmxzPiJdLAogICAgICAiY3NzIjogWyJjb250ZW50LmNzcyJdCiAgICB9CiAgXSwKICAiYnJvd3Nlcl9zcGVjaWZpY19zZXR0aW5ncyI6IHsKICAgICJnZWNrbyI6IHsKICAgICAgImlkIjogImltYWdlYmxvY2tlckBub3ZhLmJyb3dzZXIiCiAgICB9CiAgfQp9Cg==
+{
+  "manifest_version": 2,
+  "name": "Block Images",
+  "version": "1.0.0",
+  "description": "Hides all images and videos on every site for fast, data-light browsing.",
+  "permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["content.css"]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "imageblocker@nova.browser"
+    }
+  }
+}

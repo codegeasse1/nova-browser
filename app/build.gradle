@@ -1,1 +1,51 @@
-cGx1Z2lucyB7CiAgICBpZCAnY29tLmFuZHJvaWQuYXBwbGljYXRpb24nCiAgICBpZCAnb3JnLmpldGJyYWlucy5rb3RsaW4ucGx1Z2luLmNvbXBvc2UnCn0KCmFuZHJvaWQgewogICAgbmFtZXNwYWNlICdjb20ubm92YS5icm93c2VyJwogICAgY29tcGlsZVNkayAzNQoKICAgIGRlZmF1bHRDb25maWcgewogICAgICAgIGFwcGxpY2F0aW9uSWQgImNvbS5ub3ZhLmJyb3dzZXIiCiAgICAgICAgbWluU2RrIDI2CiAgICAgICAgdGFyZ2V0U2RrIDM1CiAgICAgICAgdmVyc2lvbkNvZGUgOAogICAgICAgIHZlcnNpb25OYW1lICIzLjAiCiAgICAgICAgbXVsdGlEZXhFbmFibGVkIHRydWUKICAgIH0KCiAgICBidWlsZFR5cGVzIHsKICAgICAgICByZWxlYXNlIHsKICAgICAgICAgICAgbWluaWZ5RW5hYmxlZCBmYWxzZQogICAgICAgICAgICBwcm9ndWFyZEZpbGVzIGdldERlZmF1bHRQcm9ndWFyZEZpbGUoJ3Byb2d1YXJkLWFuZHJvaWQtb3B0aW1pemUudHh0JyksICdwcm9ndWFyZC1ydWxlcy5wcm8nCiAgICAgICAgfQogICAgfQoKICAgIGNvbXBpbGVPcHRpb25zIHsKICAgICAgICBzb3VyY2VDb21wYXRpYmlsaXR5IEphdmFWZXJzaW9uLlZFUlNJT05fMTcKICAgICAgICB0YXJnZXRDb21wYXRpYmlsaXR5IEphdmFWZXJzaW9uLlZFUlNJT05fMTcKICAgIH0KICAgIGJ1aWxkRmVhdHVyZXMgewogICAgICAgIGNvbXBvc2UgdHJ1ZQogICAgfQogICAgcGFja2FnaW5nT3B0aW9ucyB7CiAgICAgICAgam5pTGlicyB7CiAgICAgICAgICAgIGtlZXBEZWJ1Z1N5bWJvbHMgKz0gWycqKi8qLnNvJ10KICAgICAgICB9CiAgICB9Cn0KCmRlcGVuZGVuY2llcyB7CiAgICBpbXBsZW1lbnRhdGlvbiBwbGF0Zm9ybSgnYW5kcm9pZHguY29tcG9zZTpjb21wb3NlLWJvbToyMDI1LjA2LjAxJykKICAgIGltcGxlbWVudGF0aW9uICdhbmRyb2lkeC5jb21wb3NlLnVpOnVpJwogICAgaW1wbGVtZW50YXRpb24gJ2FuZHJvaWR4LmNvbXBvc2UudWk6dWktZ3JhcGhpY3MnCiAgICBpbXBsZW1lbnRhdGlvbiAnYW5kcm9pZHguY29tcG9zZS5tYXRlcmlhbDM6bWF0ZXJpYWwzJwogICAgaW1wbGVtZW50YXRpb24gJ2FuZHJvaWR4LmNvbXBvc2UubWF0ZXJpYWw6bWF0ZXJpYWwtaWNvbnMtZXh0ZW5kZWQ6MS43LjgnCiAgICBpbXBsZW1lbnRhdGlvbiAnYW5kcm9pZHguYWN0aXZpdHk6YWN0aXZpdHktY29tcG9zZToxLjkuMCcKICAgIGltcGxlbWVudGF0aW9uICdhbmRyb2lkeC5jb3JlOmNvcmUta3R4OjEuMTMuMScKICAgIGltcGxlbWVudGF0aW9uICdhbmRyb2lkeC5saWZlY3ljbGU6bGlmZWN5Y2xlLXJ1bnRpbWUta3R4OjIuOC4yJwogICAgaW1wbGVtZW50YXRpb24gJ29yZy5qZXRicmFpbnMua290bGlueDprb3RsaW54LWNvcm91dGluZXMtYW5kcm9pZDoxLjguMScKICAgIGltcGxlbWVudGF0aW9uICdvcmcubW96aWxsYS5nZWNrb3ZpZXc6Z2Vja292aWV3OjE1NC4wLjIwMjYwODE0MjE1NzU2Jwp9Cg==
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+
+android {
+    namespace 'com.nova.browser'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.nova.browser"
+        minSdk 26
+        targetSdk 35
+        versionCode 8
+        versionName "3.0"
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    buildFeatures {
+        compose true
+    }
+    packagingOptions {
+        jniLibs {
+            keepDebugSymbols += ['**/*.so']
+        }
+    }
+}
+
+dependencies {
+    implementation platform('androidx.compose:compose-bom:2025.06.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-graphics'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended:1.7.8'
+    implementation 'androidx.activity:activity-compose:1.9.0'
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+    implementation 'org.mozilla.geckoview:geckoview:154.0.20260814215756'
+}

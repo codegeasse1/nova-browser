@@ -1,1 +1,157 @@
-cGFja2FnZSBjb20ubm92YS5icm93c2VyLnN0b3JlCgppbXBvcnQgYW5kcm9pZC5jb250ZW50LkNvbnRleHQKaW1wb3J0IGFuZHJvaWQuY29udGVudC5TaGFyZWRQcmVmZXJlbmNlcwppbXBvcnQgb3JnLmpzb24uSlNPTkFycmF5CmltcG9ydCBvcmcuanNvbi5KU09OT2JqZWN0CgpvYmplY3QgU3RvcmUgewogICAgcHJpdmF0ZSBsYXRlaW5pdCB2YXIgcHJlZnM6IFNoYXJlZFByZWZlcmVuY2VzCgogICAgZnVuIGluaXQoY29udGV4dDogQ29udGV4dCkgewogICAgICAgIHByZWZzID0gY29udGV4dC5hcHBsaWNhdGlvbkNvbnRleHQuZ2V0U2hhcmVkUHJlZmVyZW5jZXMoIm5vdmFfcHJlZnMiLCBDb250ZXh0Lk1PREVfUFJJVkFURSkKICAgIH0KCiAgICBwcml2YXRlIGNvbnN0IHZhbCBLRVlfQk9PS01BUktTID0gImJvb2ttYXJrcyIKCiAgICBmdW4gYWRkQm9va21hcmsodGl0bGU6IFN0cmluZywgdXJsOiBTdHJpbmcpIHsKICAgICAgICB2YWwgbGlzdCA9IGJvb2ttYXJrcygpLmZpbHRlciB7IGl0LnNlY29uZCAhPSB1cmwgfS50b011dGFibGVMaXN0KCkKICAgICAgICBsaXN0LmFkZCgwLCB0aXRsZSB0byB1cmwpCiAgICAgICAgc2F2ZVBhaXJzKEtFWV9CT09LTUFSS1MsIGxpc3QpCiAgICB9CgogICAgZnVuIHJlbW92ZUJvb2ttYXJrKHVybDogU3RyaW5nKSB7CiAgICAgICAgc2F2ZVBhaXJzKEtFWV9CT09LTUFSS1MsIGJvb2ttYXJrcygpLmZpbHRlciB7IGl0LnNlY29uZCAhPSB1cmwgfSkKICAgIH0KCiAgICBmdW4gaXNCb29rbWFya2VkKHVybDogU3RyaW5nKTogQm9vbGVhbiA9IGJvb2ttYXJrcygpLmFueSB7IGl0LnNlY29uZCA9PSB1cmwgfQoKICAgIGZ1biBib29rbWFya3MoKTogTGlzdDxQYWlyPFN0cmluZywgU3RyaW5nPj4gPSBsb2FkUGFpcnMoS0VZX0JPT0tNQVJLUykKCiAgICBwcml2YXRlIGNvbnN0IHZhbCBLRVlfSElTVE9SWSA9ICJoaXN0b3J5IgoKICAgIGZ1biBhZGRIaXN0b3J5KHRpdGxlOiBTdHJpbmcsIHVybDogU3RyaW5nKSB7CiAgICAgICAgdmFsIGxpc3QgPSBoaXN0b3J5KCkuZmlsdGVyIHsgaXQuc2Vjb25kICE9IHVybCB9LnRvTXV0YWJsZUxpc3QoKQogICAgICAgIGxpc3QuYWRkKDAsIFRyaXBsZSh0aXRsZS5pZkJsYW5rIHsgdXJsIH0sIHVybCwgU3lzdGVtLmN1cnJlbnRUaW1lTWlsbGlzKCkpKQogICAgICAgIGlmIChsaXN0LnNpemUgPiAzMDApIGxpc3Quc3ViTGlzdCgzMDAsIGxpc3Quc2l6ZSkuY2xlYXIoKQogICAgICAgIHNhdmVUcmlwbGVzKEtFWV9ISVNUT1JZLCBsaXN0KQogICAgfQoKICAgIGZ1biBoaXN0b3J5KCk6IExpc3Q8VHJpcGxlPFN0cmluZywgU3RyaW5nLCBMb25nPj4gPSBsb2FkVHJpcGxlcyhLRVlfSElTVE9SWSkKCiAgICBmdW4gY2xlYXJIaXN0b3J5KCkgPSBwcmVmcy5lZGl0KCkucmVtb3ZlKEtFWV9ISVNUT1JZKS5hcHBseSgpCgogICAgcHJpdmF0ZSBjb25zdCB2YWwgS0VZX0RJQUxTID0gInNwZWVkX2RpYWxzIgoKICAgIGZ1biBzcGVlZERpYWxzKCk6IExpc3Q8UGFpcjxTdHJpbmcsIFN0cmluZz4+IHsKICAgICAgICB2YWwgZCA9IGxvYWRQYWlycyhLRVlfRElBTFMpCiAgICAgICAgaWYgKGQuaXNFbXB0eSgpKSB7CiAgICAgICAgICAgIHJldHVybiBsaXN0T2YoCiAgICAgICAgICAgICAgICAiWW91VHViZSIgdG8gImh0dHBzOi8veW91dHViZS5jb20iLAogICAgICAgICAgICAgICAgIkdvb2dsZSIgdG8gImh0dHBzOi8vZ29vZ2xlLmNvbSIsCiAgICAgICAgICAgICAgICAiV2lraXBlZGlhIiB0byAiaHR0cHM6Ly9lbi53aWtpcGVkaWEub3JnIiwKICAgICAgICAgICAgICAgICJYIiB0byAiaHR0cHM6Ly94LmNvbSIsCiAgICAgICAgICAgICAgICAiR2l0SHViIiB0byAiaHR0cHM6Ly9naXRodWIuY29tIiwKICAgICAgICAgICAgICAgICJQZXJjaGFuY2UiIHRvICJodHRwczovL3BlcmNoYW5jZS5vcmciLAogICAgICAgICAgICApCiAgICAgICAgfQogICAgICAgIHJldHVybiBkCiAgICB9CgogICAgZnVuIGFkZFNwZWVkRGlhbCh0aXRsZTogU3RyaW5nLCB1cmw6IFN0cmluZykgewogICAgICAgIHZhbCBsaXN0ID0gc3BlZWREaWFscygpLmZpbHRlciB7IGl0LnNlY29uZCAhPSB1cmwgfS50b011dGFibGVMaXN0KCkKICAgICAgICBsaXN0LmFkZCgwLCB0aXRsZSB0byB1cmwpCiAgICAgICAgc2F2ZVBhaXJzKEtFWV9ESUFMUywgbGlzdCkKICAgIH0KCiAgICBmdW4gcmVtb3ZlU3BlZWREaWFsKHVybDogU3RyaW5nKSB7CiAgICAgICAgc2F2ZVBhaXJzKEtFWV9ESUFMUywgc3BlZWREaWFscygpLmZpbHRlciB7IGl0LnNlY29uZCAhPSB1cmwgfSkKICAgIH0KCiAgICBwcml2YXRlIGNvbnN0IHZhbCBLRVlfQURCTE9DSyA9ICJhZGJsb2NrX2xldmVsIgogICAgcHJpdmF0ZSBjb25zdCB2YWwgS0VZX1NBRkVfQlJPV1NJTkcgPSAic2FmZV9icm93c2luZyIKICAgIHByaXZhdGUgY29uc3QgdmFsIEtFWV9TRUFSQ0ggPSAic2VhcmNoX2VuZ2luZSIKICAgIHByaXZhdGUgY29uc3QgdmFsIEtFWV9USEVNRSA9ICJ0aGVtZSIKCiAgICB2YXIgYWRibG9ja0xldmVsOiBTdHJpbmcKICAgICAgICBnZXQoKSA9IHByZWZzLmdldFN0cmluZyhLRVlfQURCTE9DSywgInN0YW5kYXJkIikgPzogInN0YW5kYXJkIgogICAgICAgIHNldCh2KSA9IHByZWZzLmVkaXQoKS5wdXRTdHJpbmcoS0VZX0FEQkxPQ0ssIHYpLmFwcGx5KCkKCiAgICB2YXIgc2FmZUJyb3dzaW5nOiBCb29sZWFuCiAgICAgICAgZ2V0KCkgPSBwcmVmcy5nZXRCb29sZWFuKEtFWV9TQUZFX0JST1dTSU5HLCB0cnVlKQogICAgICAgIHNldCh2KSA9IHByZWZzLmVkaXQoKS5wdXRCb29sZWFuKEtFWV9TQUZFX0JST1dTSU5HLCB2KS5hcHBseSgpCgogICAgdmFyIHNlYXJjaEVuZ2luZTogU3RyaW5nCiAgICAgICAgZ2V0KCkgPSBwcmVmcy5nZXRTdHJpbmcoS0VZX1NFQVJDSCwgImdvb2dsZSIpID86ICJnb29nbGUiCiAgICAgICAgc2V0KHYpID0gcHJlZnMuZWRpdCgpLnB1dFN0cmluZyhLRVlfU0VBUkNILCB2KS5hcHBseSgpCgogICAgdmFyIHRoZW1lOiBTdHJpbmcKICAgICAgICBnZXQoKSA9IHByZWZzLmdldFN0cmluZyhLRVlfVEhFTUUsICJhdXRvIikgPzogImF1dG8iCiAgICAgICAgc2V0KHYpID0gcHJlZnMuZWRpdCgpLnB1dFN0cmluZyhLRVlfVEhFTUUsIHYpLmFwcGx5KCkKCiAgICBmdW4gY2xlYXJBbGxEYXRhKCkgewogICAgICAgIHByZWZzLmVkaXQoKS5yZW1vdmUoS0VZX0JPT0tNQVJLUykucmVtb3ZlKEtFWV9ISVNUT1JZKS5yZW1vdmUoS0VZX0RJQUxTKS5hcHBseSgpCiAgICB9CgogICAgcHJpdmF0ZSBjb25zdCB2YWwgS0VZX0VYVF9ESVNBQkxFRCA9ICJleHRfZGlzYWJsZWQiCgogICAgZnVuIGRpc2FibGVkRXh0ZW5zaW9ucygpOiBTZXQ8U3RyaW5nPiA9IHByZWZzLmdldFN0cmluZ1NldChLRVlfRVhUX0RJU0FCTEVELCBlbXB0eVNldCgpKSA/OiBlbXB0eVNldCgpCgogICAgZnVuIHNldEV4dGVuc2lvbkVuYWJsZWQoaWQ6IFN0cmluZywgZW5hYmxlZDogQm9vbGVhbikgewogICAgICAgIHZhbCBjdXIgPSBkaXNhYmxlZEV4dGVuc2lvbnMoKS50b011dGFibGVTZXQoKQogICAgICAgIGlmIChlbmFibGVkKSBjdXIucmVtb3ZlKGlkKSBlbHNlIGN1ci5hZGQoaWQpCiAgICAgICAgcHJlZnMuZWRpdCgpLnB1dFN0cmluZ1NldChLRVlfRVhUX0RJU0FCTEVELCBjdXIpLmFwcGx5KCkKICAgIH0KCiAgICBwcml2YXRlIGNvbnN0IHZhbCBLRVlfRE9XTkxPQURTID0gImRvd25sb2FkcyIKCiAgICBmdW4gbG9hZE9iamVjdHMoa2V5OiBTdHJpbmcpOiBMaXN0PEpTT05PYmplY3Q+IHsKICAgICAgICB2YWwgcmF3ID0gcHJlZnMuZ2V0U3RyaW5nKGtleSwgbnVsbCkgPzogcmV0dXJuIGVtcHR5TGlzdCgpCiAgICAgICAgcmV0dXJuIHJ1bkNhdGNoaW5nIHsKICAgICAgICAgICAgdmFsIGFyciA9IEpTT05BcnJheShyYXcpCiAgICAgICAgICAgICgwIHVudGlsIGFyci5sZW5ndGgoKSkubWFwIHsgYXJyLmdldEpTT05PYmplY3QoaXQpIH0KICAgICAgICB9LmdldE9yRGVmYXVsdChlbXB0eUxpc3QoKSkKICAgIH0KCiAgICBmdW4gc2F2ZU9iamVjdHMoa2V5OiBTdHJpbmcsIGxpc3Q6IExpc3Q8SlNPTk9iamVjdD4pIHsKICAgICAgICB2YWwgYXJyID0gSlNPTkFycmF5KCkKICAgICAgICBsaXN0LmZvckVhY2ggeyBhcnIucHV0KGl0KSB9CiAgICAgICAgcHJlZnMuZWRpdCgpLnB1dFN0cmluZyhrZXksIGFyci50b1N0cmluZygpKS5hcHBseSgpCiAgICB9CgogICAgY29uc3QgdmFsIEtFWV9ET1dOTE9BRFNfTElTVCA9IEtFWV9ET1dOTE9BRFMKCiAgICBwcml2YXRlIGZ1biBsb2FkUGFpcnMoa2V5OiBTdHJpbmcpOiBMaXN0PFBhaXI8U3RyaW5nLCBTdHJpbmc+PiB7CiAgICAgICAgdmFsIHJhdyA9IHByZWZzLmdldFN0cmluZyhrZXksIG51bGwpID86IHJldHVybiBlbXB0eUxpc3QoKQogICAgICAgIHJldHVybiBydW5DYXRjaGluZyB7CiAgICAgICAgICAgIHZhbCBhcnIgPSBKU09OQXJyYXkocmF3KQogICAgICAgICAgICAoMCB1bnRpbCBhcnIubGVuZ3RoKCkpLm1hcCB7IGkgLT4KICAgICAgICAgICAgICAgIHZhbCBvID0gYXJyLmdldEpTT05PYmplY3QoaSkKICAgICAgICAgICAgICAgIG8uZ2V0U3RyaW5nKCJ0IikgdG8gby5nZXRTdHJpbmcoInUiKQogICAgICAgICAgICB9CiAgICAgICAgfS5nZXRPckRlZmF1bHQoZW1wdHlMaXN0KCkpCiAgICB9CgogICAgcHJpdmF0ZSBmdW4gc2F2ZVBhaXJzKGtleTogU3RyaW5nLCBsaXN0OiBMaXN0PFBhaXI8U3RyaW5nLCBTdHJpbmc+PikgewogICAgICAgIHZhbCBhcnIgPSBKU09OQXJyYXkoKQogICAgICAgIGxpc3QuZm9yRWFjaCB7ICh0LCB1KSAtPiBhcnIucHV0KEpTT05PYmplY3QoKS5wdXQoInQiLCB0KS5wdXQoInUiLCB1KSkgfQogICAgICAgIHByZWZzLmVkaXQoKS5wdXRTdHJpbmcoa2V5LCBhcnIudG9TdHJpbmcoKSkuYXBwbHkoKQogICAgfQoKICAgIHByaXZhdGUgZnVuIGxvYWRUcmlwbGVzKGtleTogU3RyaW5nKTogTGlzdDxUcmlwbGU8U3RyaW5nLCBTdHJpbmcsIExvbmc+PiB7CiAgICAgICAgdmFsIHJhdyA9IHByZWZzLmdldFN0cmluZyhrZXksIG51bGwpID86IHJldHVybiBlbXB0eUxpc3QoKQogICAgICAgIHJldHVybiBydW5DYXRjaGluZyB7CiAgICAgICAgICAgIHZhbCBhcnIgPSBKU09OQXJyYXkocmF3KQogICAgICAgICAgICAoMCB1bnRpbCBhcnIubGVuZ3RoKCkpLm1hcCB7IGkgLT4KICAgICAgICAgICAgICAgIHZhbCBvID0gYXJyLmdldEpTT05PYmplY3QoaSkKICAgICAgICAgICAgICAgIFRyaXBsZShvLmdldFN0cmluZygidCIpLCBvLmdldFN0cmluZygidSIpLCBvLmdldExvbmcoIngiKSkKICAgICAgICAgICAgfQogICAgICAgIH0uZ2V0T3JEZWZhdWx0KGVtcHR5TGlzdCgpKQogICAgfQoKICAgIHByaXZhdGUgZnVuIHNhdmVUcmlwbGVzKGtleTogU3RyaW5nLCBsaXN0OiBMaXN0PFRyaXBsZTxTdHJpbmcsIFN0cmluZywgTG9uZz4+KSB7CiAgICAgICAgdmFsIGFyciA9IEpTT05BcnJheSgpCiAgICAgICAgbGlzdC5mb3JFYWNoIHsgKHQsIHUsIHgpIC0+IGFyci5wdXQoSlNPTk9iamVjdCgpLnB1dCgidCIsIHQpLnB1dCgidSIsIHUpLnB1dCgieCIsIHgpKSB9CiAgICAgICAgcHJlZnMuZWRpdCgpLnB1dFN0cmluZyhrZXksIGFyci50b1N0cmluZygpKS5hcHBseSgpCiAgICB9Cn0K
+package com.nova.browser.store
+
+import android.content.Context
+import android.content.SharedPreferences
+import org.json.JSONArray
+import org.json.JSONObject
+
+object Store {
+    private lateinit var prefs: SharedPreferences
+
+    fun init(context: Context) {
+        prefs = context.applicationContext.getSharedPreferences("nova_prefs", Context.MODE_PRIVATE)
+    }
+
+    private const val KEY_BOOKMARKS = "bookmarks"
+
+    fun addBookmark(title: String, url: String) {
+        val list = bookmarks().filter { it.second != url }.toMutableList()
+        list.add(0, title to url)
+        savePairs(KEY_BOOKMARKS, list)
+    }
+
+    fun removeBookmark(url: String) {
+        savePairs(KEY_BOOKMARKS, bookmarks().filter { it.second != url })
+    }
+
+    fun isBookmarked(url: String): Boolean = bookmarks().any { it.second == url }
+
+    fun bookmarks(): List<Pair<String, String>> = loadPairs(KEY_BOOKMARKS)
+
+    private const val KEY_HISTORY = "history"
+
+    fun addHistory(title: String, url: String) {
+        val list = history().filter { it.second != url }.toMutableList()
+        list.add(0, Triple(title.ifBlank { url }, url, System.currentTimeMillis()))
+        if (list.size > 300) list.subList(300, list.size).clear()
+        saveTriples(KEY_HISTORY, list)
+    }
+
+    fun history(): List<Triple<String, String, Long>> = loadTriples(KEY_HISTORY)
+
+    fun clearHistory() = prefs.edit().remove(KEY_HISTORY).apply()
+
+    private const val KEY_DIALS = "speed_dials"
+
+    fun speedDials(): List<Pair<String, String>> {
+        val d = loadPairs(KEY_DIALS)
+        if (d.isEmpty()) {
+            return listOf(
+                "YouTube" to "https://youtube.com",
+                "Google" to "https://google.com",
+                "Wikipedia" to "https://en.wikipedia.org",
+                "X" to "https://x.com",
+                "GitHub" to "https://github.com",
+                "Perchance" to "https://perchance.org",
+            )
+        }
+        return d
+    }
+
+    fun addSpeedDial(title: String, url: String) {
+        val list = speedDials().filter { it.second != url }.toMutableList()
+        list.add(0, title to url)
+        savePairs(KEY_DIALS, list)
+    }
+
+    fun removeSpeedDial(url: String) {
+        savePairs(KEY_DIALS, speedDials().filter { it.second != url })
+    }
+
+    private const val KEY_ADBLOCK = "adblock_level"
+    private const val KEY_SAFE_BROWSING = "safe_browsing"
+    private const val KEY_SEARCH = "search_engine"
+    private const val KEY_THEME = "theme"
+
+    var adblockLevel: String
+        get() = prefs.getString(KEY_ADBLOCK, "standard") ?: "standard"
+        set(v) = prefs.edit().putString(KEY_ADBLOCK, v).apply()
+
+    var safeBrowsing: Boolean
+        get() = prefs.getBoolean(KEY_SAFE_BROWSING, true)
+        set(v) = prefs.edit().putBoolean(KEY_SAFE_BROWSING, v).apply()
+
+    var searchEngine: String
+        get() = prefs.getString(KEY_SEARCH, "google") ?: "google"
+        set(v) = prefs.edit().putString(KEY_SEARCH, v).apply()
+
+    var theme: String
+        get() = prefs.getString(KEY_THEME, "auto") ?: "auto"
+        set(v) = prefs.edit().putString(KEY_THEME, v).apply()
+
+    fun clearAllData() {
+        prefs.edit().remove(KEY_BOOKMARKS).remove(KEY_HISTORY).remove(KEY_DIALS).apply()
+    }
+
+    private const val KEY_EXT_DISABLED = "ext_disabled"
+
+    fun disabledExtensions(): Set<String> = prefs.getStringSet(KEY_EXT_DISABLED, emptySet()) ?: emptySet()
+
+    fun setExtensionEnabled(id: String, enabled: Boolean) {
+        val cur = disabledExtensions().toMutableSet()
+        if (enabled) cur.remove(id) else cur.add(id)
+        prefs.edit().putStringSet(KEY_EXT_DISABLED, cur).apply()
+    }
+
+    private const val KEY_DOWNLOADS = "downloads"
+
+    fun loadObjects(key: String): List<JSONObject> {
+        val raw = prefs.getString(key, null) ?: return emptyList()
+        return runCatching {
+            val arr = JSONArray(raw)
+            (0 until arr.length()).map { arr.getJSONObject(it) }
+        }.getOrDefault(emptyList())
+    }
+
+    fun saveObjects(key: String, list: List<JSONObject>) {
+        val arr = JSONArray()
+        list.forEach { arr.put(it) }
+        prefs.edit().putString(key, arr.toString()).apply()
+    }
+
+    const val KEY_DOWNLOADS_LIST = KEY_DOWNLOADS
+
+    private fun loadPairs(key: String): List<Pair<String, String>> {
+        val raw = prefs.getString(key, null) ?: return emptyList()
+        return runCatching {
+            val arr = JSONArray(raw)
+            (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                o.getString("t") to o.getString("u")
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun savePairs(key: String, list: List<Pair<String, String>>) {
+        val arr = JSONArray()
+        list.forEach { (t, u) -> arr.put(JSONObject().put("t", t).put("u", u)) }
+        prefs.edit().putString(key, arr.toString()).apply()
+    }
+
+    private fun loadTriples(key: String): List<Triple<String, String, Long>> {
+        val raw = prefs.getString(key, null) ?: return emptyList()
+        return runCatching {
+            val arr = JSONArray(raw)
+            (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                Triple(o.getString("t"), o.getString("u"), o.getLong("x"))
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun saveTriples(key: String, list: List<Triple<String, String, Long>>) {
+        val arr = JSONArray()
+        list.forEach { (t, u, x) -> arr.put(JSONObject().put("t", t).put("u", u).put("x", x)) }
+        prefs.edit().putString(key, arr.toString()).apply()
+    }
+}

@@ -1,1 +1,92 @@
-QHJlbQpAcmVtIENvcHlyaWdodCAyMDE1IHRoZSBvcmlnaW5hbCBhdXRob3Igb3IgYXV0aG9ycy4KQHJlbQpAcmVtIExpY2Vuc2VkIHVuZGVyIHRoZSBBcGFjaGUgTGljZW5zZSwgVmVyc2lvbiAyLjAgKHRoZSAiTGljZW5zZSIpOwpAcmVtIHlvdSBtYXkgbm90IHVzZSB0aGlzIGZpbGUgZXhjZXB0IGluIGNvbXBsaWFuY2Ugd2l0aCB0aGUgTGljZW5zZS4KQHJlbSBZb3UgbWF5IG9idGFpbiBhIGNvcHkgb2YgdGhlIExpY2Vuc2UgYXQKQHJlbQpAcmVtICAgICAgaHR0cHM6Ly93d3cuYXBhY2hlLm9yZy9saWNlbnNlcy9MSUNFTlNFLTIuMApAcmVtCkByZW0gVW5sZXNzIHJlcXVpcmVkIGJ5IGFwcGxpY2FibGUgbGF3IG9yIGFncmVlZCB0byBpbiB3cml0aW5nLCBzb2Z0d2FyZQpAcmVtIGRpc3RyaWJ1dGVkIHVuZGVyIHRoZSBMaWNlbnNlIGlzIGRpc3RyaWJ1dGVkIG9uIGFuICJBUyBJUyIgQkFTSVMsCkByZW0gV0lUSE9VVCBXQVJSQU5USUVTIE9SIENPTkRJVElPTlMgT0YgQU5ZIEtJTkQsIGVpdGhlciBleHByZXNzIG9yIGltcGxpZWQuCkByZW0gU2VlIHRoZSBMaWNlbnNlIGZvciB0aGUgc3BlY2lmaWMgbGFuZ3VhZ2UgZ292ZXJuaW5nIHBlcm1pc3Npb25zIGFuZApAcmVtIGxpbWl0YXRpb25zIHVuZGVyIHRoZSBMaWNlbnNlLgpAcmVtCgpAaWYgIiVERUJVRyUiPT0iIiBAZWNobyBvZmYKQHJlbSAjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwpAcmVtCkByZW0gIEdyYWRsZSBzdGFydHVwIHNjcmlwdCBmb3IgV2luZG93cwpAcmVtCkByZW0gIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKCkByZW0gU2V0IGxvY2FsIHNjb3BlIGZvciB0aGUgdmFyaWFibGVzIHdpdGggd2luZG93cyBOVCBzaGVsbAppZiAiJU9TJSI9PSJXaW5kb3dzX05UIiBzZXRsb2NhbAoKc2V0IERJUk5BTUU9JX5kcDAKaWYgIiVESVJOQU1FJSI9PSIiIHNldCBESVJOQU1FPS4KQHJlbSBUaGlzIGlzIG5vcm1hbGx5IHVudXNlZApzZXQgQVBQX0JBU0VfTkFNRT0lfm4wCnNldCBBUFBfSE9NRT0lRElSTkFNRSUKCkByZW0gUmVzb2x2ZSBhbnkgIi4iIGFuZCAiLi4iIGluIEFQUF9IT01FIHRvIG1ha2UgaXQgc2hvcnRlci4KZm9yICUlaSBpbiAoIiVBUFBfSE9NRSUiKSBkbyBzZXQgQVBQX0hPTUU9JSV+ZmkKCkByZW0gQWRkIGRlZmF1bHQgSlZNIG9wdGlvbnMgaGVyZS4gWW91IGNhbiBhbHNvIHVzZSBKQVZBX09QVFMgYW5kIEdSQURMRV9PUFRTIHRvIHBhc3MgSlZNIG9wdGlvbnMgdG8gdGhpcyBzY3JpcHQuCnNldCBERUZBVUxUX0pWTV9PUFRTPS1EZmlsZS5lbmNvZGluZz1VVEYtOCAiLVhteDY0bSIgIi1YbXM2NG0iCgpAcmVtIEZpbmQgamF2YS5leGUKaWYgZGVmaW5lZCBKQVZBX0hPTUUgZ290byBmaW5kSmF2YUZyb21KYXZhSG9tZQoKc2V0IEpBVkFfRVhFPWphdmEuZXhlCiVKQVZBX0VYRSUgLXZlcnNpb24gPk5VTCAyPiYxCmlmICVFUlJPUkxFVkVMJSBlcXUgMCBnb3RvIGV4ZWN1dGUKCmVjaG8uIDE+JjIKZWNobyBFUlJPUjogSkFWQV9IT01FIGlzIG5vdCBzZXQgYW5kIG5vICdqYXZhJyBjb21tYW5kIGNvdWxkIGJlIGZvdW5kIGluIHlvdXIgUEFUSC4gMT4mMgplY2hvLiAxPiYyCmVjaG8gUGxlYXNlIHNldCB0aGUgSkFWQV9IT01FIHZhcmlhYmxlIGluIHlvdXIgZW52aXJvbm1lbnQgdG8gbWF0Y2ggdGhlIDE+JjIKZWNobyBsb2NhdGlvbiBvZiB5b3VyIEphdmEgaW5zdGFsbGF0aW9uLiAxPiYyCgpnb3RvIGZhaWwKCjpmaW5kSmF2YUZyb21KYXZhSG9tZQpzZXQgSkFWQV9IT01FPSVKQVZBX0hPTUU6Ij0lCnNldCBKQVZBX0VYRT0lSkFWQV9IT01FJS9iaW4vamF2YS5leGUKCmlmIGV4aXN0ICIlSkFWQV9FWEUlIiBnb3RvIGV4ZWN1dGUKCmVjaG8uIDE+JjIKZWNobyBFUlJPUjogSkFWQV9IT01FIGlzIHNldCB0byBhbiBpbnZhbGlkIGRpcmVjdG9yeTogJUpBVkFfSE9NRSUgMT4mMgplY2hvLiAxPiYyCmVjaG8gUGxlYXNlIHNldCB0aGUgSkFWQV9IT01FIHZhcmlhYmxlIGluIHlvdXIgZW52aXJvbm1lbnQgdG8gbWF0Y2ggdGhlIDE+JjIKZWNobyBsb2NhdGlvbiBvZiB5b3VyIEphdmEgaW5zdGFsbGF0aW9uLiAxPiYyCgpnb3RvIGZhaWwKCjpleGVjdXRlCkByZW0gU2V0dXAgdGhlIGNvbW1hbmQgbGluZQoKc2V0IENMQVNTUEFUSD0lQVBQX0hPTUUlXGdyYWRsZVx3cmFwcGVyXGdyYWRsZS13cmFwcGVyLmphcgoKCkByZW0gRXhlY3V0ZSBHcmFkbGUKIiVKQVZBX0VYRSUiICVERUZBVUxUX0pWTV9PUFRTJSAlSkFWQV9PUFRTJSAlR1JBRExFX09QVFMlICItRG9yZy5ncmFkbGUuYXBwbmFtZT0lQVBQX0JBU0VfTkFNRSUiIC1jbGFzc3BhdGggIiVDTEFTU1BBVEglIiBvcmcuZ3JhZGxlLndyYXBwZXIuR3JhZGxlV3JhcHBlck1haW4gJSoKCjplbmQKQHJlbSBFbmQgbG9jYWwgc2NvcGUgZm9yIHRoZSB2YXJpYWJsZXMgd2l0aCB3aW5kb3dzIE5UIHNoZWxsCmlmICVFUlJPUkxFVkVMJSBlcXUgMCBnb3RvIG1haW5FbmQKCjpmYWlsCnJlbSBTZXQgdmFyaWFibGUgR1JBRExFX0VYSVRfQ09OU09MRSBpZiB5b3UgbmVlZCB0aGUgX3NjcmlwdF8gcmV0dXJuIGNvZGUgaW5zdGVhZCBvZgpyZW0gdGhlIF9jbWQuZXhlIC9jXyByZXR1cm4gY29kZSEKc2V0IEVYSVRfQ09ERT0lRVJST1JMRVZFTCUKaWYgJUVYSVRfQ09ERSUgZXF1IDAgc2V0IEVYSVRfQ09ERT0xCmlmIG5vdCAiIj09IiVHUkFETEVfRVhJVF9DT05TT0xFJSIgZXhpdCAlRVhJVF9DT0RFJQpleGl0IC9iICVFWElUX0NPREUlCgo6bWFpbkVuZAppZiAiJU9TJSI9PSJXaW5kb3dzX05UIiBlbmRsb2NhbAoKOm9tZWdhCg==
+@rem
+@rem Copyright 2015 the original author or authors.
+@rem
+@rem Licensed under the Apache License, Version 2.0 (the "License");
+@rem you may not use this file except in compliance with the License.
+@rem You may obtain a copy of the License at
+@rem
+@rem      https://www.apache.org/licenses/LICENSE-2.0
+@rem
+@rem Unless required by applicable law or agreed to in writing, software
+@rem distributed under the License is distributed on an "AS IS" BASIS,
+@rem WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+@rem See the License for the specific language governing permissions and
+@rem limitations under the License.
+@rem
+
+@if "%DEBUG%"=="" @echo off
+@rem ##########################################################################
+@rem
+@rem  Gradle startup script for Windows
+@rem
+@rem ##########################################################################
+
+@rem Set local scope for the variables with windows NT shell
+if "%OS%"=="Windows_NT" setlocal
+
+set DIRNAME=%~dp0
+if "%DIRNAME%"=="" set DIRNAME=.
+@rem This is normally unused
+set APP_BASE_NAME=%~n0
+set APP_HOME=%DIRNAME%
+
+@rem Resolve any "." and ".." in APP_HOME to make it shorter.
+for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
+
+@rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
+set DEFAULT_JVM_OPTS=-Dfile.encoding=UTF-8 "-Xmx64m" "-Xms64m"
+
+@rem Find java.exe
+if defined JAVA_HOME goto findJavaFromJavaHome
+
+set JAVA_EXE=java.exe
+%JAVA_EXE% -version >NUL 2>&1
+if %ERRORLEVEL% equ 0 goto execute
+
+echo. 1>&2
+echo ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH. 1>&2
+echo. 1>&2
+echo Please set the JAVA_HOME variable in your environment to match the 1>&2
+echo location of your Java installation. 1>&2
+
+goto fail
+
+:findJavaFromJavaHome
+set JAVA_HOME=%JAVA_HOME:"=%
+set JAVA_EXE=%JAVA_HOME%/bin/java.exe
+
+if exist "%JAVA_EXE%" goto execute
+
+echo. 1>&2
+echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME% 1>&2
+echo. 1>&2
+echo Please set the JAVA_HOME variable in your environment to match the 1>&2
+echo location of your Java installation. 1>&2
+
+goto fail
+
+:execute
+@rem Setup the command line
+
+set CLASSPATH=%APP_HOME%\gradle\wrapper\gradle-wrapper.jar
+
+
+@rem Execute Gradle
+"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %*
+
+:end
+@rem End local scope for the variables with windows NT shell
+if %ERRORLEVEL% equ 0 goto mainEnd
+
+:fail
+rem Set variable GRADLE_EXIT_CONSOLE if you need the _script_ return code instead of
+rem the _cmd.exe /c_ return code!
+set EXIT_CODE=%ERRORLEVEL%
+if %EXIT_CODE% equ 0 set EXIT_CODE=1
+if not ""=="%GRADLE_EXIT_CONSOLE%" exit %EXIT_CODE%
+exit /b %EXIT_CODE%
+
+:mainEnd
+if "%OS%"=="Windows_NT" endlocal
+
+:omega

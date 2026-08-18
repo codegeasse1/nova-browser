@@ -1,1 +1,483 @@
-cGFja2FnZSBjb20ubm92YS5icm93c2VyLmJyb3dzZXIKCmltcG9ydCBhbmRyb2lkLmNvbnRlbnQuQ29udGV4dAppbXBvcnQgYW5kcm9pZC5jb250ZW50LkludGVudAppbXBvcnQgYW5kcm9pZC5uZXQuVXJpCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnJ1bnRpbWUuZ2V0VmFsdWUKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UucnVudGltZS5tdXRhYmxlSW50U3RhdGVPZgppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5ydW50aW1lLm11dGFibGVTdGF0ZUxpc3RPZgppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5ydW50aW1lLm11dGFibGVTdGF0ZU9mCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnJ1bnRpbWUuc2V0VmFsdWUKaW1wb3J0IGNvbS5ub3ZhLmJyb3dzZXIuQXBwCmltcG9ydCBjb20ubm92YS5icm93c2VyLmV4dC5FeHRlbnNpb25NYW5hZ2VyCmltcG9ydCBjb20ubm92YS5icm93c2VyLnN0b3JlLlN0b3JlCmltcG9ydCBvcmcubW96aWxsYS5nZWNrb3ZpZXcuQWxsb3dPckRlbnkKaW1wb3J0IG9yZy5tb3ppbGxhLmdlY2tvdmlldy5Db250ZW50QmxvY2tpbmcKaW1wb3J0IG9yZy5tb3ppbGxhLmdlY2tvdmlldy5HZWNrb1Jlc3VsdAppbXBvcnQgb3JnLm1vemlsbGEuZ2Vja292aWV3LkdlY2tvU2Vzc2lvbgppbXBvcnQgb3JnLm1vemlsbGEuZ2Vja292aWV3LkdlY2tvU2Vzc2lvblNldHRpbmdzCmltcG9ydCBvcmcubW96aWxsYS5nZWNrb3ZpZXcuR2Vja29WaWV3CmltcG9ydCBvcmcubW96aWxsYS5nZWNrb3ZpZXcuV2ViUmVzcG9uc2UKCmRhdGEgY2xhc3MgU3RvcmVPZmZlcih2YWwga2luZDogU3RyaW5nLCB2YWwga2V5OiBTdHJpbmcsIHZhbCBuYW1lOiBTdHJpbmcpCgpvYmplY3QgQnJvd3NlckNvcmUgewogICAgdmFsIHRhYnMgPSBtdXRhYmxlU3RhdGVMaXN0T2Y8VGFiU3RhdGU+KCkKICAgIHZhciBhY3RpdmVJbmRleCBieSBtdXRhYmxlSW50U3RhdGVPZigtMSkKICAgIHZhciB0b3RhbEJsb2NrZWQgYnkgbXV0YWJsZVN0YXRlT2YoMEwpCiAgICB2YXIgbGFzdERvd25sb2FkTWVzc2FnZSBieSBtdXRhYmxlU3RhdGVPZjxTdHJpbmc/PihudWxsKQogICAgdmFyIHBlbmRpbmdFeHRlcm5hbEludGVudCBieSBtdXRhYmxlU3RhdGVPZjxTdHJpbmc/PihudWxsKQogICAgdmFyIGxhc3RTaGllbGROb3RpY2UgYnkgbXV0YWJsZVN0YXRlT2Y8U3RyaW5nPz4obnVsbCkKICAgIHZhciBzdG9yZU9mZmVyIGJ5IG11dGFibGVTdGF0ZU9mPFN0b3JlT2ZmZXI/PihudWxsKQogICAgdmFyIGZ1bGxzY3JlZW4gYnkgbXV0YWJsZVN0YXRlT2YoZmFsc2UpCgogICAgcHJpdmF0ZSB2YWwgc2Vzc2lvbnMgPSBIYXNoTWFwPEludCwgR2Vja29TZXNzaW9uPigpCiAgICBwcml2YXRlIHZhbCBzZXNzaW9uTG9hZHMgPSBIYXNoTWFwPEludCwgU3RyaW5nPigpCiAgICBwcml2YXRlIHZhciBnZWNrb1ZpZXc6IEdlY2tvVmlldz8gPSBudWxsCiAgICBwcml2YXRlIHZhciBuZXh0SWQgPSAxCgogICAgdmFsIGFjdGl2ZVRhYjogVGFiU3RhdGU/IGdldCgpID0gdGFicy5nZXRPck51bGwoYWN0aXZlSW5kZXgpCiAgICBmdW4gYWN0aXZlU2Vzc2lvbigpOiBHZWNrb1Nlc3Npb24/ID0gYWN0aXZlVGFiPy5sZXQgeyBzZXNzaW9uc1tpdC5pZF0gfQoKICAgIGZ1biBuZXdUYWIodXJsOiBTdHJpbmc/ID0gbnVsbCwgaXNQcml2YXRlOiBCb29sZWFuID0gZmFsc2UpOiBJbnQgewogICAgICAgIHZhbCBpZCA9IG5leHRJZCsrCiAgICAgICAgdmFsIHNoaWVsZCA9IFN0b3JlLmFkYmxvY2tMZXZlbCAhPSAib2ZmIgogICAgICAgIHZhbCB0YWIgPSBUYWJTdGF0ZShpZCA9IGlkLCBpc1ByaXZhdGUgPSBpc1ByaXZhdGUsIHNoaWVsZCA9IHNoaWVsZCkKICAgICAgICB0YWJzLmFkZCh0YWIpCiAgICAgICAgYWN0aXZhdGUodGFicy5sYXN0SW5kZXgpCiAgICAgICAgaWYgKCF1cmwuaXNOdWxsT3JCbGFuaygpKSB0YWJzW3RhYnMubGFzdEluZGV4XSA9IHRhYnNbdGFicy5sYXN0SW5kZXhdLmNvcHkodXJsID0gdXJsKQogICAgICAgIHJldHVybiB0YWJzLmxhc3RJbmRleAogICAgfQoKICAgIGZ1biBhdHRhY2hWaWV3KGNvbnRleHQ6IENvbnRleHQsIHRhYklkOiBJbnQpOiBHZWNrb1ZpZXcgewogICAgICAgIHZhbCB2ID0gZ2Vja29WaWV3ID86IEdlY2tvVmlldyhjb250ZXh0KS5hbHNvIHsgZ2Vja29WaWV3ID0gaXQgfQogICAgICAgIHZhbCBzZXNzaW9uID0gc2Vzc2lvbkZvcih0YWJJZCkKICAgICAgICBpZiAodi5nZXRTZXNzaW9uKCkgIT09IHNlc3Npb24pIHsKICAgICAgICAgICAgcnVuQ2F0Y2hpbmcgeyB2LnJlbGVhc2VTZXNzaW9uKCkgfQogICAgICAgICAgICB2LnNldFNlc3Npb24oc2Vzc2lvbikKICAgICAgICB9CiAgICAgICAgcmV0dXJuIHYKICAgIH0KCiAgICBwcml2YXRlIGZ1biBzZXNzaW9uRm9yKHRhYklkOiBJbnQsIGF1dG9Mb2FkOiBCb29sZWFuID0gdHJ1ZSk6IEdlY2tvU2Vzc2lvbiB7CiAgICAgICAgc2Vzc2lvbnNbdGFiSWRdPy5sZXQgeyBzIC0+CiAgICAgICAgICAgIGlmIChhdXRvTG9hZCkgbWF5YmVMb2FkKHRhYklkLCBzKQogICAgICAgICAgICByZXR1cm4gcwogICAgICAgIH0KICAgICAgICB2YWwgcnVudGltZSA9IEFwcC5nZWNrb1J1bnRpbWUKICAgICAgICB2YWwgdGFiID0gdGFicy5maXJzdE9yTnVsbCB7IGl0LmlkID09IHRhYklkIH0KICAgICAgICB2YWwgc2V0dGluZ3MgPSBHZWNrb1Nlc3Npb25TZXR0aW5ncy5CdWlsZGVyKCkKICAgICAgICAgICAgLnVzZVByaXZhdGVNb2RlKHRhYj8uaXNQcml2YXRlID09IHRydWUpCiAgICAgICAgICAgIC5idWlsZCgpCiAgICAgICAgc2V0dGluZ3MudXNlVHJhY2tpbmdQcm90ZWN0aW9uID0gdGFiPy5zaGllbGQgPzogdHJ1ZQogICAgICAgIHNldHRpbmdzLnVzZXJBZ2VudE1vZGUgPQogICAgICAgICAgICBpZiAodGFiPy5kZXNrdG9wU2l0ZSA9PSB0cnVlKSBHZWNrb1Nlc3Npb25TZXR0aW5ncy5VU0VSX0FHRU5UX01PREVfREVTS1RPUCBlbHNlIEdlY2tvU2Vzc2lvblNldHRpbmdzLlVTRVJfQUdFTlRfTU9ERV9NT0JJTEUKICAgICAgICBzZXR0aW5ncy5kaXNwbGF5TW9kZSA9IEdlY2tvU2Vzc2lvblNldHRpbmdzLkRJU1BMQVlfTU9ERV9CUk9XU0VSCgogICAgICAgIHZhbCBzZXNzaW9uID0gR2Vja29TZXNzaW9uKHNldHRpbmdzKQogICAgICAgIGNvbmZpZ3VyZURlbGVnYXRlcyhzZXNzaW9uLCB0YWJJZCkKICAgICAgICBzZXNzaW9uLm9wZW4ocnVudGltZSkKICAgICAgICBzZXNzaW9uc1t0YWJJZF0gPSBzZXNzaW9uCiAgICAgICAgaWYgKGF1dG9Mb2FkKSBtYXliZUxvYWQodGFiSWQsIHNlc3Npb24pCiAgICAgICAgcmV0dXJuIHNlc3Npb24KICAgIH0KCiAgICBwcml2YXRlIGZ1biBtYXliZUxvYWQodGFiSWQ6IEludCwgc2Vzc2lvbjogR2Vja29TZXNzaW9uKSB7CiAgICAgICAgdmFsIHRhYiA9IHRhYnMuZmlyc3RPck51bGwgeyBpdC5pZCA9PSB0YWJJZCB9ID86IHJldHVybgogICAgICAgIHZhbCB1cmwgPSB0YWIudXJsCiAgICAgICAgaWYgKHVybC5pc0JsYW5rKCkgfHwgdGFiLmlzU3RhcnRQYWdlKSByZXR1cm4KICAgICAgICBpZiAoc2Vzc2lvbkxvYWRzW3RhYklkXSA9PSB1cmwpIHJldHVybgogICAgICAgIHNlc3Npb25Mb2Fkc1t0YWJJZF0gPSB1cmwKICAgICAgICBydW5DYXRjaGluZyB7IHNlc3Npb24ubG9hZFVyaSh1cmwpIH0KICAgIH0KCiAgICBwcml2YXRlIGZ1biBjb25maWd1cmVEZWxlZ2F0ZXMoc2Vzc2lvbjogR2Vja29TZXNzaW9uLCB0YWJJZDogSW50KSB7CiAgICAgICAgc2Vzc2lvbi5uYXZpZ2F0aW9uRGVsZWdhdGUgPSBvYmplY3QgOiBHZWNrb1Nlc3Npb24uTmF2aWdhdGlvbkRlbGVnYXRlIHsKICAgICAgICAgICAgb3ZlcnJpZGUgZnVuIG9uTG9hZFJlcXVlc3Qoc2Vzc2lvbjogR2Vja29TZXNzaW9uLCByZXF1ZXN0OiBHZWNrb1Nlc3Npb24uTmF2aWdhdGlvbkRlbGVnYXRlLkxvYWRSZXF1ZXN0KTogR2Vja29SZXN1bHQ8QWxsb3dPckRlbnk+PyB7CiAgICAgICAgICAgICAgICB2YWwgdXJpID0gcmVxdWVzdC51cmkgPzogcmV0dXJuIG51bGwKICAgICAgICAgICAgICAgIHJldHVybiBpZiAoaGFuZGxlRXh0ZXJuYWxVcmwodXJpLCByZXF1ZXN0LmlzTWFpbkZyYW1lKSkgR2Vja29SZXN1bHQuZGVueSgpIGVsc2UgbnVsbAogICAgICAgICAgICB9CgogICAgICAgICAgICBvdmVycmlkZSBmdW4gb25Mb2NhdGlvbkNoYW5nZSgKICAgICAgICAgICAgICAgIHNlc3Npb246IEdlY2tvU2Vzc2lvbiwKICAgICAgICAgICAgICAgIHVybDogU3RyaW5nPywKICAgICAgICAgICAgICAgIHBlcm1zOiBNdXRhYmxlTGlzdDxHZWNrb1Nlc3Npb24uUGVybWlzc2lvbkRlbGVnYXRlLkNvbnRlbnRQZXJtaXNzaW9uPj8sCiAgICAgICAgICAgICAgICBoYXNVc2VyR2VzdHVyZTogQm9vbGVhbj8sCiAgICAgICAgICAgICkgewogICAgICAgICAgICAgICAgdmFsIHUgPSB1cmwgPzogcmV0dXJuCiAgICAgICAgICAgICAgICBydW5DYXRjaGluZyB7CiAgICAgICAgICAgICAgICAgICAgcGF0Y2godGFiSWQpIHsgY29weSh1cmwgPSB1LCBzZWN1cmUgPSB1LnN0YXJ0c1dpdGgoImh0dHBzOi8vIikpIH0KICAgICAgICAgICAgICAgICAgICBvZmZlclN0b3JlSW5zdGFsbCh1KQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CgogICAgICAgICAgICBvdmVycmlkZSBmdW4gb25DYW5Hb0JhY2soc2Vzc2lvbjogR2Vja29TZXNzaW9uLCBjYW5Hb0JhY2s6IEJvb2xlYW4pIHsKICAgICAgICAgICAgICAgIHJ1bkNhdGNoaW5nIHsgcGF0Y2godGFiSWQpIHsgY29weShjYW5Hb0JhY2sgPSBjYW5Hb0JhY2spIH0gfQogICAgICAgICAgICB9CgogICAgICAgICAgICBvdmVycmlkZSBmdW4gb25DYW5Hb0ZvcndhcmQoc2Vzc2lvbjogR2Vja29TZXNzaW9uLCBjYW5Hb0ZvcndhcmQ6IEJvb2xlYW4pIHsKICAgICAgICAgICAgICAgIHJ1bkNhdGNoaW5nIHsgcGF0Y2godGFiSWQpIHsgY29weShjYW5Hb0ZvcndhcmQgPSBjYW5Hb0ZvcndhcmQpIH0gfQogICAgICAgICAgICB9CgogICAgICAgICAgICBvdmVycmlkZSBmdW4gb25OZXdTZXNzaW9uKHNlc3Npb246IEdlY2tvU2Vzc2lvbiwgdXJpOiBTdHJpbmc/KTogR2Vja29SZXN1bHQ8R2Vja29TZXNzaW9uPj8gewogICAgICAgICAgICAgICAgdmFsIHRhYiA9IHRhYnMuZmlyc3RPck51bGwgeyBpdC5pZCA9PSB0YWJJZCB9CiAgICAgICAgICAgICAgICB2YWwgaW5kZXggPSBuZXdUYWIodXJsID0gdXJpID86ICIiLCBpc1ByaXZhdGUgPSB0YWI/LmlzUHJpdmF0ZSA9PSB0cnVlKQogICAgICAgICAgICAgICAgdmFsIG5ld1RhYklkID0gdGFic1tpbmRleF0uaWQKICAgICAgICAgICAgICAgIHZhbCBuZXdTZXNzaW9uID0gc2Vzc2lvbkZvcihuZXdUYWJJZCwgYXV0b0xvYWQgPSBmYWxzZSkKICAgICAgICAgICAgICAgIHJldHVybiBHZWNrb1Jlc3VsdC5mcm9tVmFsdWUobmV3U2Vzc2lvbikKICAgICAgICAgICAgfQoKICAgICAgICAgICAgb3ZlcnJpZGUgZnVuIG9uTG9hZEVycm9yKHNlc3Npb246IEdlY2tvU2Vzc2lvbiwgdXJpOiBTdHJpbmc/LCBlcnJvcjogSW50LCBjYXRlZ29yeTogSW50KSB7CiAgICAgICAgICAgICAgICBydW5DYXRjaGluZyB7IHBhdGNoKHRhYklkKSB7IGNvcHkocHJvZ3Jlc3MgPSAxMDApIH0gfQogICAgICAgICAgICB9CiAgICAgICAgfQoKICAgICAgICBzZXNzaW9uLnByb2dyZXNzRGVsZWdhdGUgPSBvYmplY3QgOiBHZWNrb1Nlc3Npb24uUHJvZ3Jlc3NEZWxlZ2F0ZSB7CiAgICAgICAgICAgIG92ZXJyaWRlIGZ1biBvblBhZ2VTdGFydChzZXNzaW9uOiBHZWNrb1Nlc3Npb24sIHVybDogU3RyaW5nKSB7CiAgICAgICAgICAgICAgICBydW5DYXRjaGluZyB7CiAgICAgICAgICAgICAgICAgICAgaWYgKHN0b3JlT2ZmZXIgIT0gbnVsbCkgc3RvcmVPZmZlciA9IG51bGwKICAgICAgICAgICAgICAgICAgICBwYXRjaCh0YWJJZCkgewogICAgICAgICAgICAgICAgICAgICAgICBjb3B5KHVybCA9IHVybCwgdGl0bGUgPSAiIiwgcHJvZ3Jlc3MgPSAwLCBzZWN1cmUgPSB1cmwuc3RhcnRzV2l0aCgiaHR0cHM6Ly8iKSwgYmxvY2tlZCA9IDApCiAgICAgICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CgogICAgICAgICAgICBvdmVycmlkZSBmdW4gb25QYWdlU3RvcChzZXNzaW9uOiBHZWNrb1Nlc3Npb24sIHN1Y2Nlc3M6IEJvb2xlYW4pIHsKICAgICAgICAgICAgICAgIHJ1bkNhdGNoaW5nIHsKICAgICAgICAgICAgICAgICAgICB2YWwgdGFiID0gdGFicy5maXJzdE9yTnVsbCB7IGl0LmlkID09IHRhYklkIH0gPzogcmV0dXJuCiAgICAgICAgICAgICAgICAgICAgcGF0Y2godGFiSWQpIHsgY29weShwcm9ncmVzcyA9IDEwMCkgfQogICAgICAgICAgICAgICAgICAgIGlmICghdGFiLmlzUHJpdmF0ZSAmJiB0YWIudXJsLnN0YXJ0c1dpdGgoImh0dHAiKSkgewogICAgICAgICAgICAgICAgICAgICAgICBTdG9yZS5hZGRIaXN0b3J5KHRhYi50aXRsZS5pZkJsYW5rIHsgdGFiLnVybCB9LCB0YWIudXJsKQogICAgICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQoKICAgICAgICAgICAgb3ZlcnJpZGUgZnVuIG9uUHJvZ3Jlc3NDaGFuZ2Uoc2Vzc2lvbjogR2Vja29TZXNzaW9uLCBwcm9ncmVzczogSW50KSB7CiAgICAgICAgICAgICAgICBydW5DYXRjaGluZyB7IHBhdGNoKHRhYklkKSB7IGNvcHkocHJvZ3Jlc3MgPSBwcm9ncmVzcy5jb2VyY2VJbigwLCAxMDApKSB9IH0KICAgICAgICAgICAgfQoKICAgICAgICAgICAgb3ZlcnJpZGUgZnVuIG9uU2VjdXJpdHlDaGFuZ2Uoc2Vzc2lvbjogR2Vja29TZXNzaW9uLCBzZWN1cml0eUluZm86IEdlY2tvU2Vzc2lvbi5Qcm9ncmVzc0RlbGVnYXRlLlNlY3VyaXR5SW5mb3JtYXRpb24pIHsKICAgICAgICAgICAgICAgIHJ1bkNhdGNoaW5nIHsgcGF0Y2godGFiSWQpIHsgY29weShzZWN1cmUgPSBzZWN1cml0eUluZm8uaXNTZWN1cmUpIH0gfQogICAgICAgICAgICB9CiAgICAgICAgfQoKICAgICAgICBzZXNzaW9uLmNvbnRlbnREZWxlZ2F0ZSA9IG9iamVjdCA6IEdlY2tvU2Vzc2lvbi5Db250ZW50RGVsZWdhdGUgewogICAgICAgICAgICBvdmVycmlkZSBmdW4gb25UaXRsZUNoYW5nZShzZXNzaW9uOiBHZWNrb1Nlc3Npb24sIHRpdGxlOiBTdHJpbmc/KSB7CiAgICAgICAgICAgICAgICBydW5DYXRjaGluZyB7CiAgICAgICAgICAgICAgICAgICAgaWYgKCF0aXRsZS5pc051bGxPckJsYW5rKCkpIHBhdGNoKHRhYklkKSB7IGNvcHkodGl0bGUgPSB0aXRsZSkgfQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CgogICAgICAgICAgICBvdmVycmlkZSBmdW4gb25GdWxsU2NyZWVuKHNlc3Npb246IEdlY2tvU2Vzc2lvbiwgZnVsbFNjcmVlbjogQm9vbGVhbikgewogICAgICAgICAgICAgICAgcnVuQ2F0Y2hpbmcgewogICAgICAgICAgICAgICAgICAgIHNlc3Npb24uc2V0dGluZ3MuZGlzcGxheU1vZGUgPQogICAgICAgICAgICAgICAgICAgICAgICBpZiAoZnVsbFNjcmVlbikgR2Vja29TZXNzaW9uU2V0dGluZ3MuRElTUExBWV9NT0RFX0ZVTExTQ1JFRU4gZWxzZSBHZWNrb1Nlc3Npb25TZXR0aW5ncy5ESVNQTEFZX01PREVfQlJPV1NFUgogICAgICAgICAgICAgICAgICAgIHNldEZ1bGxzY3JlZW4oZnVsbFNjcmVlbikKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQoKICAgICAgICAgICAgb3ZlcnJpZGUgZnVuIG9uRXh0ZXJuYWxSZXNwb25zZShzZXNzaW9uOiBHZWNrb1Nlc3Npb24sIHJlc3BvbnNlOiBXZWJSZXNwb25zZSkgewogICAgICAgICAgICAgICAgcnVuQ2F0Y2hpbmcgewogICAgICAgICAgICAgICAgICAgIHZhbCB1cmwgPSByZXNwb25zZS51cmkKICAgICAgICAgICAgICAgICAgICB2YWwgbG93ZXIgPSB1cmwubG93ZXJjYXNlKCkKICAgICAgICAgICAgICAgICAgICB2YWwgaXNFeHQgPSBsb3dlci5lbmRzV2l0aCgiLnhwaSIpIHx8IGxvd2VyLmVuZHNXaXRoKCIuY3J4IikKICAgICAgICAgICAgICAgICAgICBpZiAoaXNFeHQpIHsKICAgICAgICAgICAgICAgICAgICAgICAgRXh0ZW5zaW9uTWFuYWdlci5pbnN0YWxsRnJvbVVybChBcHAuY29udGV4dCwgdXJsKQogICAgICAgICAgICAgICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgICAgICAgICAgICAgIHZhbCBtaW1lID0gcmVzcG9uc2UuaGVhZGVycz8uZ2V0KCJDb250ZW50LVR5cGUiKQogICAgICAgICAgICAgICAgICAgICAgICBEb3dubG9hZHMuc3RhcnQoQXBwLmNvbnRleHQsIHVybCwgIiIsIG51bGwsIG1pbWUsIC0xTCkgeyBtc2cgLT4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIGxhc3REb3dubG9hZE1lc3NhZ2UgPSBtc2cKICAgICAgICAgICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQoKICAgICAgICAgICAgb3ZlcnJpZGUgZnVuIG9uQ2xvc2VSZXF1ZXN0KHNlc3Npb246IEdlY2tvU2Vzc2lvbikgewogICAgICAgICAgICAgICAgcnVuQ2F0Y2hpbmcgewogICAgICAgICAgICAgICAgICAgIHZhbCBpID0gdGFicy5pbmRleE9mRmlyc3QgeyBpdC5pZCA9PSB0YWJJZCB9CiAgICAgICAgICAgICAgICAgICAgaWYgKGkgPj0gMCkgY2xvc2VUYWIoaSkKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQogICAgICAgIH0KCiAgICAgICAgc2Vzc2lvbi5jb250ZW50QmxvY2tpbmdEZWxlZ2F0ZSA9IG9iamVjdCA6IENvbnRlbnRCbG9ja2luZy5EZWxlZ2F0ZSB7CiAgICAgICAgICAgIG92ZXJyaWRlIGZ1biBvbkNvbnRlbnRCbG9ja2VkKHNlc3Npb246IEdlY2tvU2Vzc2lvbiwgZXZlbnQ6IENvbnRlbnRCbG9ja2luZy5CbG9ja0V2ZW50KSB7CiAgICAgICAgICAgICAgICBydW5DYXRjaGluZyB7CiAgICAgICAgICAgICAgICAgICAgdG90YWxCbG9ja2VkICs9IDEKICAgICAgICAgICAgICAgICAgICBwYXRjaCh0YWJJZCkgeyBjb3B5KGJsb2NrZWQgPSBibG9ja2VkICsgMSkgfQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CiAgICAgICAgfQoKICAgICAgICBzZXNzaW9uLnBlcm1pc3Npb25EZWxlZ2F0ZSA9IG9iamVjdCA6IEdlY2tvU2Vzc2lvbi5QZXJtaXNzaW9uRGVsZWdhdGUgewogICAgICAgICAgICBvdmVycmlkZSBmdW4gb25BbmRyb2lkUGVybWlzc2lvbnNSZXF1ZXN0KAogICAgICAgICAgICAgICAgc2Vzc2lvbjogR2Vja29TZXNzaW9uLAogICAgICAgICAgICAgICAgcGVybWlzc2lvbnM6IEFycmF5PFN0cmluZz4sCiAgICAgICAgICAgICAgICBjYWxsYmFjazogR2Vja29TZXNzaW9uLlBlcm1pc3Npb25EZWxlZ2F0ZS5DYWxsYmFjaywKICAgICAgICAgICAgKSB7CiAgICAgICAgICAgICAgICBBcHAucmVxdWVzdEFuZHJvaWRQZXJtaXNzaW9ucyhwZXJtaXNzaW9ucy50b0xpc3QoKSkgeyBncmFudGVkIC0+CiAgICAgICAgICAgICAgICAgICAgaWYgKGdyYW50ZWQpIGNhbGxiYWNrLmdyYW50KCkgZWxzZSBjYWxsYmFjay5yZWplY3QoKQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CgogICAgICAgICAgICBvdmVycmlkZSBmdW4gb25Db250ZW50UGVybWlzc2lvblJlcXVlc3QoCiAgICAgICAgICAgICAgICBzZXNzaW9uOiBHZWNrb1Nlc3Npb24sCiAgICAgICAgICAgICAgICBwZXJtOiBHZWNrb1Nlc3Npb24uUGVybWlzc2lvbkRlbGVnYXRlLkNvbnRlbnRQZXJtaXNzaW9uLAogICAgICAgICAgICApOiBHZWNrb1Jlc3VsdDxJbnQ+PyB7CiAgICAgICAgICAgICAgICByZXR1cm4gR2Vja29SZXN1bHQuZnJvbVZhbHVlKEdlY2tvU2Vzc2lvbi5QZXJtaXNzaW9uRGVsZWdhdGUuQ29udGVudFBlcm1pc3Npb24uVkFMVUVfQUxMT1cpCiAgICAgICAgICAgIH0KICAgICAgICB9CgogICAgICAgIHNlc3Npb24ucHJvbXB0RGVsZWdhdGUgPSBvYmplY3QgOiBHZWNrb1Nlc3Npb24uUHJvbXB0RGVsZWdhdGUgewogICAgICAgICAgICBvdmVycmlkZSBmdW4gb25GaWxlUHJvbXB0KAogICAgICAgICAgICAgICAgc2Vzc2lvbjogR2Vja29TZXNzaW9uLAogICAgICAgICAgICAgICAgcHJvbXB0OiBHZWNrb1Nlc3Npb24uUHJvbXB0RGVsZWdhdGUuRmlsZVByb21wdCwKICAgICAgICAgICAgKTogR2Vja29SZXN1bHQ8R2Vja29TZXNzaW9uLlByb21wdERlbGVnYXRlLlByb21wdFJlc3BvbnNlPj8gewogICAgICAgICAgICAgICAgdmFsIHJlc3VsdCA9IEdlY2tvUmVzdWx0PEdlY2tvU2Vzc2lvbi5Qcm9tcHREZWxlZ2F0ZS5Qcm9tcHRSZXNwb25zZT4oKQogICAgICAgICAgICAgICAgQXBwLnBlbmRpbmdGaWxlUHJvbXB0ID0gcHJvbXB0CiAgICAgICAgICAgICAgICBBcHAucGVuZGluZ0ZpbGVQcm9tcHRSZXN1bHQgPSByZXN1bHQKICAgICAgICAgICAgICAgIEFwcC5hY3Rpdml0eT8ub3BlbkZpbGVDaG9vc2VyKCkKICAgICAgICAgICAgICAgIHJldHVybiByZXN1bHQKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KCiAgICBwcml2YXRlIGZ1biBoYW5kbGVFeHRlcm5hbFVybCh1cmw6IFN0cmluZywgaXNNYWluRnJhbWU6IEJvb2xlYW4pOiBCb29sZWFuIHsKICAgICAgICB2YWwgc2NoZW1lID0gdXJsLnN1YnN0cmluZ0JlZm9yZSgiOiIpLmxvd2VyY2FzZSgpCiAgICAgICAgaWYgKHNjaGVtZSBpbiBXRUJfU0NIRU1FUykgcmV0dXJuIGZhbHNlCiAgICAgICAgaWYgKGlzTWFpbkZyYW1lKSBvcGVuRXh0ZXJuYWwodXJsKQogICAgICAgIHJldHVybiB0cnVlCiAgICB9CgogICAgcHJpdmF0ZSBmdW4gb2ZmZXJTdG9yZUluc3RhbGwodXJsOiBTdHJpbmcpIHsKICAgICAgICB2YWwgaG9zdCA9IHJ1bkNhdGNoaW5nIHsgVXJpLnBhcnNlKHVybCkuaG9zdCA/OiAiIiB9LmdldE9yRGVmYXVsdCgiIikKICAgICAgICBpZiAoaG9zdC5pc0VtcHR5KCkpIHJldHVybgogICAgICAgIGlmIChob3N0ID09ICJhZGRvbnMubW96aWxsYS5vcmciIHx8IGhvc3QuZW5kc1dpdGgoIi5hZGRvbnMubW96aWxsYS5vcmciKSkgewogICAgICAgICAgICB2YWwgbSA9IFJlZ2V4KCIvKD86ZmlyZWZveC8pP2FkZG9uLyhbXi8/XSspIikuZmluZCh1cmwpID86IHJldHVybgogICAgICAgICAgICB2YWwgc2x1ZyA9IG0uZ3JvdXBWYWx1ZXNbMV0KICAgICAgICAgICAgdmFsIGtleSA9ICJhbW86JHNsdWciCiAgICAgICAgICAgIGlmIChzdG9yZU9mZmVyPy5rZXkgPT0ga2V5KSByZXR1cm4KICAgICAgICAgICAgdmFsIG5hbWUgPSBzbHVnLnJlcGxhY2UoJy0nLCAnICcpLnJlcGxhY2VGaXJzdENoYXIgeyBpdC51cHBlcmNhc2UoKSB9CiAgICAgICAgICAgIHN0b3JlT2ZmZXIgPSBTdG9yZU9mZmVyKCJhbW8iLCBzbHVnLCBuYW1lKQogICAgICAgICAgICByZXR1cm4KICAgICAgICB9CiAgICAgICAgdmFsIGlzQ2hyb21lU3RvcmUgPQogICAgICAgICAgICBob3N0ID09ICJjaHJvbWV3ZWJzdG9yZS5nb29nbGUuY29tIiB8fCBob3N0ID09ICJuZXdlYnN0b3JlLmdvb2dsZS5jb20iIHx8IGhvc3QuZW5kc1dpdGgoIi5jaHJvbWV3ZWJzdG9yZS5nb29nbGUuY29tIikgfHwgaG9zdC5lbmRzV2l0aCgiLm5ld2Vic3RvcmUuZ29vZ2xlLmNvbSIpCiAgICAgICAgaWYgKGlzQ2hyb21lU3RvcmUpIHsKICAgICAgICAgICAgdmFsIG0gPSBSZWdleCgiL2RldGFpbC8oW14vXSspLyhbYS1wXXszMn0pIikuZmluZCh1cmwpID86IHJldHVybgogICAgICAgICAgICB2YWwgaWQgPSBtLmdyb3VwVmFsdWVzWzJdCiAgICAgICAgICAgIHZhbCBrZXkgPSAiY2hyb21lOiRpZCIKICAgICAgICAgICAgaWYgKHN0b3JlT2ZmZXI/LmtleSA9PSBrZXkpIHJldHVybgogICAgICAgICAgICB2YWwgc2x1ZyA9IG0uZ3JvdXBWYWx1ZXNbMV0KICAgICAgICAgICAgdmFsIG5hbWUgPSBzbHVnLnNwbGl0KCctJywgJ18nKS5qb2luVG9TdHJpbmcoIiAiKSB7IHBhcnQgLT4KICAgICAgICAgICAgICAgIHBhcnQucmVwbGFjZUZpcnN0Q2hhciB7IGlmIChpdC5pc0xvd2VyQ2FzZSgpKSBpdC50aXRsZWNhc2UoKSBlbHNlIGl0LnRvU3RyaW5nKCkgfQogICAgICAgICAgICB9CiAgICAgICAgICAgIHN0b3JlT2ZmZXIgPSBTdG9yZU9mZmVyKCJjaHJvbWUiLCBpZCwgbmFtZSkKICAgICAgICB9CiAgICB9CgogICAgZnVuIGFjdGl2YXRlKGluZGV4OiBJbnQpIHsKICAgICAgICBpZiAoaW5kZXggIWluIHRhYnMuaW5kaWNlcykgcmV0dXJuCiAgICAgICAgYWN0aXZlSW5kZXggPSBpbmRleAogICAgfQoKICAgIGZ1biBjbG9zZVRhYihpbmRleDogSW50KSB7CiAgICAgICAgdmFsIHRhYiA9IHRhYnMuZ2V0T3JOdWxsKGluZGV4KSA/OiByZXR1cm4KICAgICAgICBzZXNzaW9ucy5yZW1vdmUodGFiLmlkKT8ubGV0IHsKICAgICAgICAgICAgcnVuQ2F0Y2hpbmcgewogICAgICAgICAgICAgICAgaXQuc2V0dGluZ3MuZGlzcGxheU1vZGUgPSBHZWNrb1Nlc3Npb25TZXR0aW5ncy5ESVNQTEFZX01PREVfQlJPV1NFUgogICAgICAgICAgICAgICAgaXQuY2xvc2UoKQogICAgICAgICAgICB9CiAgICAgICAgfQogICAgICAgIHNlc3Npb25Mb2Fkcy5yZW1vdmUodGFiLmlkKQogICAgICAgIHRhYnMucmVtb3ZlQXQoaW5kZXgpCiAgICAgICAgaWYgKHRhYnMuaXNFbXB0eSgpKSB7CiAgICAgICAgICAgIGFjdGl2ZUluZGV4ID0gLTEKICAgICAgICAgICAgbmV3VGFiKCkKICAgICAgICB9IGVsc2UgewogICAgICAgICAgICBhY3RpdmF0ZShpZiAoaW5kZXggPCB0YWJzLnNpemUpIGluZGV4IGVsc2UgdGFicy5sYXN0SW5kZXgpCiAgICAgICAgfQogICAgfQoKICAgIGZ1biBjbG9zZUFsbFByaXZhdGUoKSB7CiAgICAgICAgdmFsIGlkcyA9IHRhYnMuZmlsdGVyIHsgaXQuaXNQcml2YXRlIH0ubWFwIHsgaXQuaWQgfQogICAgICAgIGlkcy5mb3JFYWNoIHsgaWQgLT4KICAgICAgICAgICAgc2Vzc2lvbnMucmVtb3ZlKGlkKT8ubGV0IHsgcnVuQ2F0Y2hpbmcgeyBpdC5jbG9zZSgpIH0gfQogICAgICAgICAgICBzZXNzaW9uTG9hZHMucmVtb3ZlKGlkKQogICAgICAgIH0KICAgICAgICB0YWJzLnJlbW92ZUFsbCB7IGl0LmlzUHJpdmF0ZSB9CiAgICAgICAgaWYgKHRhYnMuaXNFbXB0eSgpKSB7CiAgICAgICAgICAgIGFjdGl2ZUluZGV4ID0gLTEKICAgICAgICAgICAgbmV3VGFiKCkKICAgICAgICB9IGVsc2UgaWYgKGFjdGl2ZUluZGV4ID49IHRhYnMuc2l6ZSkgewogICAgICAgICAgICBhY3RpdmVJbmRleCA9IHRhYnMubGFzdEluZGV4CiAgICAgICAgfQogICAgfQoKICAgIGZ1biBuYXZpZ2F0ZShpbnB1dDogU3RyaW5nKSB7CiAgICAgICAgdmFsIHRhYiA9IGFjdGl2ZVRhYiA/OiByZXR1cm4KICAgICAgICB2YWwgdXJsID0gaW50ZXJwcmV0KGlucHV0KSA/OiByZXR1cm4KICAgICAgICBwYXRjaCh0YWIuaWQpIHsgY29weSh1cmwgPSB1cmwpIH0KICAgICAgICB2YWwgc2Vzc2lvbiA9IHNlc3Npb25Gb3IodGFiLmlkKQogICAgICAgIGlmIChzZXNzaW9uTG9hZHNbdGFiLmlkXSAhPSB1cmwpIHsKICAgICAgICAgICAgc2Vzc2lvbkxvYWRzW3RhYi5pZF0gPSBudWxsCiAgICAgICAgICAgIHJ1bkNhdGNoaW5nIHsgc2Vzc2lvbi5sb2FkVXJpKHVybCkgfQogICAgICAgICAgICBzZXNzaW9uTG9hZHNbdGFiLmlkXSA9IHVybAogICAgICAgIH0KICAgIH0KCiAgICBmdW4gbG9hZEluVGFiKGluZGV4OiBJbnQsIGlucHV0OiBTdHJpbmcpIHsKICAgICAgICB2YWwgdGFiID0gdGFicy5nZXRPck51bGwoaW5kZXgpID86IHJldHVybgogICAgICAgIHZhbCB1cmwgPSBpbnRlcnByZXQoaW5wdXQpID86IHJldHVybgogICAgICAgIGFjdGl2YXRlKGluZGV4KQogICAgICAgIHBhdGNoKHRhYi5pZCkgeyBjb3B5KHVybCA9IHVybCkgfQogICAgICAgIHZhbCBzZXNzaW9uID0gc2Vzc2lvbkZvcih0YWIuaWQpCiAgICAgICAgaWYgKHNlc3Npb25Mb2Fkc1t0YWIuaWRdICE9IHVybCkgewogICAgICAgICAgICBzZXNzaW9uTG9hZHNbdGFiLmlkXSA9IG51bGwKICAgICAgICAgICAgcnVuQ2F0Y2hpbmcgeyBzZXNzaW9uLmxvYWRVcmkodXJsKSB9CiAgICAgICAgICAgIHNlc3Npb25Mb2Fkc1t0YWIuaWRdID0gdXJsCiAgICAgICAgfQogICAgfQoKICAgIGZ1biBpbnRlcnByZXQocmF3OiBTdHJpbmcpOiBTdHJpbmc/IHsKICAgICAgICB2YWwgcSA9IHJhdy50cmltKCkKICAgICAgICBpZiAocS5pc0VtcHR5KCkpIHJldHVybiBudWxsCiAgICAgICAgdmFsIGhhc1NjaGVtZSA9IHEuY29udGFpbnMoIjovLyIpCiAgICAgICAgdmFsIGxvb2tzTGlrZVVybCA9ICFxLmNvbnRhaW5zKCIgIikgJiYgKHEuY29udGFpbnMoIi4iKSB8fCBoYXNTY2hlbWUgfHwgcS5zdGFydHNXaXRoKCJsb2NhbGhvc3QiKSkKICAgICAgICByZXR1cm4gaWYgKGxvb2tzTGlrZVVybCkgewogICAgICAgICAgICBpZiAoaGFzU2NoZW1lKSBxIGVsc2UgImh0dHBzOi8vJHEiCiAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAgc2VhcmNoVXJsKHEpCiAgICAgICAgfQogICAgfQoKICAgIGZ1biBzZWFyY2hVcmwocXVlcnk6IFN0cmluZyk6IFN0cmluZyB7CiAgICAgICAgdmFsIHEgPSBVcmkuZW5jb2RlKHF1ZXJ5KQogICAgICAgIHJldHVybiB3aGVuIChTdG9yZS5zZWFyY2hFbmdpbmUpIHsKICAgICAgICAgICAgImR1Y2tkdWNrZ28iIC0+ICJodHRwczovL2R1Y2tkdWNrZ28uY29tLz9xPSRxIgogICAgICAgICAgICAiYmluZyIgLT4gImh0dHBzOi8vd3d3LmJpbmcuY29tL3NlYXJjaD9xPSRxIgogICAgICAgICAgICBlbHNlIC0+ICJodHRwczovL3d3dy5nb29nbGUuY29tL3NlYXJjaD9xPSRxIgogICAgICAgIH0KICAgIH0KCiAgICBmdW4gZ29Ib21lKCkgewogICAgICAgIHZhbCB0YWIgPSBhY3RpdmVUYWIgPzogcmV0dXJuCiAgICAgICAgcGF0Y2godGFiLmlkKSB7IGNvcHkodXJsID0gIiIsIHRpdGxlID0gIiIsIHByb2dyZXNzID0gMCwgYmxvY2tlZCA9IDAsIHNlY3VyZSA9IGZhbHNlLCBjYW5Hb0JhY2sgPSBmYWxzZSwgY2FuR29Gb3J3YXJkID0gZmFsc2UpIH0KICAgICAgICBzZXNzaW9uc1t0YWIuaWRdPy5sZXQgeyBydW5DYXRjaGluZyB7IGl0LmxvYWRVcmkoImFib3V0OmJsYW5rIikgfSB9CiAgICB9CgogICAgZnVuIHRvZ2dsZVNoaWVsZCgpIHsKICAgICAgICB2YWwgdGFiID0gYWN0aXZlVGFiID86IHJldHVybgogICAgICAgIHZhbCBuZXh0ID0gIXRhYi5zaGllbGQKICAgICAgICBwYXRjaCh0YWIuaWQpIHsgY29weShzaGllbGQgPSBuZXh0KSB9CiAgICAgICAgc2Vzc2lvbnNbdGFiLmlkXT8ubGV0IHsgc2Vzc2lvbiAtPgogICAgICAgICAgICBydW5DYXRjaGluZyB7CiAgICAgICAgICAgICAgICBzZXNzaW9uLnNldHRpbmdzLnVzZVRyYWNraW5nUHJvdGVjdGlvbiA9IG5leHQKICAgICAgICAgICAgICAgIHNlc3Npb24ucmVsb2FkKCkKICAgICAgICAgICAgfQogICAgICAgIH0KICAgICAgICBpZiAoU3RvcmUuYWRibG9ja0xldmVsICE9ICJvZmYiKSB7CiAgICAgICAgICAgIGxhc3RTaGllbGROb3RpY2UgPSAiQWQgYmxvY2tpbmcgdHVybmVkICR7aWYgKG5leHQpICJvbiIgZWxzZSAib2ZmIn0gZm9yIHRoaXMgc2l0ZS4gUmVsb2FkIHRoZSBwYWdlLiIKICAgICAgICB9CiAgICB9CgogICAgZnVuIGFwcGx5U2hpZWxkVG9BbGwoKSB7CiAgICAgICAgdmFsIG9uID0gU3RvcmUuYWRibG9ja0xldmVsICE9ICJvZmYiCiAgICAgICAgdGFicy5mb3JFYWNoIHsgdGFiIC0+CiAgICAgICAgICAgIHBhdGNoKHRhYi5pZCkgeyBjb3B5KHNoaWVsZCA9IG9uKSB9CiAgICAgICAgICAgIHNlc3Npb25zW3RhYi5pZF0/LmxldCB7IHNlc3Npb24gLT4KICAgICAgICAgICAgICAgIHJ1bkNhdGNoaW5nIHsgc2Vzc2lvbi5zZXR0aW5ncy51c2VUcmFja2luZ1Byb3RlY3Rpb24gPSBvbiB9CiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgaWYgKFN0b3JlLmFkYmxvY2tMZXZlbCA9PSAib2ZmIikgewogICAgICAgICAgICBsYXN0U2hpZWxkTm90aWNlID0gIkFkIGJsb2NraW5nIGlzIG9mZiBmb3IgYWxsIHRhYnMuIFJlbG9hZCBwYWdlcyB0byBhcHBseS4iCiAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAgbGFzdFNoaWVsZE5vdGljZSA9ICJBZCBibG9ja2luZyB1cGRhdGVkIGZvciBhbGwgdGFicy4gUmVsb2FkIHBhZ2VzIHRvIGFwcGx5LiIKICAgICAgICB9CiAgICB9CgogICAgZnVuIHRvZ2dsZURlc2t0b3BTaXRlKCkgewogICAgICAgIHZhbCB0YWIgPSBhY3RpdmVUYWIgPzogcmV0dXJuCiAgICAgICAgdmFsIG5leHQgPSAhdGFiLmRlc2t0b3BTaXRlCiAgICAgICAgcGF0Y2godGFiLmlkKSB7IGNvcHkoZGVza3RvcFNpdGUgPSBuZXh0KSB9CiAgICAgICAgc2Vzc2lvbnNbdGFiLmlkXT8ubGV0IHsgc2Vzc2lvbiAtPgogICAgICAgICAgICBydW5DYXRjaGluZyB7CiAgICAgICAgICAgICAgICBzZXNzaW9uLnNldHRpbmdzLnVzZXJBZ2VudE1vZGUgPQogICAgICAgICAgICAgICAgICAgIGlmIChuZXh0KSBHZWNrb1Nlc3Npb25TZXR0aW5ncy5VU0VSX0FHRU5UX01PREVfREVTS1RPUCBlbHNlIEdlY2tvU2Vzc2lvblNldHRpbmdzLlVTRVJfQUdFTlRfTU9ERV9NT0JJTEUKICAgICAgICAgICAgICAgIHNlc3Npb24ucmVsb2FkKCkKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KCiAgICBmdW4gc2V0RnVsbHNjcmVlbihvbjogQm9vbGVhbikgewogICAgICAgIGlmIChmdWxsc2NyZWVuID09IG9uKSByZXR1cm4KICAgICAgICBmdWxsc2NyZWVuID0gb24KICAgICAgICBydW5DYXRjaGluZyB7CiAgICAgICAgICAgIGlmIChvbikgQXBwLmFjdGl2aXR5Py5zZXRGdWxsc2NyZWVuVWkodHJ1ZSkgZWxzZSBBcHAuYWN0aXZpdHk/LnNldEZ1bGxzY3JlZW5VaShmYWxzZSkKICAgICAgICB9CiAgICB9CgogICAgZnVuIGV4aXRGdWxsc2NyZWVuKCkgewogICAgICAgIGFjdGl2ZVNlc3Npb24oKT8ubGV0IHsgc2Vzc2lvbiAtPgogICAgICAgICAgICBydW5DYXRjaGluZyB7CiAgICAgICAgICAgICAgICBzZXNzaW9uLnNldHRpbmdzLmRpc3BsYXlNb2RlID0gR2Vja29TZXNzaW9uU2V0dGluZ3MuRElTUExBWV9NT0RFX0JST1dTRVIKICAgICAgICAgICAgfQogICAgICAgIH0KICAgICAgICBzZXRGdWxsc2NyZWVuKGZhbHNlKQogICAgfQoKICAgIGZ1biByZXBvcnRCbG9ja2VkKHRhYklkOiBJbnQsIG46IEludCA9IDEpIHsKICAgICAgICB0b3RhbEJsb2NrZWQgKz0gbgogICAgICAgIHBhdGNoKHRhYklkKSB7IGNvcHkoYmxvY2tlZCA9IGJsb2NrZWQgKyBuKSB9CiAgICB9CgogICAgZnVuIGJhY2soKTogQm9vbGVhbiB7CiAgICAgICAgdmFsIHRhYiA9IGFjdGl2ZVRhYiA/OiByZXR1cm4gZmFsc2UKICAgICAgICByZXR1cm4gaWYgKHRhYi5jYW5Hb0JhY2spIHsKICAgICAgICAgICAgYWN0aXZlU2Vzc2lvbigpPy5nb0JhY2soKQogICAgICAgICAgICB0cnVlCiAgICAgICAgfSBlbHNlIGZhbHNlCiAgICB9CgogICAgZnVuIGZvcndhcmQoKSB7CiAgICAgICAgYWN0aXZlU2Vzc2lvbigpPy5nb0ZvcndhcmQoKQogICAgfQoKICAgIGZ1biByZWxvYWQoKSB7CiAgICAgICAgdmFsIHRhYiA9IGFjdGl2ZVRhYiA/OiByZXR1cm4KICAgICAgICBpZiAodGFiLmlzU3RhcnRQYWdlKSByZXR1cm4KICAgICAgICBhY3RpdmVTZXNzaW9uKCk/LnJlbG9hZCgpCiAgICB9CgogICAgZnVuIHN0b3AoKSB7CiAgICAgICAgYWN0aXZlU2Vzc2lvbigpPy5zdG9wKCkKICAgIH0KCiAgICBmdW4gb3BlbkV4dGVybmFsKHJhdzogU3RyaW5nKSB7CiAgICAgICAgdmFsIGFjdGl2aXR5ID0gQXBwLmFjdGl2aXR5ID86IHJldHVybgogICAgICAgIHRyeSB7CiAgICAgICAgICAgIHZhbCB1cmkgPSBpZiAocmF3LnN0YXJ0c1dpdGgoImludGVudDoiKSkgewogICAgICAgICAgICAgICAgcnVuQ2F0Y2hpbmcgewogICAgICAgICAgICAgICAgICAgIHZhbCB1ID0gVXJpLnBhcnNlKHJhdykKICAgICAgICAgICAgICAgICAgICBVcmkucGFyc2UodS5nZXRRdWVyeVBhcmFtZXRlcigiYnJvd3Nlcl9mYWxsYmFja191cmwiKSA/OiByYXcpCiAgICAgICAgICAgICAgICB9LmdldE9yRGVmYXVsdChVcmkucGFyc2UocmF3KSkKICAgICAgICAgICAgfSBlbHNlIFVyaS5wYXJzZShyYXcpCiAgICAgICAgICAgIGFjdGl2aXR5LnN0YXJ0QWN0aXZpdHkoSW50ZW50KEludGVudC5BQ1RJT05fVklFVywgdXJpKSkKICAgICAgICB9IGNhdGNoIChfOiBFeGNlcHRpb24pIHsKICAgICAgICAgICAgcGVuZGluZ0V4dGVybmFsSW50ZW50ID0gcmF3CiAgICAgICAgfQogICAgfQoKICAgIGZ1biBmYXZpY29uVXJsKHVybDogU3RyaW5nKTogU3RyaW5nIHsKICAgICAgICB2YWwgaG9zdCA9IHJ1bkNhdGNoaW5nIHsgVXJpLnBhcnNlKHVybCkuaG9zdCA/OiAiIiB9LmdldE9yRGVmYXVsdCgiIikKICAgICAgICByZXR1cm4gImh0dHBzOi8vd3d3Lmdvb2dsZS5jb20vczIvZmF2aWNvbnM/ZG9tYWluPSR7VXJpLmVuY29kZShob3N0KX0mc3o9NjQiCiAgICB9CgogICAgcHJpdmF0ZSBmdW4gcGF0Y2goaWQ6IEludCwgdHJhbnNmb3JtOiBUYWJTdGF0ZS4oKSAtPiBUYWJTdGF0ZSkgewogICAgICAgIHZhbCBpID0gdGFicy5pbmRleE9mRmlyc3QgeyBpdC5pZCA9PSBpZCB9CiAgICAgICAgaWYgKGkgPCAwKSByZXR1cm4KICAgICAgICB0YWJzW2ldID0gdHJhbnNmb3JtKHRhYnNbaV0pCiAgICB9CgogICAgcHJpdmF0ZSB2YWwgV0VCX1NDSEVNRVMgPSBzZXRPZigiaHR0cCIsICJodHRwcyIsICJhYm91dCIsICJkYXRhIiwgImZpbGUiLCAiamF2YXNjcmlwdCIsICJibG9iIiwgIndzIiwgIndzcyIpCn0K
+package com.nova.browser.browser
+
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.nova.browser.App
+import com.nova.browser.ext.ExtensionManager
+import com.nova.browser.store.Store
+import org.mozilla.geckoview.AllowOrDeny
+import org.mozilla.geckoview.ContentBlocking
+import org.mozilla.geckoview.GeckoResult
+import org.mozilla.geckoview.GeckoSession
+import org.mozilla.geckoview.GeckoSessionSettings
+import org.mozilla.geckoview.GeckoView
+import org.mozilla.geckoview.WebResponse
+
+data class StoreOffer(val kind: String, val key: String, val name: String)
+
+object BrowserCore {
+    val tabs = mutableStateListOf<TabState>()
+    var activeIndex by mutableIntStateOf(-1)
+    var totalBlocked by mutableStateOf(0L)
+    var lastDownloadMessage by mutableStateOf<String?>(null)
+    var pendingExternalIntent by mutableStateOf<String?>(null)
+    var lastShieldNotice by mutableStateOf<String?>(null)
+    var storeOffer by mutableStateOf<StoreOffer?>(null)
+    var fullscreen by mutableStateOf(false)
+
+    private val sessions = HashMap<Int, GeckoSession>()
+    private val sessionLoads = HashMap<Int, String>()
+    private var geckoView: GeckoView? = null
+    private var nextId = 1
+
+    val activeTab: TabState? get() = tabs.getOrNull(activeIndex)
+    fun activeSession(): GeckoSession? = activeTab?.let { sessions[it.id] }
+
+    fun newTab(url: String? = null, isPrivate: Boolean = false): Int {
+        val id = nextId++
+        val shield = Store.adblockLevel != "off"
+        val tab = TabState(id = id, isPrivate = isPrivate, shield = shield)
+        tabs.add(tab)
+        activate(tabs.lastIndex)
+        if (!url.isNullOrBlank()) tabs[tabs.lastIndex] = tabs[tabs.lastIndex].copy(url = url)
+        return tabs.lastIndex
+    }
+
+    fun attachView(context: Context, tabId: Int): GeckoView {
+        val v = geckoView ?: GeckoView(context).also { geckoView = it }
+        val session = sessionFor(tabId)
+        if (v.getSession() !== session) {
+            runCatching { v.releaseSession() }
+            v.setSession(session)
+        }
+        return v
+    }
+
+    private fun sessionFor(tabId: Int, autoLoad: Boolean = true): GeckoSession {
+        sessions[tabId]?.let { s ->
+            if (autoLoad) maybeLoad(tabId, s)
+            return s
+        }
+        val runtime = App.geckoRuntime
+        val tab = tabs.firstOrNull { it.id == tabId }
+        val settings = GeckoSessionSettings.Builder()
+            .usePrivateMode(tab?.isPrivate == true)
+            .build()
+        settings.useTrackingProtection = tab?.shield ?: true
+        settings.userAgentMode =
+            if (tab?.desktopSite == true) GeckoSessionSettings.USER_AGENT_MODE_DESKTOP else GeckoSessionSettings.USER_AGENT_MODE_MOBILE
+        settings.displayMode = GeckoSessionSettings.DISPLAY_MODE_BROWSER
+
+        val session = GeckoSession(settings)
+        configureDelegates(session, tabId)
+        session.open(runtime)
+        sessions[tabId] = session
+        if (autoLoad) maybeLoad(tabId, session)
+        return session
+    }
+
+    private fun maybeLoad(tabId: Int, session: GeckoSession) {
+        val tab = tabs.firstOrNull { it.id == tabId } ?: return
+        val url = tab.url
+        if (url.isBlank() || tab.isStartPage) return
+        if (sessionLoads[tabId] == url) return
+        sessionLoads[tabId] = url
+        runCatching { session.loadUri(url) }
+    }
+
+    private fun configureDelegates(session: GeckoSession, tabId: Int) {
+        session.navigationDelegate = object : GeckoSession.NavigationDelegate {
+            override fun onLoadRequest(session: GeckoSession, request: GeckoSession.NavigationDelegate.LoadRequest): GeckoResult<AllowOrDeny>? {
+                val uri = request.uri ?: return null
+                return if (handleExternalUrl(uri, request.isMainFrame)) GeckoResult.deny() else null
+            }
+
+            override fun onLocationChange(
+                session: GeckoSession,
+                url: String?,
+                perms: MutableList<GeckoSession.PermissionDelegate.ContentPermission>?,
+                hasUserGesture: Boolean?,
+            ) {
+                val u = url ?: return
+                runCatching {
+                    patch(tabId) { copy(url = u, secure = u.startsWith("https://")) }
+                    offerStoreInstall(u)
+                }
+            }
+
+            override fun onCanGoBack(session: GeckoSession, canGoBack: Boolean) {
+                runCatching { patch(tabId) { copy(canGoBack = canGoBack) } }
+            }
+
+            override fun onCanGoForward(session: GeckoSession, canGoForward: Boolean) {
+                runCatching { patch(tabId) { copy(canGoForward = canGoForward) } }
+            }
+
+            override fun onNewSession(session: GeckoSession, uri: String?): GeckoResult<GeckoSession>? {
+                val tab = tabs.firstOrNull { it.id == tabId }
+                val index = newTab(url = uri ?: "", isPrivate = tab?.isPrivate == true)
+                val newTabId = tabs[index].id
+                val newSession = sessionFor(newTabId, autoLoad = false)
+                return GeckoResult.fromValue(newSession)
+            }
+
+            override fun onLoadError(session: GeckoSession, uri: String?, error: Int, category: Int) {
+                runCatching { patch(tabId) { copy(progress = 100) } }
+            }
+        }
+
+        session.progressDelegate = object : GeckoSession.ProgressDelegate {
+            override fun onPageStart(session: GeckoSession, url: String) {
+                runCatching {
+                    if (storeOffer != null) storeOffer = null
+                    patch(tabId) {
+                        copy(url = url, title = "", progress = 0, secure = url.startsWith("https://"), blocked = 0)
+                    }
+                }
+            }
+
+            override fun onPageStop(session: GeckoSession, success: Boolean) {
+                runCatching {
+                    val tab = tabs.firstOrNull { it.id == tabId } ?: return
+                    patch(tabId) { copy(progress = 100) }
+                    if (!tab.isPrivate && tab.url.startsWith("http")) {
+                        Store.addHistory(tab.title.ifBlank { tab.url }, tab.url)
+                    }
+                }
+            }
+
+            override fun onProgressChange(session: GeckoSession, progress: Int) {
+                runCatching { patch(tabId) { copy(progress = progress.coerceIn(0, 100)) } }
+            }
+
+            override fun onSecurityChange(session: GeckoSession, securityInfo: GeckoSession.ProgressDelegate.SecurityInformation) {
+                runCatching { patch(tabId) { copy(secure = securityInfo.isSecure) } }
+            }
+        }
+
+        session.contentDelegate = object : GeckoSession.ContentDelegate {
+            override fun onTitleChange(session: GeckoSession, title: String?) {
+                runCatching {
+                    if (!title.isNullOrBlank()) patch(tabId) { copy(title = title) }
+                }
+            }
+
+            override fun onFullScreen(session: GeckoSession, fullScreen: Boolean) {
+                runCatching {
+                    session.settings.displayMode =
+                        if (fullScreen) GeckoSessionSettings.DISPLAY_MODE_FULLSCREEN else GeckoSessionSettings.DISPLAY_MODE_BROWSER
+                    setFullscreen(fullScreen)
+                }
+            }
+
+            override fun onExternalResponse(session: GeckoSession, response: WebResponse) {
+                runCatching {
+                    val url = response.uri
+                    val lower = url.lowercase()
+                    val isExt = lower.endsWith(".xpi") || lower.endsWith(".crx")
+                    if (isExt) {
+                        ExtensionManager.installFromUrl(App.context, url)
+                    } else {
+                        val mime = response.headers?.get("Content-Type")
+                        Downloads.start(App.context, url, "", null, mime, -1L) { msg ->
+                            lastDownloadMessage = msg
+                        }
+                    }
+                }
+            }
+
+            override fun onCloseRequest(session: GeckoSession) {
+                runCatching {
+                    val i = tabs.indexOfFirst { it.id == tabId }
+                    if (i >= 0) closeTab(i)
+                }
+            }
+        }
+
+        session.contentBlockingDelegate = object : ContentBlocking.Delegate {
+            override fun onContentBlocked(session: GeckoSession, event: ContentBlocking.BlockEvent) {
+                runCatching {
+                    totalBlocked += 1
+                    patch(tabId) { copy(blocked = blocked + 1) }
+                }
+            }
+        }
+
+        session.permissionDelegate = object : GeckoSession.PermissionDelegate {
+            override fun onAndroidPermissionsRequest(
+                session: GeckoSession,
+                permissions: Array<String>,
+                callback: GeckoSession.PermissionDelegate.Callback,
+            ) {
+                App.requestAndroidPermissions(permissions.toList()) { granted ->
+                    if (granted) callback.grant() else callback.reject()
+                }
+            }
+
+            override fun onContentPermissionRequest(
+                session: GeckoSession,
+                perm: GeckoSession.PermissionDelegate.ContentPermission,
+            ): GeckoResult<Int>? {
+                return GeckoResult.fromValue(GeckoSession.PermissionDelegate.ContentPermission.VALUE_ALLOW)
+            }
+        }
+
+        session.promptDelegate = object : GeckoSession.PromptDelegate {
+            override fun onFilePrompt(
+                session: GeckoSession,
+                prompt: GeckoSession.PromptDelegate.FilePrompt,
+            ): GeckoResult<GeckoSession.PromptDelegate.PromptResponse>? {
+                val result = GeckoResult<GeckoSession.PromptDelegate.PromptResponse>()
+                App.pendingFilePrompt = prompt
+                App.pendingFilePromptResult = result
+                App.activity?.openFileChooser()
+                return result
+            }
+        }
+    }
+
+    private fun handleExternalUrl(url: String, isMainFrame: Boolean): Boolean {
+        val scheme = url.substringBefore(":").lowercase()
+        if (scheme in WEB_SCHEMES) return false
+        if (isMainFrame) openExternal(url)
+        return true
+    }
+
+    private fun offerStoreInstall(url: String) {
+        val host = runCatching { Uri.parse(url).host ?: "" }.getOrDefault("")
+        if (host.isEmpty()) return
+        if (host == "addons.mozilla.org" || host.endsWith(".addons.mozilla.org")) {
+            val m = Regex("/(?:firefox/)?addon/([^/?]+)").find(url) ?: return
+            val slug = m.groupValues[1]
+            val key = "amo:$slug"
+            if (storeOffer?.key == key) return
+            val name = slug.replace('-', ' ').replaceFirstChar { it.uppercase() }
+            storeOffer = StoreOffer("amo", slug, name)
+            return
+        }
+        val isChromeStore =
+            host == "chromewebstore.google.com" || host == "newebstore.google.com" || host.endsWith(".chromewebstore.google.com") || host.endsWith(".newebstore.google.com")
+        if (isChromeStore) {
+            val m = Regex("/detail/([^/]+)/([a-p]{32})").find(url) ?: return
+            val id = m.groupValues[2]
+            val key = "chrome:$id"
+            if (storeOffer?.key == key) return
+            val slug = m.groupValues[1]
+            val name = slug.split('-', '_').joinToString(" ") { part ->
+                part.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+            }
+            storeOffer = StoreOffer("chrome", id, name)
+        }
+    }
+
+    fun activate(index: Int) {
+        if (index !in tabs.indices) return
+        activeIndex = index
+    }
+
+    fun closeTab(index: Int) {
+        val tab = tabs.getOrNull(index) ?: return
+        sessions.remove(tab.id)?.let {
+            runCatching {
+                it.settings.displayMode = GeckoSessionSettings.DISPLAY_MODE_BROWSER
+                it.close()
+            }
+        }
+        sessionLoads.remove(tab.id)
+        tabs.removeAt(index)
+        if (tabs.isEmpty()) {
+            activeIndex = -1
+            newTab()
+        } else {
+            activate(if (index < tabs.size) index else tabs.lastIndex)
+        }
+    }
+
+    fun closeAllPrivate() {
+        val ids = tabs.filter { it.isPrivate }.map { it.id }
+        ids.forEach { id ->
+            sessions.remove(id)?.let { runCatching { it.close() } }
+            sessionLoads.remove(id)
+        }
+        tabs.removeAll { it.isPrivate }
+        if (tabs.isEmpty()) {
+            activeIndex = -1
+            newTab()
+        } else if (activeIndex >= tabs.size) {
+            activeIndex = tabs.lastIndex
+        }
+    }
+
+    fun navigate(input: String) {
+        val tab = activeTab ?: return
+        val url = interpret(input) ?: return
+        patch(tab.id) { copy(url = url) }
+        val session = sessionFor(tab.id)
+        if (sessionLoads[tab.id] != url) {
+            sessionLoads[tab.id] = null
+            runCatching { session.loadUri(url) }
+            sessionLoads[tab.id] = url
+        }
+    }
+
+    fun loadInTab(index: Int, input: String) {
+        val tab = tabs.getOrNull(index) ?: return
+        val url = interpret(input) ?: return
+        activate(index)
+        patch(tab.id) { copy(url = url) }
+        val session = sessionFor(tab.id)
+        if (sessionLoads[tab.id] != url) {
+            sessionLoads[tab.id] = null
+            runCatching { session.loadUri(url) }
+            sessionLoads[tab.id] = url
+        }
+    }
+
+    fun interpret(raw: String): String? {
+        val q = raw.trim()
+        if (q.isEmpty()) return null
+        val hasScheme = q.contains("://")
+        val looksLikeUrl = !q.contains(" ") && (q.contains(".") || hasScheme || q.startsWith("localhost"))
+        return if (looksLikeUrl) {
+            if (hasScheme) q else "https://$q"
+        } else {
+            searchUrl(q)
+        }
+    }
+
+    fun searchUrl(query: String): String {
+        val q = Uri.encode(query)
+        return when (Store.searchEngine) {
+            "duckduckgo" -> "https://duckduckgo.com/?q=$q"
+            "bing" -> "https://www.bing.com/search?q=$q"
+            else -> "https://www.google.com/search?q=$q"
+        }
+    }
+
+    fun goHome() {
+        val tab = activeTab ?: return
+        patch(tab.id) { copy(url = "", title = "", progress = 0, blocked = 0, secure = false, canGoBack = false, canGoForward = false) }
+        sessions[tab.id]?.let { runCatching { it.loadUri("about:blank") } }
+    }
+
+    fun toggleShield() {
+        val tab = activeTab ?: return
+        val next = !tab.shield
+        patch(tab.id) { copy(shield = next) }
+        sessions[tab.id]?.let { session ->
+            runCatching {
+                session.settings.useTrackingProtection = next
+                session.reload()
+            }
+        }
+        if (Store.adblockLevel != "off") {
+            lastShieldNotice = "Ad blocking turned ${if (next) "on" else "off"} for this site. Reload the page."
+        }
+    }
+
+    fun applyShieldToAll() {
+        val on = Store.adblockLevel != "off"
+        tabs.forEach { tab ->
+            patch(tab.id) { copy(shield = on) }
+            sessions[tab.id]?.let { session ->
+                runCatching { session.settings.useTrackingProtection = on }
+            }
+        }
+        if (Store.adblockLevel == "off") {
+            lastShieldNotice = "Ad blocking is off for all tabs. Reload pages to apply."
+        } else {
+            lastShieldNotice = "Ad blocking updated for all tabs. Reload pages to apply."
+        }
+    }
+
+    fun toggleDesktopSite() {
+        val tab = activeTab ?: return
+        val next = !tab.desktopSite
+        patch(tab.id) { copy(desktopSite = next) }
+        sessions[tab.id]?.let { session ->
+            runCatching {
+                session.settings.userAgentMode =
+                    if (next) GeckoSessionSettings.USER_AGENT_MODE_DESKTOP else GeckoSessionSettings.USER_AGENT_MODE_MOBILE
+                session.reload()
+            }
+        }
+    }
+
+    fun setFullscreen(on: Boolean) {
+        if (fullscreen == on) return
+        fullscreen = on
+        runCatching {
+            if (on) App.activity?.setFullscreenUi(true) else App.activity?.setFullscreenUi(false)
+        }
+    }
+
+    fun exitFullscreen() {
+        activeSession()?.let { session ->
+            runCatching {
+                session.settings.displayMode = GeckoSessionSettings.DISPLAY_MODE_BROWSER
+            }
+        }
+        setFullscreen(false)
+    }
+
+    fun reportBlocked(tabId: Int, n: Int = 1) {
+        totalBlocked += n
+        patch(tabId) { copy(blocked = blocked + n) }
+    }
+
+    fun back(): Boolean {
+        val tab = activeTab ?: return false
+        return if (tab.canGoBack) {
+            activeSession()?.goBack()
+            true
+        } else false
+    }
+
+    fun forward() {
+        activeSession()?.goForward()
+    }
+
+    fun reload() {
+        val tab = activeTab ?: return
+        if (tab.isStartPage) return
+        activeSession()?.reload()
+    }
+
+    fun stop() {
+        activeSession()?.stop()
+    }
+
+    fun openExternal(raw: String) {
+        val activity = App.activity ?: return
+        try {
+            val uri = if (raw.startsWith("intent:")) {
+                runCatching {
+                    val u = Uri.parse(raw)
+                    Uri.parse(u.getQueryParameter("browser_fallback_url") ?: raw)
+                }.getOrDefault(Uri.parse(raw))
+            } else Uri.parse(raw)
+            activity.startActivity(Intent(Intent.ACTION_VIEW, uri))
+        } catch (_: Exception) {
+            pendingExternalIntent = raw
+        }
+    }
+
+    fun faviconUrl(url: String): String {
+        val host = runCatching { Uri.parse(url).host ?: "" }.getOrDefault("")
+        return "https://www.google.com/s2/favicons?domain=${Uri.encode(host)}&sz=64"
+    }
+
+    private fun patch(id: Int, transform: TabState.() -> TabState) {
+        val i = tabs.indexOfFirst { it.id == id }
+        if (i < 0) return
+        tabs[i] = transform(tabs[i])
+    }
+
+    private val WEB_SCHEMES = setOf("http", "https", "about", "data", "file", "javascript", "blob", "ws", "wss")
+}

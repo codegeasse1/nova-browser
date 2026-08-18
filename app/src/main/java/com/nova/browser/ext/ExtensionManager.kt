@@ -1,1 +1,255 @@
-cGFja2FnZSBjb20ubm92YS5icm93c2VyLmV4dAoKaW1wb3J0IGFuZHJvaWQuY29udGVudC5Db250ZXh0CmltcG9ydCBhbmRyb2lkLm5ldC5VcmkKaW1wb3J0IGFuZHJvaWQudXRpbC5Mb2cKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UucnVudGltZS5nZXRWYWx1ZQppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5ydW50aW1lLm11dGFibGVTdGF0ZUxpc3RPZgppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5ydW50aW1lLm11dGFibGVTdGF0ZU9mCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnJ1bnRpbWUuc2V0VmFsdWUKaW1wb3J0IGNvbS5ub3ZhLmJyb3dzZXIuQXBwCmltcG9ydCBjb20ubm92YS5icm93c2VyLmJyb3dzZXIuQnJvd3NlckNvcmUKaW1wb3J0IGNvbS5ub3ZhLmJyb3dzZXIuZW5naW5lLkFkQmxvY2tlcgppbXBvcnQgY29tLm5vdmEuYnJvd3Nlci5zdG9yZS5TdG9yZQppbXBvcnQgb3JnLm1vemlsbGEuZ2Vja28udXRpbC5HZWNrb0J1bmRsZQppbXBvcnQgb3JnLm1vemlsbGEuZ2Vja292aWV3LkFsbG93T3JEZW55CmltcG9ydCBvcmcubW96aWxsYS5nZWNrb3ZpZXcuR2Vja29SZXN1bHQKaW1wb3J0IG9yZy5tb3ppbGxhLmdlY2tvdmlldy5XZWJFeHRlbnNpb24KaW1wb3J0IG9yZy5tb3ppbGxhLmdlY2tvdmlldy5XZWJFeHRlbnNpb25Db250cm9sbGVyCmltcG9ydCBqYXZhLmlvLkZpbGUKCmRhdGEgY2xhc3MgRXh0ZW5zaW9uVWkoCiAgICB2YWwgaWQ6IFN0cmluZywKICAgIHZhbCBuYW1lOiBTdHJpbmcsCiAgICB2YWwgdmVyc2lvbjogU3RyaW5nLAogICAgdmFsIGRlc2NyaXB0aW9uOiBTdHJpbmcsCiAgICB2YWwgZW5hYmxlZDogQm9vbGVhbiwKICAgIHZhbCBpc0J1aWx0SW46IEJvb2xlYW4sCiAgICB2YWwgcGVybWlzc2lvbnM6IExpc3Q8U3RyaW5nPiwKKQoKb2JqZWN0IEV4dGVuc2lvbk1hbmFnZXIgewogICAgdmFsIGV4dGVuc2lvbnMgPSBtdXRhYmxlU3RhdGVMaXN0T2Y8RXh0ZW5zaW9uVWk+KCkKICAgIHZhciBidXN5IGJ5IG11dGFibGVTdGF0ZU9mKGZhbHNlKQogICAgdmFyIG1lc3NhZ2UgYnkgbXV0YWJsZVN0YXRlT2Y8U3RyaW5nPz4obnVsbCkKCiAgICBwcml2YXRlIHZhbCBsaXZlID0gSGFzaE1hcDxTdHJpbmcsIFdlYkV4dGVuc2lvbj4oKQoKICAgIHByaXZhdGUgY29uc3QgdmFsIE5BVElWRV9BUFAgPSAibm92YSIKICAgIGNvbnN0IHZhbCBTSElFTERfSUQgPSAibm92YS1zaGllbGRAbm92YS5icm93c2VyIgoKICAgIHByaXZhdGUgdmFsIEJVSUxUX0lOUyA9IGxpc3RPZigKICAgICAgICAibmlnaHRzaGlmdEBub3ZhLmJyb3dzZXIiLAogICAgICAgICJpbWFnZWJsb2NrZXJAbm92YS5icm93c2VyIiwKICAgICAgICAidGV4dHNpemVyQG5vdmEuYnJvd3NlciIsCiAgICAgICAgU0hJRUxEX0lELAogICAgKQoKICAgIHByaXZhdGUgZnVuIGNvbnRyb2xsZXIoKTogV2ViRXh0ZW5zaW9uQ29udHJvbGxlciA9IEFwcC5nZWNrb1J1bnRpbWUud2ViRXh0ZW5zaW9uQ29udHJvbGxlcgoKICAgIGZ1biBhdHRhY2goKSB7CiAgICAgICAgcnVuQ2F0Y2hpbmcgewogICAgICAgICAgICBjb250cm9sbGVyKCkuc2V0UHJvbXB0RGVsZWdhdGUob2JqZWN0IDogV2ViRXh0ZW5zaW9uQ29udHJvbGxlci5Qcm9tcHREZWxlZ2F0ZSB7CiAgICAgICAgICAgICAgICBvdmVycmlkZSBmdW4gb25JbnN0YWxsUHJvbXB0UmVxdWVzdCgKICAgICAgICAgICAgICAgICAgICBleHRlbnNpb246IFdlYkV4dGVuc2lvbiwKICAgICAgICAgICAgICAgICAgICBwZXJtaXNzaW9uczogQXJyYXk8U3RyaW5nPiwKICAgICAgICAgICAgICAgICAgICBvcmlnaW5zOiBBcnJheTxTdHJpbmc+LAogICAgICAgICAgICAgICAgICAgIGRhdGFDb2xsZWN0aW9uUGVybWlzc2lvbnM6IEFycmF5PFN0cmluZz4sCiAgICAgICAgICAgICAgICApOiBHZWNrb1Jlc3VsdDxXZWJFeHRlbnNpb24uUGVybWlzc2lvblByb21wdFJlc3BvbnNlPj8gewogICAgICAgICAgICAgICAgICAgIHJldHVybiBHZWNrb1Jlc3VsdC5mcm9tVmFsdWUoV2ViRXh0ZW5zaW9uLlBlcm1pc3Npb25Qcm9tcHRSZXNwb25zZSh0cnVlLCBmYWxzZSwgZmFsc2UpKQogICAgICAgICAgICAgICAgfQoKICAgICAgICAgICAgICAgIG92ZXJyaWRlIGZ1biBvblVwZGF0ZVByb21wdCgKICAgICAgICAgICAgICAgICAgICBleHRlbnNpb246IFdlYkV4dGVuc2lvbiwKICAgICAgICAgICAgICAgICAgICBuZXdQZXJtaXNzaW9uczogQXJyYXk8U3RyaW5nPiwKICAgICAgICAgICAgICAgICAgICBuZXdPcmlnaW5zOiBBcnJheTxTdHJpbmc+LAogICAgICAgICAgICAgICAgICAgIG5ld0RhdGFDb2xsZWN0aW9uUGVybWlzc2lvbnM6IEFycmF5PFN0cmluZz4sCiAgICAgICAgICAgICAgICApOiBHZWNrb1Jlc3VsdDxBbGxvd09yRGVueT4/IHsKICAgICAgICAgICAgICAgICAgICByZXR1cm4gR2Vja29SZXN1bHQuYWxsb3coKQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9KQogICAgICAgICAgICBCVUlMVF9JTlMuZm9yRWFjaCB7IGVuc3VyZUJ1aWx0SW4oaXQpIH0KICAgICAgICAgICAgc2V0U2hpZWxkRW5hYmxlZChTdG9yZS5hZGJsb2NrTGV2ZWwgIT0gIm9mZiIpCiAgICAgICAgICAgIHJlZnJlc2goKQogICAgICAgIH0KICAgIH0KCiAgICBwcml2YXRlIGZ1biBlbnN1cmVCdWlsdEluKGlkOiBTdHJpbmcpIHsKICAgICAgICB2YWwgZm9sZGVyID0gaWQucmVtb3ZlU3VmZml4KCJAbm92YS5icm93c2VyIikKICAgICAgICBjb250cm9sbGVyKCkuZW5zdXJlQnVpbHRJbigicmVzb3VyY2U6Ly9hbmRyb2lkL2Fzc2V0cy9leHRlbnNpb25zLyRmb2xkZXIvIiwgaWQpCiAgICAgICAgICAgIC5hY2NlcHQoeyBleHQgLT4KICAgICAgICAgICAgICAgIGxpdmVbaWRdID0gZXh0CiAgICAgICAgICAgICAgICBpZiAoaWQgPT0gU0hJRUxEX0lEKSBhdHRhY2hTaGllbGRCcmlkZ2UoZXh0KQogICAgICAgICAgICAgICAgcmVmcmVzaCgpCiAgICAgICAgICAgIH0sIHsgdCAtPgogICAgICAgICAgICAgICAgTG9nLncoIk5vdmEiLCAiQ291bGQgbm90IGxvYWQgYnVpbHQtaW4gZXh0ZW5zaW9uICRpZDogJHt0Lm1lc3NhZ2V9IikKICAgICAgICAgICAgfSkKICAgIH0KCiAgICBwcml2YXRlIGZ1biBhdHRhY2hTaGllbGRCcmlkZ2UoZXh0OiBXZWJFeHRlbnNpb24pIHsKICAgICAgICBleHQuc2V0TWVzc2FnZURlbGVnYXRlKG9iamVjdCA6IFdlYkV4dGVuc2lvbi5NZXNzYWdlRGVsZWdhdGUgewogICAgICAgICAgICBvdmVycmlkZSBmdW4gb25NZXNzYWdlKAogICAgICAgICAgICAgICAgbmF0aXZlQXBwOiBTdHJpbmc/LAogICAgICAgICAgICAgICAgbWVzc2FnZTogQW55PywKICAgICAgICAgICAgICAgIHNlbmRlcjogV2ViRXh0ZW5zaW9uLk1lc3NhZ2VTZW5kZXI/LAogICAgICAgICAgICApOiBHZWNrb1Jlc3VsdDxBbnk/Pj8gewogICAgICAgICAgICAgICAgaWYgKG1lc3NhZ2UgIWlzIEdlY2tvQnVuZGxlKSByZXR1cm4gbnVsbAogICAgICAgICAgICAgICAgdmFsIHVybCA9IG1lc3NhZ2UuZ2V0U3RyaW5nKCJ1cmwiKSA/OiAiIgogICAgICAgICAgICAgICAgdmFsIHBhZ2VVcmwgPSBtZXNzYWdlLmdldFN0cmluZygicGFnZVVybCIpID86ICIiCiAgICAgICAgICAgICAgICB2YWwgdGFiSWQgPSBtZXNzYWdlLmdldEludCgidGFiSWQiLCAtMSkKICAgICAgICAgICAgICAgIHZhbCBibG9ja2VkID0gcnVuQ2F0Y2hpbmcgeyBBZEJsb2NrZXIuc2hvdWxkQmxvY2sodXJsLCBwYWdlVXJsKSB9LmdldE9yRGVmYXVsdChmYWxzZSkKICAgICAgICAgICAgICAgIGlmIChibG9ja2VkKSB7CiAgICAgICAgICAgICAgICAgICAgdmFsIHRhcmdldCA9IEJyb3dzZXJDb3JlLnRhYnMuZmlyc3RPck51bGwgeyBpdC5pZCA9PSB0YWJJZCB9CiAgICAgICAgICAgICAgICAgICAgdmFsIGlkID0gdGFyZ2V0Py5pZCA/OiBCcm93c2VyQ29yZS5hY3RpdmVUYWI/LmlkID86IC0xCiAgICAgICAgICAgICAgICAgICAgaWYgKGlkID4gMCkgQnJvd3NlckNvcmUucmVwb3J0QmxvY2tlZChpZCwgMSkKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIHZhbCBidW5kbGUgPSBHZWNrb0J1bmRsZSgxKQogICAgICAgICAgICAgICAgYnVuZGxlLnB1dEJvb2xlYW4oImJsb2NrIiwgYmxvY2tlZCkKICAgICAgICAgICAgICAgIHJldHVybiBHZWNrb1Jlc3VsdC5mcm9tVmFsdWU8QW55Pz4oYnVuZGxlKQogICAgICAgICAgICB9CiAgICAgICAgfSwgTkFUSVZFX0FQUCkKICAgIH0KCiAgICBmdW4gcmVmcmVzaCgpIHsKICAgICAgICBydW5DYXRjaGluZyB7CiAgICAgICAgICAgIGNvbnRyb2xsZXIoKS5saXN0KCkuYWNjZXB0KHsgbGlzdCAtPgogICAgICAgICAgICAgICAgc3luY2hyb25pemVkKGV4dGVuc2lvbnMpIHsKICAgICAgICAgICAgICAgICAgICBsaXZlLmNsZWFyKCkKICAgICAgICAgICAgICAgICAgICBleHRlbnNpb25zLmNsZWFyKCkKICAgICAgICAgICAgICAgICAgICB2YWwgZGlzYWJsZWQgPSBTdG9yZS5kaXNhYmxlZEV4dGVuc2lvbnMoKQogICAgICAgICAgICAgICAgICAgIGZvciAoZXh0IGluIGxpc3QpIHsKICAgICAgICAgICAgICAgICAgICAgICAgbGl2ZVtleHQuaWRdID0gZXh0CiAgICAgICAgICAgICAgICAgICAgICAgIHZhbCBtZCA9IGV4dC5tZXRhRGF0YQogICAgICAgICAgICAgICAgICAgICAgICB2YWwgbmFtZSA9IG1kLm5hbWUuaWZCbGFuayB7IGV4dC5pZCB9CiAgICAgICAgICAgICAgICAgICAgICAgIHZhbCBwZXJtcyA9IG1kLnJlcXVpcmVkUGVybWlzc2lvbnM/LnRvTGlzdCgpID86IGVtcHR5TGlzdCgpCiAgICAgICAgICAgICAgICAgICAgICAgIGV4dGVuc2lvbnMuYWRkKAogICAgICAgICAgICAgICAgICAgICAgICAgICAgRXh0ZW5zaW9uVWkoCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgaWQgPSBleHQuaWQsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgbmFtZSA9IG5hbWUsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdmVyc2lvbiA9IG1kLnZlcnNpb24uaWZCbGFuayB7ICIxLjAiIH0sCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgZGVzY3JpcHRpb24gPSBtZC5kZXNjcmlwdGlvbiA/OiAiIiwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBlbmFibGVkID0gZXh0LmlkICFpbiBkaXNhYmxlZCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBpc0J1aWx0SW4gPSBleHQuaXNCdWlsdEluLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHBlcm1pc3Npb25zID0gcGVybXMsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICApLAogICAgICAgICAgICAgICAgICAgICAgICApCiAgICAgICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgICAgIGV4dGVuc2lvbnMuc29ydEJ5IHsgaXQubmFtZS5sb3dlcmNhc2UoKSB9CiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgIH0sIHsgdCAtPgogICAgICAgICAgICAgICAgTG9nLncoIk5vdmEiLCAiQ291bGQgbm90IGxpc3QgZXh0ZW5zaW9uczogJHt0Lm1lc3NhZ2V9IikKICAgICAgICAgICAgfSkKICAgICAgICB9CiAgICB9CgogICAgZnVuIHNldFNoaWVsZEVuYWJsZWQob246IEJvb2xlYW4pIHsKICAgICAgICB2YWwgZXh0ID0gbGl2ZVtTSElFTERfSURdID86IHJldHVybgogICAgICAgIHJ1bkNhdGNoaW5nIHsKICAgICAgICAgICAgdmFsIHNyYyA9IFdlYkV4dGVuc2lvbkNvbnRyb2xsZXIuRW5hYmxlU291cmNlLlVTRVIKICAgICAgICAgICAgaWYgKG9uKSBjb250cm9sbGVyKCkuZW5hYmxlKGV4dCwgc3JjKSBlbHNlIGNvbnRyb2xsZXIoKS5kaXNhYmxlKGV4dCwgc3JjKQogICAgICAgIH0KICAgIH0KCiAgICBmdW4gaW5zdGFsbEZyb21BbW8oY29udGV4dDogQ29udGV4dCwgc2x1ZzogU3RyaW5nLCBvbkRvbmU6IChCb29sZWFuKSAtPiBVbml0ID0ge30pIHsKICAgICAgICB2YWwgdXJsID0gImh0dHBzOi8vYWRkb25zLm1vemlsbGEub3JnL2ZpcmVmb3gvZG93bmxvYWRzL2xhdGVzdC8kc2x1Zy8iCiAgICAgICAgaW5zdGFsbEZyb21VcmwoY29udGV4dCwgdXJsLCBvbkRvbmUpCiAgICB9CgogICAgZnVuIGluc3RhbGxGcm9tVXJsKGNvbnRleHQ6IENvbnRleHQsIHVybDogU3RyaW5nLCBvbkRvbmU6IChCb29sZWFuKSAtPiBVbml0ID0ge30pIHsKICAgICAgICBpZiAoYnVzeSkgcmV0dXJuCiAgICAgICAgYnVzeSA9IHRydWUKICAgICAgICBtZXNzYWdlID0gbnVsbAogICAgICAgIHZhbCB0cmltbWVkID0gdXJsLnRyaW0oKQogICAgICAgIHZhbCB0YXJnZXQgPSBpZiAoIXRyaW1tZWQuc3RhcnRzV2l0aCgiaHR0cCIpKSB7CiAgICAgICAgICAgIHZhbCBtID0gUmVnZXgoIi8oPzpmaXJlZm94Lyk/YWRkb24vKFteLz9dKykiKS5maW5kKHRyaW1tZWQpCiAgICAgICAgICAgIGlmIChtICE9IG51bGwpICJodHRwczovL2FkZG9ucy5tb3ppbGxhLm9yZy9maXJlZm94L2Rvd25sb2Fkcy9sYXRlc3QvJHttLmdyb3VwVmFsdWVzWzFdfS8iIGVsc2UgdHJpbW1lZAogICAgICAgIH0gZWxzZSB0cmltbWVkCiAgICAgICAgcnVuQ2F0Y2hpbmcgewogICAgICAgICAgICBjb250cm9sbGVyKCkuaW5zdGFsbCh0YXJnZXQpLmFjY2VwdCh7IGV4dCAtPgogICAgICAgICAgICAgICAgYnVzeSA9IGZhbHNlCiAgICAgICAgICAgICAgICBsaXZlW2V4dC5pZF0gPSBleHQKICAgICAgICAgICAgICAgIHZhbCBtZCA9IGV4dC5tZXRhRGF0YQogICAgICAgICAgICAgICAgbWVzc2FnZSA9ICJJbnN0YWxsZWQgXCIke21kLm5hbWUuaWZCbGFuayB7IGV4dC5pZCB9fVwiIgogICAgICAgICAgICAgICAgU3RvcmUuc2V0RXh0ZW5zaW9uRW5hYmxlZChleHQuaWQsIHRydWUpCiAgICAgICAgICAgICAgICByZWZyZXNoKCkKICAgICAgICAgICAgICAgIG9uRG9uZSh0cnVlKQogICAgICAgICAgICB9LCB7IHQgLT4KICAgICAgICAgICAgICAgIGJ1c3kgPSBmYWxzZQogICAgICAgICAgICAgICAgbWVzc2FnZSA9ICJDb3VsZCBub3QgaW5zdGFsbCBhZGQtb246ICR7dC5tZXNzYWdlfSIKICAgICAgICAgICAgICAgIG9uRG9uZShmYWxzZSkKICAgICAgICAgICAgfSkKICAgICAgICB9Lm9uRmFpbHVyZSB7CiAgICAgICAgICAgIGJ1c3kgPSBmYWxzZQogICAgICAgICAgICBtZXNzYWdlID0gIkNvdWxkIG5vdCBpbnN0YWxsIGFkZC1vbjogJHtpdC5tZXNzYWdlfSIKICAgICAgICAgICAgb25Eb25lKGZhbHNlKQogICAgICAgIH0KICAgIH0KCiAgICBmdW4gaW5zdGFsbEZyb21VcmkoY29udGV4dDogQ29udGV4dCwgdXJpOiBVcmksIG9uRG9uZTogKEJvb2xlYW4pIC0+IFVuaXQgPSB7fSkgewogICAgICAgIGlmIChidXN5KSByZXR1cm4KICAgICAgICBidXN5ID0gdHJ1ZQogICAgICAgIG1lc3NhZ2UgPSBudWxsCiAgICAgICAgdHJ5IHsKICAgICAgICAgICAgdmFsIGJ5dGVzID0gY29udGV4dC5jb250ZW50UmVzb2x2ZXIub3BlbklucHV0U3RyZWFtKHVyaSk/LnVzZSB7IGl0LnJlYWRCeXRlcygpIH0KICAgICAgICAgICAgICAgID86IHRocm93IEV4Y2VwdGlvbigiY291bGQgbm90IHJlYWQgZmlsZSIpCiAgICAgICAgICAgIHZhbCBkaXIgPSBGaWxlKGNvbnRleHQuZmlsZXNEaXIsICJleHRlbnNpb24taW1wb3J0cyIpCiAgICAgICAgICAgIGlmICghZGlyLmV4aXN0cygpKSBkaXIubWtkaXJzKCkKICAgICAgICAgICAgdmFsIGZpbGUgPSBGaWxlKGRpciwgImltcG9ydC54cGkiKQogICAgICAgICAgICBmaWxlLndyaXRlQnl0ZXMoYnl0ZXMpCiAgICAgICAgICAgIGNvbnRyb2xsZXIoKS5pbnN0YWxsKFVyaS5mcm9tRmlsZShmaWxlKS50b1N0cmluZygpKS5hY2NlcHQoeyBleHQgLT4KICAgICAgICAgICAgICAgIGJ1c3kgPSBmYWxzZQogICAgICAgICAgICAgICAgbGl2ZVtleHQuaWRdID0gZXh0CiAgICAgICAgICAgICAgICB2YWwgbWQgPSBleHQubWV0YURhdGEKICAgICAgICAgICAgICAgIG1lc3NhZ2UgPSAiSW5zdGFsbGVkIFwiJHttZC5uYW1lLmlmQmxhbmsgeyBleHQuaWQgfX1cIiIKICAgICAgICAgICAgICAgIFN0b3JlLnNldEV4dGVuc2lvbkVuYWJsZWQoZXh0LmlkLCB0cnVlKQogICAgICAgICAgICAgICAgcmVmcmVzaCgpCiAgICAgICAgICAgICAgICBvbkRvbmUodHJ1ZSkKICAgICAgICAgICAgfSwgeyB0IC0+CiAgICAgICAgICAgICAgICBidXN5ID0gZmFsc2UKICAgICAgICAgICAgICAgIG1lc3NhZ2UgPSAiQ291bGQgbm90IGluc3RhbGwgYWRkLW9uOiAke3QubWVzc2FnZX0iCiAgICAgICAgICAgICAgICBvbkRvbmUoZmFsc2UpCiAgICAgICAgICAgIH0pCiAgICAgICAgfSBjYXRjaCAoZTogRXhjZXB0aW9uKSB7CiAgICAgICAgICAgIGJ1c3kgPSBmYWxzZQogICAgICAgICAgICBtZXNzYWdlID0gIkltcG9ydCBmYWlsZWQ6ICR7ZS5tZXNzYWdlfSIKICAgICAgICAgICAgb25Eb25lKGZhbHNlKQogICAgICAgIH0KICAgIH0KCiAgICBmdW4gc2V0RW5hYmxlZChleHQ6IEV4dGVuc2lvblVpLCBlbmFibGVkOiBCb29sZWFuKSB7CiAgICAgICAgU3RvcmUuc2V0RXh0ZW5zaW9uRW5hYmxlZChleHQuaWQsIGVuYWJsZWQpCiAgICAgICAgdmFsIGkgPSBleHRlbnNpb25zLmluZGV4T2ZGaXJzdCB7IGl0LmlkID09IGV4dC5pZCB9CiAgICAgICAgaWYgKGkgPj0gMCkgZXh0ZW5zaW9uc1tpXSA9IGV4dGVuc2lvbnNbaV0uY29weShlbmFibGVkID0gZW5hYmxlZCkKICAgICAgICB2YWwgbGl2ZUV4dCA9IGxpdmVbZXh0LmlkXSA/OiByZXR1cm4KICAgICAgICBydW5DYXRjaGluZyB7CiAgICAgICAgICAgIHZhbCBzcmMgPSBXZWJFeHRlbnNpb25Db250cm9sbGVyLkVuYWJsZVNvdXJjZS5VU0VSCiAgICAgICAgICAgIGlmIChlbmFibGVkKSBjb250cm9sbGVyKCkuZW5hYmxlKGxpdmVFeHQsIHNyYykgZWxzZSBjb250cm9sbGVyKCkuZGlzYWJsZShsaXZlRXh0LCBzcmMpCiAgICAgICAgfQogICAgfQoKICAgIGZ1biB1bmluc3RhbGwoZXh0OiBFeHRlbnNpb25VaSkgewogICAgICAgIGlmIChleHQuaXNCdWlsdEluKSB7CiAgICAgICAgICAgIG1lc3NhZ2UgPSAiQnVuZGxlZCBleHRlbnNpb25zIGNhbid0IGJlIHVuaW5zdGFsbGVkIChkaXNhYmxlIHRoZW0gaW5zdGVhZCkiCiAgICAgICAgICAgIHJldHVybgogICAgICAgIH0KICAgICAgICB2YWwgbGl2ZUV4dCA9IGxpdmVbZXh0LmlkXQogICAgICAgIGlmIChsaXZlRXh0ICE9IG51bGwpIHsKICAgICAgICAgICAgcnVuQ2F0Y2hpbmcgewogICAgICAgICAgICAgICAgY29udHJvbGxlcigpLnVuaW5zdGFsbChsaXZlRXh0KS5hY2NlcHQoewogICAgICAgICAgICAgICAgICAgIGxpdmUucmVtb3ZlKGV4dC5pZCkKICAgICAgICAgICAgICAgICAgICBTdG9yZS5zZXRFeHRlbnNpb25FbmFibGVkKGV4dC5pZCwgZmFsc2UpCiAgICAgICAgICAgICAgICAgICAgdmFsIGkgPSBleHRlbnNpb25zLmluZGV4T2ZGaXJzdCB7IGl0LmlkID09IGV4dC5pZCB9CiAgICAgICAgICAgICAgICAgICAgaWYgKGkgPj0gMCkgZXh0ZW5zaW9ucy5yZW1vdmVBdChpKQogICAgICAgICAgICAgICAgICAgIG1lc3NhZ2UgPSAiVW5pbnN0YWxsZWQgXCIke2V4dC5uYW1lfVwiIgogICAgICAgICAgICAgICAgfSwgeyB0IC0+CiAgICAgICAgICAgICAgICAgICAgbWVzc2FnZSA9ICJDb3VsZCBub3QgdW5pbnN0YWxsOiAke3QubWVzc2FnZX0iCiAgICAgICAgICAgICAgICB9KQogICAgICAgICAgICB9CiAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAgU3RvcmUuc2V0RXh0ZW5zaW9uRW5hYmxlZChleHQuaWQsIGZhbHNlKQogICAgICAgICAgICB2YWwgaSA9IGV4dGVuc2lvbnMuaW5kZXhPZkZpcnN0IHsgaXQuaWQgPT0gZXh0LmlkIH0KICAgICAgICAgICAgaWYgKGkgPj0gMCkgZXh0ZW5zaW9ucy5yZW1vdmVBdChpKQogICAgICAgICAgICBtZXNzYWdlID0gIlVuaW5zdGFsbGVkIFwiJHtleHQubmFtZX1cIiIKICAgICAgICB9CiAgICB9Cn0K
+package com.nova.browser.ext
+
+import android.content.Context
+import android.net.Uri
+import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.nova.browser.App
+import com.nova.browser.browser.BrowserCore
+import com.nova.browser.engine.AdBlocker
+import com.nova.browser.store.Store
+import org.mozilla.gecko.util.GeckoBundle
+import org.mozilla.geckoview.AllowOrDeny
+import org.mozilla.geckoview.GeckoResult
+import org.mozilla.geckoview.WebExtension
+import org.mozilla.geckoview.WebExtensionController
+import java.io.File
+
+data class ExtensionUi(
+    val id: String,
+    val name: String,
+    val version: String,
+    val description: String,
+    val enabled: Boolean,
+    val isBuiltIn: Boolean,
+    val permissions: List<String>,
+)
+
+object ExtensionManager {
+    val extensions = mutableStateListOf<ExtensionUi>()
+    var busy by mutableStateOf(false)
+    var message by mutableStateOf<String?>(null)
+
+    private val live = HashMap<String, WebExtension>()
+
+    private const val NATIVE_APP = "nova"
+    const val SHIELD_ID = "nova-shield@nova.browser"
+
+    private val BUILT_INS = listOf(
+        "nightshift@nova.browser",
+        "imageblocker@nova.browser",
+        "textsizer@nova.browser",
+        SHIELD_ID,
+    )
+
+    private fun controller(): WebExtensionController = App.geckoRuntime.webExtensionController
+
+    fun attach() {
+        runCatching {
+            controller().setPromptDelegate(object : WebExtensionController.PromptDelegate {
+                override fun onInstallPromptRequest(
+                    extension: WebExtension,
+                    permissions: Array<String>,
+                    origins: Array<String>,
+                    dataCollectionPermissions: Array<String>,
+                ): GeckoResult<WebExtension.PermissionPromptResponse>? {
+                    return GeckoResult.fromValue(WebExtension.PermissionPromptResponse(true, false, false))
+                }
+
+                override fun onUpdatePrompt(
+                    extension: WebExtension,
+                    newPermissions: Array<String>,
+                    newOrigins: Array<String>,
+                    newDataCollectionPermissions: Array<String>,
+                ): GeckoResult<AllowOrDeny>? {
+                    return GeckoResult.allow()
+                }
+            })
+            BUILT_INS.forEach { ensureBuiltIn(it) }
+            setShieldEnabled(Store.adblockLevel != "off")
+            refresh()
+        }
+    }
+
+    private fun ensureBuiltIn(id: String) {
+        val folder = id.removeSuffix("@nova.browser")
+        controller().ensureBuiltIn("resource://android/assets/extensions/$folder/", id)
+            .accept({ ext ->
+                live[id] = ext
+                if (id == SHIELD_ID) attachShieldBridge(ext)
+                refresh()
+            }, { t ->
+                Log.w("Nova", "Could not load built-in extension $id: ${t.message}")
+            })
+    }
+
+    private fun attachShieldBridge(ext: WebExtension) {
+        ext.setMessageDelegate(object : WebExtension.MessageDelegate {
+            override fun onMessage(
+                nativeApp: String?,
+                message: Any?,
+                sender: WebExtension.MessageSender?,
+            ): GeckoResult<Any?>? {
+                if (message !is GeckoBundle) return null
+                val url = message.getString("url") ?: ""
+                val pageUrl = message.getString("pageUrl") ?: ""
+                val tabId = message.getInt("tabId", -1)
+                val blocked = runCatching { AdBlocker.shouldBlock(url, pageUrl) }.getOrDefault(false)
+                if (blocked) {
+                    val target = BrowserCore.tabs.firstOrNull { it.id == tabId }
+                    val id = target?.id ?: BrowserCore.activeTab?.id ?: -1
+                    if (id > 0) BrowserCore.reportBlocked(id, 1)
+                }
+                val bundle = GeckoBundle(1)
+                bundle.putBoolean("block", blocked)
+                return GeckoResult.fromValue<Any?>(bundle)
+            }
+        }, NATIVE_APP)
+    }
+
+    fun refresh() {
+        runCatching {
+            controller().list().accept({ list ->
+                synchronized(extensions) {
+                    live.clear()
+                    extensions.clear()
+                    val disabled = Store.disabledExtensions()
+                    for (ext in list) {
+                        live[ext.id] = ext
+                        val md = ext.metaData
+                        val name = md.name.ifBlank { ext.id }
+                        val perms = md.requiredPermissions?.toList() ?: emptyList()
+                        extensions.add(
+                            ExtensionUi(
+                                id = ext.id,
+                                name = name,
+                                version = md.version.ifBlank { "1.0" },
+                                description = md.description ?: "",
+                                enabled = ext.id !in disabled,
+                                isBuiltIn = ext.isBuiltIn,
+                                permissions = perms,
+                            ),
+                        )
+                    }
+                    extensions.sortBy { it.name.lowercase() }
+                }
+            }, { t ->
+                Log.w("Nova", "Could not list extensions: ${t.message}")
+            })
+        }
+    }
+
+    fun setShieldEnabled(on: Boolean) {
+        val ext = live[SHIELD_ID] ?: return
+        runCatching {
+            val src = WebExtensionController.EnableSource.USER
+            if (on) controller().enable(ext, src) else controller().disable(ext, src)
+        }
+    }
+
+    fun installFromAmo(context: Context, slug: String, onDone: (Boolean) -> Unit = {}) {
+        val url = "https://addons.mozilla.org/firefox/downloads/latest/$slug/"
+        installFromUrl(context, url, onDone)
+    }
+
+    fun installFromUrl(context: Context, url: String, onDone: (Boolean) -> Unit = {}) {
+        if (busy) return
+        busy = true
+        message = null
+        val trimmed = url.trim()
+        val target = if (!trimmed.startsWith("http")) {
+            val m = Regex("/(?:firefox/)?addon/([^/?]+)").find(trimmed)
+            if (m != null) "https://addons.mozilla.org/firefox/downloads/latest/${m.groupValues[1]}/" else trimmed
+        } else trimmed
+        runCatching {
+            controller().install(target).accept({ ext ->
+                busy = false
+                live[ext.id] = ext
+                val md = ext.metaData
+                message = "Installed \"${md.name.ifBlank { ext.id }}\""
+                Store.setExtensionEnabled(ext.id, true)
+                refresh()
+                onDone(true)
+            }, { t ->
+                busy = false
+                message = "Could not install add-on: ${t.message}"
+                onDone(false)
+            })
+        }.onFailure {
+            busy = false
+            message = "Could not install add-on: ${it.message}"
+            onDone(false)
+        }
+    }
+
+    fun installFromUri(context: Context, uri: Uri, onDone: (Boolean) -> Unit = {}) {
+        if (busy) return
+        busy = true
+        message = null
+        try {
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                ?: throw Exception("could not read file")
+            val dir = File(context.filesDir, "extension-imports")
+            if (!dir.exists()) dir.mkdirs()
+            val file = File(dir, "import.xpi")
+            file.writeBytes(bytes)
+            controller().install(Uri.fromFile(file).toString()).accept({ ext ->
+                busy = false
+                live[ext.id] = ext
+                val md = ext.metaData
+                message = "Installed \"${md.name.ifBlank { ext.id }}\""
+                Store.setExtensionEnabled(ext.id, true)
+                refresh()
+                onDone(true)
+            }, { t ->
+                busy = false
+                message = "Could not install add-on: ${t.message}"
+                onDone(false)
+            })
+        } catch (e: Exception) {
+            busy = false
+            message = "Import failed: ${e.message}"
+            onDone(false)
+        }
+    }
+
+    fun setEnabled(ext: ExtensionUi, enabled: Boolean) {
+        Store.setExtensionEnabled(ext.id, enabled)
+        val i = extensions.indexOfFirst { it.id == ext.id }
+        if (i >= 0) extensions[i] = extensions[i].copy(enabled = enabled)
+        val liveExt = live[ext.id] ?: return
+        runCatching {
+            val src = WebExtensionController.EnableSource.USER
+            if (enabled) controller().enable(liveExt, src) else controller().disable(liveExt, src)
+        }
+    }
+
+    fun uninstall(ext: ExtensionUi) {
+        if (ext.isBuiltIn) {
+            message = "Bundled extensions can't be uninstalled (disable them instead)"
+            return
+        }
+        val liveExt = live[ext.id]
+        if (liveExt != null) {
+            runCatching {
+                controller().uninstall(liveExt).accept({
+                    live.remove(ext.id)
+                    Store.setExtensionEnabled(ext.id, false)
+                    val i = extensions.indexOfFirst { it.id == ext.id }
+                    if (i >= 0) extensions.removeAt(i)
+                    message = "Uninstalled \"${ext.name}\""
+                }, { t ->
+                    message = "Could not uninstall: ${t.message}"
+                })
+            }
+        } else {
+            Store.setExtensionEnabled(ext.id, false)
+            val i = extensions.indexOfFirst { it.id == ext.id }
+            if (i >= 0) extensions.removeAt(i)
+            message = "Uninstalled \"${ext.name}\""
+        }
+    }
+}

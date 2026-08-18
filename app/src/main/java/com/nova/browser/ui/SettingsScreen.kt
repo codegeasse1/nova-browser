@@ -1,1 +1,186 @@
-cGFja2FnZSBjb20ubm92YS5icm93c2VyLnVpCgppbXBvcnQgYW5kcm9pZC5jb250ZW50LkludGVudAppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLmJhY2tncm91bmQKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UuZm91bmRhdGlvbi5sYXlvdXQuQ29sdW1uCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLmZvdW5kYXRpb24ubGF5b3V0LlBhZGRpbmdWYWx1ZXMKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UuZm91bmRhdGlvbi5sYXlvdXQuUm93CmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLmZvdW5kYXRpb24ubGF5b3V0LlNwYWNlcgppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLmxheW91dC5maWxsTWF4U2l6ZQppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLmxheW91dC5maWxsTWF4V2lkdGgKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UuZm91bmRhdGlvbi5sYXlvdXQuaGVpZ2h0CmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLmZvdW5kYXRpb24ubGF5b3V0Lm5hdmlnYXRpb25CYXJzUGFkZGluZwppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLmxheW91dC5wYWRkaW5nCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLmZvdW5kYXRpb24ubGF5b3V0LnN0YXR1c0JhcnNQYWRkaW5nCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLmZvdW5kYXRpb24ubGF6eS5MYXp5Q29sdW1uCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLm1hdGVyaWFsLmljb25zLkljb25zCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLm1hdGVyaWFsLmljb25zLnJvdW5kZWQuRG5zCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLm1hdGVyaWFsLmljb25zLnJvdW5kZWQuRG93bmxvYWQKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UubWF0ZXJpYWwuaWNvbnMucm91bmRlZC5FeHRlbnNpb24KaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UubWF0ZXJpYWwuaWNvbnMucm91bmRlZC5Mb2NrCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLm1hdGVyaWFsMy5BbGVydERpYWxvZwppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5tYXRlcmlhbDMuTWF0ZXJpYWxUaGVtZQppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5tYXRlcmlhbDMuU3dpdGNoCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLm1hdGVyaWFsMy5UZXh0CmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLm1hdGVyaWFsMy5UZXh0QnV0dG9uCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnJ1bnRpbWUuQ29tcG9zYWJsZQppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5ydW50aW1lLmdldFZhbHVlCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnJ1bnRpbWUubXV0YWJsZVN0YXRlT2YKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UucnVudGltZS5yZW1lbWJlcgppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5ydW50aW1lLnNldFZhbHVlCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnVpLkFsaWdubWVudAppbXBvcnQgYW5kcm9pZHguY29tcG9zZS51aS5Nb2RpZmllcgppbXBvcnQgYW5kcm9pZHguY29tcG9zZS51aS50ZXh0LnN0eWxlLlRleHRBbGlnbgppbXBvcnQgYW5kcm9pZHguY29tcG9zZS51aS51bml0LmRwCmltcG9ydCBjb20ubm92YS5icm93c2VyLmJyb3dzZXIuQnJvd3NlckNvcmUKaW1wb3J0IGNvbS5ub3ZhLmJyb3dzZXIuc3RvcmUuU3RvcmUKCkBDb21wb3NhYmxlCmZ1biBTZXR0aW5nc1NjcmVlbihvbkJhY2s6ICgpIC0+IFVuaXQsIG9uT3BlbkV4dGVuc2lvbnM6ICgpIC0+IFVuaXQsIG9uT3BlbkRvd25sb2FkczogKCkgLT4gVW5pdCkgewogICAgdmFyIG5vdGUgYnkgcmVtZW1iZXIgeyBtdXRhYmxlU3RhdGVPZjxTdHJpbmc/PihudWxsKSB9CiAgICB2YXIgc2FmZUJyb3dzaW5nIGJ5IHJlbWVtYmVyIHsgbXV0YWJsZVN0YXRlT2YoU3RvcmUuc2FmZUJyb3dzaW5nKSB9CiAgICB2YWwgY29udGV4dCA9IGFuZHJvaWR4LmNvbXBvc2UudWkucGxhdGZvcm0uTG9jYWxDb250ZXh0LmN1cnJlbnQKCiAgICBDb2x1bW4oCiAgICAgICAgTW9kaWZpZXIKICAgICAgICAgICAgLmZpbGxNYXhTaXplKCkKICAgICAgICAgICAgLmJhY2tncm91bmQoTWF0ZXJpYWxUaGVtZS5jb2xvclNjaGVtZS5iYWNrZ3JvdW5kKQogICAgICAgICAgICAuc3RhdHVzQmFyc1BhZGRpbmcoKQogICAgICAgICAgICAubmF2aWdhdGlvbkJhcnNQYWRkaW5nKCksCiAgICApIHsKICAgICAgICBIZWFkZXJSb3codGl0bGUgPSAiU2V0dGluZ3MiLCBvbkJhY2sgPSBvbkJhY2spCiAgICAgICAgTGF6eUNvbHVtbigKICAgICAgICAgICAgbW9kaWZpZXIgPSBNb2RpZmllci53ZWlnaHQoMWYpLAogICAgICAgICAgICBjb250ZW50UGFkZGluZyA9IFBhZGRpbmdWYWx1ZXMoYm90dG9tID0gMzIuZHApLAogICAgICAgICkgewogICAgICAgICAgICBpdGVtIHsgU2VjdGlvbkhlYWRlcigiUHJpdmFjeSAmIFNlY3VyaXR5IikgfQoKICAgICAgICAgICAgaXRlbSB7CiAgICAgICAgICAgICAgICBTZXR0aW5nQmxvY2soCiAgICAgICAgICAgICAgICAgICAgdGl0bGUgPSAiQWQgJiB0cmFja2VyIGJsb2NraW5nIiwKICAgICAgICAgICAgICAgICAgICBzdWJ0aXRsZSA9ICJCbG9ja3MgYWRzLCB0cmFja2VycywgYW5hbHl0aWNzLCBzb2NpYWwgd2lkZ2V0cywgY3J5cHRvbWluZXJzIGFuZCBmaW5nZXJwcmludGVycyB1c2luZyBHZWNrb1ZpZXcncyBFbmhhbmNlZCBUcmFja2luZyBQcm90ZWN0aW9uIHBsdXMgdGhlIEVhc3lMaXN0LCBFYXN5UHJpdmFjeSBhbmQgYW5ub3lhbmNlIGxpc3RzICh0aGUgc2FtZSBjb21tdW5pdHkgbGlzdHMgdXNlZCBieSB1QmxvY2sgT3JpZ2luKS4gRW5hYmxlZCBieSBkZWZhdWx0IOKAlCB0aGUgbnVtYmVyIGluIHRoZSBhZGRyZXNzIGJhciBpcyB3aGF0IGl0IGJsb2NrZWQgb24gdGhlIGN1cnJlbnQgcGFnZS4iLAogICAgICAgICAgICAgICAgKSB7CiAgICAgICAgICAgICAgICAgICAgUmFkaW9Sb3coCiAgICAgICAgICAgICAgICAgICAgICAgIG9wdGlvbnMgPSBsaXN0T2YoIk9mZiIsICJTdGFuZGFyZCIsICJTdHJpY3QiKSwKICAgICAgICAgICAgICAgICAgICAgICAgdmFsdWVzID0gbGlzdE9mKCJvZmYiLCAic3RhbmRhcmQiLCAic3RyaWN0IiksCiAgICAgICAgICAgICAgICAgICAgICAgIHNlbGVjdGVkID0gU3RvcmUuYWRibG9ja0xldmVsLAogICAgICAgICAgICAgICAgICAgICkgeyB2IC0+CiAgICAgICAgICAgICAgICAgICAgICAgIFN0b3JlLmFkYmxvY2tMZXZlbCA9IHYKICAgICAgICAgICAgICAgICAgICAgICAgY29tLm5vdmEuYnJvd3Nlci5leHQuRXh0ZW5zaW9uTWFuYWdlci5zZXRTaGllbGRFbmFibGVkKHYgIT0gIm9mZiIpCiAgICAgICAgICAgICAgICAgICAgICAgIEJyb3dzZXJDb3JlLmFwcGx5U2hpZWxkVG9BbGwoKQogICAgICAgICAgICAgICAgICAgICAgICBub3RlID0gaWYgKHYgPT0gIm9mZiIpICJBZCBibG9ja2luZyBpcyBub3cgb2ZmLiBSZWxvYWQgcGFnZXMgdG8gYXBwbHkuIiBlbHNlICJBZCBibG9ja2luZyB1cGRhdGVkIGZvciBhbGwgdGFicy4gUmVsb2FkIHBhZ2VzIHRvIGFwcGx5LiIKICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgIH0KCiAgICAgICAgICAgIGl0ZW0geyBTdGF0Um93KCJSZXF1ZXN0cyBibG9ja2VkIHRoaXMgc2Vzc2lvbiIsICIke0Jyb3dzZXJDb3JlLnRvdGFsQmxvY2tlZH0iKSB9CgogICAgICAgICAgICBpdGVtIHsKICAgICAgICAgICAgICAgIFNldHRpbmdCbG9jaygKICAgICAgICAgICAgICAgICAgICB0aXRsZSA9ICJTYWZlIGJyb3dzaW5nIiwKICAgICAgICAgICAgICAgICAgICBzdWJ0aXRsZSA9ICJVc2VzIEdlY2tvVmlldydzIGJ1aWx0LWluIFNhZmUgQnJvd3NpbmcgKE1vemlsbGEgKyBHb29nbGUgbGlzdHMpIHRvIHdhcm4gb24gZGFuZ2Vyb3VzIHNpdGVzLiIsCiAgICAgICAgICAgICAgICApIHsKICAgICAgICAgICAgICAgICAgICBSb3coCiAgICAgICAgICAgICAgICAgICAgICAgIE1vZGlmaWVyLmZpbGxNYXhXaWR0aCgpLAogICAgICAgICAgICAgICAgICAgICAgICB2ZXJ0aWNhbEFsaWdubWVudCA9IEFsaWdubWVudC5DZW50ZXJWZXJ0aWNhbGx5LAogICAgICAgICAgICAgICAgICAgICAgICBob3Jpem9udGFsQXJyYW5nZW1lbnQgPSBhbmRyb2lkeC5jb21wb3NlLmZvdW5kYXRpb24ubGF5b3V0LkFycmFuZ2VtZW50LlNwYWNlQmV0d2VlbiwKICAgICAgICAgICAgICAgICAgICApIHsKICAgICAgICAgICAgICAgICAgICAgICAgVGV4dCgiRW5hYmxlZCIsIHN0eWxlID0gTWF0ZXJpYWxUaGVtZS50eXBvZ3JhcGh5LmJvZHlNZWRpdW0pCiAgICAgICAgICAgICAgICAgICAgICAgIFN3aXRjaCgKICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNoZWNrZWQgPSBzYWZlQnJvd3NpbmcsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBvbkNoZWNrZWRDaGFuZ2UgPSB7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc2FmZUJyb3dzaW5nID0gaXQKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBTdG9yZS5zYWZlQnJvd3NpbmcgPSBpdAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG5vdGUgPSAiU2FmZSBicm93c2luZyB0YWtlcyBlZmZlY3QgZm9yIHBhZ2VzIGxvYWRlZCBhZnRlciB0aGlzIGNoYW5nZS4iCiAgICAgICAgICAgICAgICAgICAgICAgICAgICB9LAogICAgICAgICAgICAgICAgICAgICAgICApCiAgICAgICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CgogICAgICAgICAgICBpdGVtIHsgU2VjdGlvbkhlYWRlcigiQXBwZWFyYW5jZSIpIH0KCiAgICAgICAgICAgIGl0ZW0gewogICAgICAgICAgICAgICAgU2V0dGluZ0Jsb2NrKHRpdGxlID0gIlRoZW1lIikgewogICAgICAgICAgICAgICAgICAgIFJhZGlvUm93KAogICAgICAgICAgICAgICAgICAgICAgICBvcHRpb25zID0gbGlzdE9mKCJTeXN0ZW0iLCAiTGlnaHQiLCAiRGFyayIpLAogICAgICAgICAgICAgICAgICAgICAgICB2YWx1ZXMgPSBsaXN0T2YoImF1dG8iLCAibGlnaHQiLCAiZGFyayIpLAogICAgICAgICAgICAgICAgICAgICAgICBzZWxlY3RlZCA9IFN0b3JlLnRoZW1lLAogICAgICAgICAgICAgICAgICAgICkgeyB2IC0+CiAgICAgICAgICAgICAgICAgICAgICAgIFN0b3JlLnRoZW1lID0gdgogICAgICAgICAgICAgICAgICAgICAgICBub3RlID0gbnVsbAogICAgICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQoKICAgICAgICAgICAgaXRlbSB7IFNlY3Rpb25IZWFkZXIoIkdlbmVyYWwiKSB9CgogICAgICAgICAgICBpdGVtIHsKICAgICAgICAgICAgICAgIFNldHRpbmdCbG9jayh0aXRsZSA9ICJTZWFyY2ggZW5naW5lIikgewogICAgICAgICAgICAgICAgICAgIFJhZGlvUm93KAogICAgICAgICAgICAgICAgICAgICAgICBvcHRpb25zID0gbGlzdE9mKCJHb29nbGUiLCAiRHVja0R1Y2tHbyIsICJCaW5nIiksCiAgICAgICAgICAgICAgICAgICAgICAgIHZhbHVlcyA9IGxpc3RPZigiZ29vZ2xlIiwgImR1Y2tkdWNrZ28iLCAiYmluZyIpLAogICAgICAgICAgICAgICAgICAgICAgICBzZWxlY3RlZCA9IFN0b3JlLnNlYXJjaEVuZ2luZSwKICAgICAgICAgICAgICAgICAgICApIHsgdiAtPgogICAgICAgICAgICAgICAgICAgICAgICBTdG9yZS5zZWFyY2hFbmdpbmUgPSB2CiAgICAgICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CgogICAgICAgICAgICBpdGVtIHsKICAgICAgICAgICAgICAgIEJ1dHRvblJvdygiRG93bmxvYWRzIiwgSWNvbnMuUm91bmRlZC5Eb3dubG9hZCwgb25PcGVuRG93bmxvYWRzKQogICAgICAgICAgICB9CgogICAgICAgICAgICBpdGVtIHsKICAgICAgICAgICAgICAgIFNldHRpbmdCbG9jaygKICAgICAgICAgICAgICAgICAgICB0aXRsZSA9ICJTZWN1cmUgRE5TIiwKICAgICAgICAgICAgICAgICAgICBzdWJ0aXRsZSA9ICJBbmRyb2lkJ3MgbmV0d29yayBzdGFjayBkb2Vzbid0IGxldCBhcHBzIG92ZXJyaWRlIEROUyBwZXItYXBwLCBzbyBOb3ZhIHVzZXMgdGhlIE9TLWxldmVsIFByaXZhdGUgRE5TIChETlMtb3Zlci1UTFMpIHdoZW4gZW5hYmxlZC4gT25lIHRhcCBvcGVucyB0aGUgc3lzdGVtIHNldHRpbmdzLiIsCiAgICAgICAgICAgICAgICApIHsKICAgICAgICAgICAgICAgICAgICBCdXR0b25Sb3coIk9wZW4gUHJpdmF0ZSBETlMgc2V0dGluZ3MiLCBJY29ucy5Sb3VuZGVkLkRucykgewogICAgICAgICAgICAgICAgICAgICAgICBydW5DYXRjaGluZyB7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICBjb250ZXh0LnN0YXJ0QWN0aXZpdHkoSW50ZW50KCJhbmRyb2lkLnNldHRpbmdzLlBSSVZBVEVfRE5TX1NFVFRJTkdTIikpCiAgICAgICAgICAgICAgICAgICAgICAgIH0ub25GYWlsdXJlIHsKICAgICAgICAgICAgICAgICAgICAgICAgICAgIG5vdGUgPSAiUHJpdmF0ZSBETlMgbmVlZHMgQW5kcm9pZCA5KyB3aXRoIGEgbmV0d29yayBjb25uZWN0aW9uLiIKICAgICAgICAgICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQoKICAgICAgICAgICAgaXRlbSB7CiAgICAgICAgICAgICAgICBCdXR0b25Sb3coIkV4dGVuc2lvbnMiLCBJY29ucy5Sb3VuZGVkLkV4dGVuc2lvbiwgb25PcGVuRXh0ZW5zaW9ucykKICAgICAgICAgICAgfQoKICAgICAgICAgICAgaXRlbSB7CiAgICAgICAgICAgICAgICBCdXR0b25Sb3coIkNsZWFyIGJvb2ttYXJrcywgaGlzdG9yeSAmIHNob3J0Y3V0cyIsIEljb25zLlJvdW5kZWQuTG9jaykgewogICAgICAgICAgICAgICAgICAgIFN0b3JlLmNsZWFyQWxsRGF0YSgpCiAgICAgICAgICAgICAgICAgICAgbm90ZSA9ICJCb29rbWFya3MsIGhpc3RvcnkgYW5kIHNob3J0Y3V0cyBjbGVhcmVkLiIKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQoKICAgICAgICAgICAgaXRlbSB7IFNlY3Rpb25IZWFkZXIoIkFib3V0IikgfQoKICAgICAgICAgICAgaXRlbSB7CiAgICAgICAgICAgICAgICBUZXh0KAogICAgICAgICAgICAgICAgICAgICJOb3ZhIEJyb3dzZXIgMy4wXG5cbiIgKwogICAgICAgICAgICAgICAgICAgICAgICAiRW5naW5lOiBNb3ppbGxhIEdlY2tvVmlldyDigJQgdGhlIHNhbWUgZW5naW5lIHRoYXQgcG93ZXJzIEZpcmVmb3ggZm9yIEFuZHJvaWQsIHdpdGggbmF0aXZlIEhUTUw1IHZpZGVvLCBmdWxsc2NyZWVuIGFuZCByb3RhdGlvbiBzdXBwb3J0LlxuIiArCiAgICAgICAgICAgICAgICAgICAgICAgICJBZCBibG9ja2luZyAoRWFzeUxpc3QgKyBFbmhhbmNlZCBUcmFja2luZyBQcm90ZWN0aW9uKSDCtyBTYWZlIGJyb3dzaW5nIMK3IEZpcmVmb3ggYWRkLW9uIHN1cHBvcnQgKEFNTykgwrcgUHJpdmF0ZSBtb2RlIMK3IERvd25sb2FkcyDCtyBEZXNrdG9wIG1vZGUgwrcgU2VjdXJlIEROUyAoc3lzdGVtKSIsCiAgICAgICAgICAgICAgICAgICAgc3R5bGUgPSBNYXRlcmlhbFRoZW1lLnR5cG9ncmFwaHkuYm9keVNtYWxsLAogICAgICAgICAgICAgICAgICAgIGNvbG9yID0gTWF0ZXJpYWxUaGVtZS5jb2xvclNjaGVtZS5vblN1cmZhY2VWYXJpYW50LAogICAgICAgICAgICAgICAgICAgIHRleHRBbGlnbiA9IFRleHRBbGlnbi5DZW50ZXIsCiAgICAgICAgICAgICAgICAgICAgbW9kaWZpZXIgPSBNb2RpZmllci5maWxsTWF4V2lkdGgoKS5wYWRkaW5nKGhvcml6b250YWwgPSAyNC5kcCwgdmVydGljYWwgPSA4LmRwKSwKICAgICAgICAgICAgICAgICkKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KCiAgICBub3RlPy5sZXQgewogICAgICAgIEFsZXJ0RGlhbG9nKAogICAgICAgICAgICBvbkRpc21pc3NSZXF1ZXN0ID0geyBub3RlID0gbnVsbCB9LAogICAgICAgICAgICB0aXRsZSA9IHsgVGV4dCgiTm90ZSIpIH0sCiAgICAgICAgICAgIHRleHQgPSB7IFRleHQoaXQpIH0sCiAgICAgICAgICAgIGNvbmZpcm1CdXR0b24gPSB7CiAgICAgICAgICAgICAgICBUZXh0QnV0dG9uKG9uQ2xpY2sgPSB7IG5vdGUgPSBudWxsIH0pIHsgVGV4dCgiT0siKSB9CiAgICAgICAgICAgIH0sCiAgICAgICAgKQogICAgfQp9Cg==
+package com.nova.browser.ui
+
+import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Dns
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.nova.browser.browser.BrowserCore
+import com.nova.browser.store.Store
+
+@Composable
+fun SettingsScreen(onBack: () -> Unit, onOpenExtensions: () -> Unit, onOpenDownloads: () -> Unit) {
+    var note by remember { mutableStateOf<String?>(null) }
+    var safeBrowsing by remember { mutableStateOf(Store.safeBrowsing) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .navigationBarsPadding(),
+    ) {
+        HeaderRow(title = "Settings", onBack = onBack)
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(bottom = 32.dp),
+        ) {
+            item { SectionHeader("Privacy & Security") }
+
+            item {
+                SettingBlock(
+                    title = "Ad & tracker blocking",
+                    subtitle = "Blocks ads, trackers, analytics, social widgets, cryptominers and fingerprinters using GeckoView's Enhanced Tracking Protection plus the EasyList, EasyPrivacy and annoyance lists (the same community lists used by uBlock Origin). Enabled by default — the number in the address bar is what it blocked on the current page.",
+                ) {
+                    RadioRow(
+                        options = listOf("Off", "Standard", "Strict"),
+                        values = listOf("off", "standard", "strict"),
+                        selected = Store.adblockLevel,
+                    ) { v ->
+                        Store.adblockLevel = v
+                        com.nova.browser.ext.ExtensionManager.setShieldEnabled(v != "off")
+                        BrowserCore.applyShieldToAll()
+                        note = if (v == "off") "Ad blocking is now off. Reload pages to apply." else "Ad blocking updated for all tabs. Reload pages to apply."
+                    }
+                }
+            }
+
+            item { StatRow("Requests blocked this session", "${BrowserCore.totalBlocked}") }
+
+            item {
+                SettingBlock(
+                    title = "Safe browsing",
+                    subtitle = "Uses GeckoView's built-in Safe Browsing (Mozilla + Google lists) to warn on dangerous sites.",
+                ) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
+                    ) {
+                        Text("Enabled", style = MaterialTheme.typography.bodyMedium)
+                        Switch(
+                            checked = safeBrowsing,
+                            onCheckedChange = {
+                                safeBrowsing = it
+                                Store.safeBrowsing = it
+                                note = "Safe browsing takes effect for pages loaded after this change."
+                            },
+                        )
+                    }
+                }
+            }
+
+            item { SectionHeader("Appearance") }
+
+            item {
+                SettingBlock(title = "Theme") {
+                    RadioRow(
+                        options = listOf("System", "Light", "Dark"),
+                        values = listOf("auto", "light", "dark"),
+                        selected = Store.theme,
+                    ) { v ->
+                        Store.theme = v
+                        note = null
+                    }
+                }
+            }
+
+            item { SectionHeader("General") }
+
+            item {
+                SettingBlock(title = "Search engine") {
+                    RadioRow(
+                        options = listOf("Google", "DuckDuckGo", "Bing"),
+                        values = listOf("google", "duckduckgo", "bing"),
+                        selected = Store.searchEngine,
+                    ) { v ->
+                        Store.searchEngine = v
+                    }
+                }
+            }
+
+            item {
+                ButtonRow("Downloads", Icons.Rounded.Download, onOpenDownloads)
+            }
+
+            item {
+                SettingBlock(
+                    title = "Secure DNS",
+                    subtitle = "Android's network stack doesn't let apps override DNS per-app, so Nova uses the OS-level Private DNS (DNS-over-TLS) when enabled. One tap opens the system settings.",
+                ) {
+                    ButtonRow("Open Private DNS settings", Icons.Rounded.Dns) {
+                        runCatching {
+                            context.startActivity(Intent("android.settings.PRIVATE_DNS_SETTINGS"))
+                        }.onFailure {
+                            note = "Private DNS needs Android 9+ with a network connection."
+                        }
+                    }
+                }
+            }
+
+            item {
+                ButtonRow("Extensions", Icons.Rounded.Extension, onOpenExtensions)
+            }
+
+            item {
+                ButtonRow("Clear bookmarks, history & shortcuts", Icons.Rounded.Lock) {
+                    Store.clearAllData()
+                    note = "Bookmarks, history and shortcuts cleared."
+                }
+            }
+
+            item { SectionHeader("About") }
+
+            item {
+                Text(
+                    "Nova Browser 3.0\n\n" +
+                        "Engine: Mozilla GeckoView — the same engine that powers Firefox for Android, with native HTML5 video, fullscreen and rotation support.\n" +
+                        "Ad blocking (EasyList + Enhanced Tracking Protection) · Safe browsing · Firefox add-on support (AMO) · Private mode · Downloads · Desktop mode · Secure DNS (system)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+                )
+            }
+        }
+    }
+
+    note?.let {
+        AlertDialog(
+            onDismissRequest = { note = null },
+            title = { Text("Note") },
+            text = { Text(it) },
+            confirmButton = {
+                TextButton(onClick = { note = null }) { Text("OK") }
+            },
+        )
+    }
+}

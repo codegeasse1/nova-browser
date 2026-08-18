@@ -1,1 +1,37 @@
-IyBOb3ZhIEJyb3dzZXIgMi4wCgpBIG1vZGVybiwgZmVhdHVyZS1yaWNoIEFuZHJvaWQgYnJvd3NlciBidWlsdCBvbiAqKkNocm9taXVtKiog4oCUIEFuZHJvaWQgU3lzdGVtIFdlYlZpZXcKKHRoZSBzYW1lIEJsaW5rICsgVjggZW5naW5lIHRoYXQgcG93ZXJzIENocm9tZSBvbiBBbmRyb2lkKSDigJQgd2l0aCBhIE1hdGVyaWFsLTMgQ29tcG9zZSBVSS4KCiMjIEZlYXR1cmVzCgotICoqQ2hyb21pdW0gZW5naW5lKiog4oCUIEFuZHJvaWQgU3lzdGVtIFdlYlZpZXcgKEJsaW5rIHJlbmRlcmluZyArIFY4IEpTKS4gRnVsbCB3ZWIgcGxhdGZvcm0gc3VwcG9ydCwKICB0aW55IEFQSywgYW5kIHRoZSBlbmdpbmUgc2hpcHMgd2l0aCBBbmRyb2lkIGl0c2VsZiBzbyBpdCBzdGF5cyBjdXJyZW50IHdpdGhvdXQgYXBwIHVwZGF0ZXMuCi0gKipSZWFsIGFkIGJsb2NraW5nKiog4oCUIHRoZSBFYXN5TGlzdCwgRWFzeVByaXZhY3kgYW5kIGFubm95YW5jZSBmaWx0ZXIgbGlzdHMgKHRoZSBzYW1lIGNvbW11bml0eQogIGxpc3RzIHVzZWQgYnkgdUJsb2NrIE9yaWdpbikgYXBwbGllZCB2aWEgbmV0d29yayBpbnRlcmNlcHRpb247IHBlci1zaXRlIHNoaWVsZCB0b2dnbGUgaW4gdGhlCiAgdG9vbGJhciwgbGl2ZSBibG9ja2VkLWNvdW50IHN0YXRzLCBPZmYgLyBTdGFuZGFyZCAvIFN0cmljdCBsZXZlbHMuCi0gKipTYWZlIGJyb3dzaW5nKiog4oCUIHRoZSBDaHJvbWl1bSBlbmdpbmUncyBidWlsdC1pbiBTYWZlIEJyb3dzaW5nIHByb3RlY3Rpb24uCi0gKipDb250ZW50LXNjcmlwdCBleHRlbnNpb25zKiog4oCUIGluc3RhbGwgcmVhbCBleHRlbnNpb25zIGZyb20gKiouY3J4IC8gLnhwaSAvIC56aXAqKiBwYWNrYWdlcwogIChkb3dubG9hZCBvbmUgZnJvbSBhIHBhZ2UgYW5kIE5vdmEgYXV0by1pbnN0YWxscywgb3IgcGljayBhIGZpbGUpLiBDb250ZW50LXNjcmlwdC1vbmx5CiAgZXh0ZW5zaW9ucyAoZGFyayBtb2RlLCB0ZXh0IHNpemUsIGltYWdlIGJsb2NraW5nLCBldGMuKSB3b3JrIGZ1bGx5LiBUaHJlZSBhcmUgYnVuZGxlZC4KLSAqKk1vZGVybiBVSSoqIOKAlCBNYXRlcmlhbCAzLCBkYXJrL2xpZ2h0L3N5c3RlbSB0aGVtZXMsIGdyYWRpZW50IHN0YXJ0IHBhZ2Ugd2l0aCBsaXZlIGNsb2NrLAogIHNwZWVkLWRpYWwgdGlsZXMsIHBpbGwgYWRkcmVzcyBiYXIgd2l0aCBzdWdnZXN0aW9ucywgZ3JpZCB0YWIgc3dpdGNoZXIsIGFuaW1hdGVkIHByb2dyZXNzLgotICoqUHJpdmF0ZSAoaW5jb2duaXRvKSBtb2RlKiog4oCUIGRpc3RpbmN0IHRoZW1lLCBwcml2YXRlIHNlc3Npb25zLgotIFRhYnMsIGJvb2ttYXJrcywgaGlzdG9yeSwgKipkb3dubG9hZHMgbWFuYWdlcioqLCBleHRlcm5hbC1saW5rIGhhbmRsaW5nLCBzZWFyY2gtZW5naW5lIGNob2ljZSwKICBkZXNrdG9wLXNpdGUgbW9kZS4KCiMjIE5vdGVzCgotIENocm9tZSBXZWIgU3RvcmUgaGFzICoqbm8gaW5zdGFsbCBmbG93IG9uIEFuZHJvaWQgYXQgYWxsKiog4oCUIGV2ZW4gQ2hyb21lIGZvciBBbmRyb2lkIGNhbid0CiAgIkFkZCB0byBDaHJvbWUiICh0aGF0IGJ1dHRvbiBpcyBkZXNrdG9wLW9ubHkpLiBOb3ZhIGluc3RhbGxzIGV4dGVuc2lvbiBwYWNrYWdlcyBpbnN0ZWFkLCBmcm9tCiAgYW55IHNvdXJjZSAoQU1PLCBHaXRIdWIgcmVsZWFzZXMsIC5jcngvLnppcCBtaXJyb3JzKS4gRXh0ZW5zaW9ucyBuZWVkaW5nIGJhY2tncm91bmQgcGFnZXMgb3IKICBicm93c2VyIEFQSXMgZG9uJ3QgcnVuIG9uIFdlYlZpZXcg4oCUIGNvbnRlbnQtc2NyaXB0IGV4dGVuc2lvbnMgZG8uCi0gQWQtYmxvY2sgbGV2ZWwgYW5kIHNhZmUtYnJvd3NpbmcgY2hhbmdlcyBhcHBseSB0byBwYWdlcyBsb2FkZWQgYWZ0ZXJ3YXJkczsgdGhlIHBlci1zaXRlIHNoaWVsZAogIHRvZ2dsZSBpcyBpbnN0YW50LgotIEJ1aWx0IGJ5IEdpdEh1YiBBY3Rpb25zIG9uIHRoZSBgYnVpbGRgIGJyYW5jaDsgdGhlIGRlYnVnIEFQSyBpcyB0aGUgYG5vdmEtYnJvd3Nlci1kZWJ1Zy1hcGtgIGFydGlmYWN0LgoKIyMgQnVpbGQKCmBgYGJhc2gKLi9ncmFkbGV3IGFzc2VtYmxlRGVidWcgICAjIEFQSyBhdCBhcHAvYnVpbGQvb3V0cHV0cy9hcGsvZGVidWcvCmBgYAo=
+# Nova Browser 2.0
+
+A modern, feature-rich Android browser built on **Chromium** — Android System WebView
+(the same Blink + V8 engine that powers Chrome on Android) — with a Material-3 Compose UI.
+
+## Features
+
+- **Chromium engine** — Android System WebView (Blink rendering + V8 JS). Full web platform support,
+  tiny APK, and the engine ships with Android itself so it stays current without app updates.
+- **Real ad blocking** — the EasyList, EasyPrivacy and annoyance filter lists (the same community
+  lists used by uBlock Origin) applied via network interception; per-site shield toggle in the
+  toolbar, live blocked-count stats, Off / Standard / Strict levels.
+- **Safe browsing** — the Chromium engine's built-in Safe Browsing protection.
+- **Content-script extensions** — install real extensions from **.crx / .xpi / .zip** packages
+  (download one from a page and Nova auto-installs, or pick a file). Content-script-only
+  extensions (dark mode, text size, image blocking, etc.) work fully. Three are bundled.
+- **Modern UI** — Material 3, dark/light/system themes, gradient start page with live clock,
+  speed-dial tiles, pill address bar with suggestions, grid tab switcher, animated progress.
+- **Private (incognito) mode** — distinct theme, private sessions.
+- Tabs, bookmarks, history, **downloads manager**, external-link handling, search-engine choice,
+  desktop-site mode.
+
+## Notes
+
+- Chrome Web Store has **no install flow on Android at all** — even Chrome for Android can't
+  "Add to Chrome" (that button is desktop-only). Nova installs extension packages instead, from
+  any source (AMO, GitHub releases, .crx/.zip mirrors). Extensions needing background pages or
+  browser APIs don't run on WebView — content-script extensions do.
+- Ad-block level and safe-browsing changes apply to pages loaded afterwards; the per-site shield
+  toggle is instant.
+- Built by GitHub Actions on the `build` branch; the debug APK is the `nova-browser-debug-apk` artifact.
+
+## Build
+
+```bash
+./gradlew assembleDebug   # APK at app/build/outputs/apk/debug/
+```

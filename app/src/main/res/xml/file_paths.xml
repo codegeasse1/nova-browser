@@ -1,1 +1,5 @@
-PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHBhdGhzIHhtbG5zOmFuZHJvaWQ9Imh0dHA6Ly9zY2hlbWFzLmFuZHJvaWQuY29tL2Fway9yZXMvYW5kcm9pZCI+CiAgICA8ZmlsZXMtcGF0aCBuYW1lPSJpbnRlcm5hbCIgcGF0aD0iLiIgLz4KICAgIDxleHRlcm5hbC1maWxlcy1wYXRoIG5hbWU9ImV4dGVybmFsX2Rvd25sb2FkcyIgcGF0aD0iRG93bmxvYWQvTm92YS8iIC8+CjwvcGF0aHM+Cg==
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <files-path name="internal" path="." />
+    <external-files-path name="external_downloads" path="Download/Nova/" />
+</paths>

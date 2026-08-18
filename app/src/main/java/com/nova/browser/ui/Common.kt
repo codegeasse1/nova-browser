@@ -1,1 +1,125 @@
-cGFja2FnZSBjb20ubm92YS5icm93c2VyLnVpCgppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLmNsaWNrYWJsZQppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLmxheW91dC5BcnJhbmdlbWVudAppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLmxheW91dC5Db2x1bW4KaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UuZm91bmRhdGlvbi5sYXlvdXQuQ29sdW1uU2NvcGUKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UuZm91bmRhdGlvbi5sYXlvdXQuUm93CmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLmZvdW5kYXRpb24ubGF5b3V0LlNwYWNlcgppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLmxheW91dC5maWxsTWF4V2lkdGgKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UuZm91bmRhdGlvbi5sYXlvdXQuaGVpZ2h0CmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLmZvdW5kYXRpb24ubGF5b3V0LnBhZGRpbmcKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UuZm91bmRhdGlvbi5sYXlvdXQuc2l6ZQppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLmxheW91dC53aWR0aAppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5tYXRlcmlhbC5pY29ucy5JY29ucwppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5tYXRlcmlhbC5pY29ucy5hdXRvbWlycm9yZWQucm91bmRlZC5BcnJvd0JhY2sKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UubWF0ZXJpYWwuaWNvbnMucm91bmRlZC5TZWFyY2gKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UubWF0ZXJpYWwzLkljb24KaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UubWF0ZXJpYWwzLkljb25CdXR0b24KaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UubWF0ZXJpYWwzLk1hdGVyaWFsVGhlbWUKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UubWF0ZXJpYWwzLlJhZGlvQnV0dG9uCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLm1hdGVyaWFsMy5UZXh0CmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnJ1bnRpbWUuQ29tcG9zYWJsZQppbXBvcnQgYW5kcm9pZHguY29tcG9zZS51aS5BbGlnbm1lbnQKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UudWkuTW9kaWZpZXIKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UudWkuZ3JhcGhpY3MudmVjdG9yLkltYWdlVmVjdG9yCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnVpLnRleHQuZm9udC5Gb250V2VpZ2h0CmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnVpLnRleHQuc3R5bGUuVGV4dEFsaWduCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnVpLnVuaXQuZHAKCkBDb21wb3NhYmxlCmZ1biBIZWFkZXJSb3codGl0bGU6IFN0cmluZywgb25CYWNrOiAoKSAtPiBVbml0LCB0cmFpbGluZzogKEBDb21wb3NhYmxlICgpIC0+IFVuaXQpPyA9IG51bGwpIHsKICAgIFJvdygKICAgICAgICBNb2RpZmllci5maWxsTWF4V2lkdGgoKS5wYWRkaW5nKGhvcml6b250YWwgPSA4LmRwLCB2ZXJ0aWNhbCA9IDQuZHApLAogICAgICAgIHZlcnRpY2FsQWxpZ25tZW50ID0gQWxpZ25tZW50LkNlbnRlclZlcnRpY2FsbHksCiAgICApIHsKICAgICAgICBJY29uQnV0dG9uKG9uQ2xpY2sgPSBvbkJhY2spIHsgSWNvbihJY29ucy5BdXRvTWlycm9yZWQuUm91bmRlZC5BcnJvd0JhY2ssICJCYWNrIikgfQogICAgICAgIFRleHQodGl0bGUsIHN0eWxlID0gTWF0ZXJpYWxUaGVtZS50eXBvZ3JhcGh5LnRpdGxlTGFyZ2UsIGZvbnRXZWlnaHQgPSBGb250V2VpZ2h0LkJvbGQpCiAgICAgICAgU3BhY2VyKE1vZGlmaWVyLndlaWdodCgxZikpCiAgICAgICAgdHJhaWxpbmc/Lmludm9rZSgpCiAgICB9Cn0KCkBDb21wb3NhYmxlCmZ1biBTZWN0aW9uSGVhZGVyKHRleHQ6IFN0cmluZykgewogICAgVGV4dCgKICAgICAgICB0ZXh0LAogICAgICAgIHN0eWxlID0gTWF0ZXJpYWxUaGVtZS50eXBvZ3JhcGh5LmxhYmVsTGFyZ2UsCiAgICAgICAgY29sb3IgPSBNYXRlcmlhbFRoZW1lLmNvbG9yU2NoZW1lLnByaW1hcnksCiAgICAgICAgbW9kaWZpZXIgPSBNb2RpZmllci5maWxsTWF4V2lkdGgoKS5wYWRkaW5nKGhvcml6b250YWwgPSAyMC5kcCwgdmVydGljYWwgPSAxMi5kcCksCiAgICApCn0KCkBDb21wb3NhYmxlCmZ1biBTZXR0aW5nQmxvY2sodGl0bGU6IFN0cmluZywgc3VidGl0bGU6IFN0cmluZz8gPSBudWxsLCBjb250ZW50OiBAQ29tcG9zYWJsZSBDb2x1bW5TY29wZS4oKSAtPiBVbml0KSB7CiAgICBDb2x1bW4oTW9kaWZpZXIuZmlsbE1heFdpZHRoKCkucGFkZGluZyhob3Jpem9udGFsID0gMjAuZHAsIHZlcnRpY2FsID0gNi5kcCkpIHsKICAgICAgICBUZXh0KHRpdGxlLCBzdHlsZSA9IE1hdGVyaWFsVGhlbWUudHlwb2dyYXBoeS50aXRsZVNtYWxsLCBmb250V2VpZ2h0ID0gRm9udFdlaWdodC5TZW1pQm9sZCkKICAgICAgICBzdWJ0aXRsZT8ubGV0IHsKICAgICAgICAgICAgVGV4dChpdCwgc3R5bGUgPSBNYXRlcmlhbFRoZW1lLnR5cG9ncmFwaHkuYm9keVNtYWxsLCBjb2xvciA9IE1hdGVyaWFsVGhlbWUuY29sb3JTY2hlbWUub25TdXJmYWNlVmFyaWFudCkKICAgICAgICB9CiAgICAgICAgU3BhY2VyKE1vZGlmaWVyLmhlaWdodCg0LmRwKSkKICAgICAgICBjb250ZW50KCkKICAgIH0KfQoKQENvbXBvc2FibGUKZnVuIFJhZGlvUm93KG9wdGlvbnM6IExpc3Q8U3RyaW5nPiwgdmFsdWVzOiBMaXN0PFN0cmluZz4sIHNlbGVjdGVkOiBTdHJpbmcsIG9uU2VsZWN0OiAoU3RyaW5nKSAtPiBVbml0KSB7CiAgICBvcHRpb25zLmZvckVhY2hJbmRleGVkIHsgaSwgbGFiZWwgLT4KICAgICAgICBSb3coCiAgICAgICAgICAgIE1vZGlmaWVyLmZpbGxNYXhXaWR0aCgpLmNsaWNrYWJsZSB7IG9uU2VsZWN0KHZhbHVlc1tpXSkgfS5wYWRkaW5nKHZlcnRpY2FsID0gNi5kcCksCiAgICAgICAgICAgIHZlcnRpY2FsQWxpZ25tZW50ID0gQWxpZ25tZW50LkNlbnRlclZlcnRpY2FsbHksCiAgICAgICAgKSB7CiAgICAgICAgICAgIFJhZGlvQnV0dG9uKHNlbGVjdGVkID0gc2VsZWN0ZWQgPT0gdmFsdWVzW2ldLCBvbkNsaWNrID0geyBvblNlbGVjdCh2YWx1ZXNbaV0pIH0pCiAgICAgICAgICAgIFNwYWNlcihNb2RpZmllci53aWR0aCg4LmRwKSkKICAgICAgICAgICAgVGV4dChsYWJlbCwgc3R5bGUgPSBNYXRlcmlhbFRoZW1lLnR5cG9ncmFwaHkuYm9keU1lZGl1bSkKICAgICAgICB9CiAgICB9Cn0KCkBDb21wb3NhYmxlCmZ1biBTdGF0Um93KHRpdGxlOiBTdHJpbmcsIHZhbHVlOiBTdHJpbmcpIHsKICAgIFJvdygKICAgICAgICBNb2RpZmllci5maWxsTWF4V2lkdGgoKS5wYWRkaW5nKGhvcml6b250YWwgPSAyMC5kcCwgdmVydGljYWwgPSA4LmRwKSwKICAgICAgICBob3Jpem9udGFsQXJyYW5nZW1lbnQgPSBBcnJhbmdlbWVudC5TcGFjZUJldHdlZW4sCiAgICApIHsKICAgICAgICBUZXh0KHRpdGxlLCBzdHlsZSA9IE1hdGVyaWFsVGhlbWUudHlwb2dyYXBoeS5ib2R5TWVkaXVtKQogICAgICAgIFRleHQoCiAgICAgICAgICAgIHZhbHVlLAogICAgICAgICAgICBzdHlsZSA9IE1hdGVyaWFsVGhlbWUudHlwb2dyYXBoeS5ib2R5TWVkaXVtLAogICAgICAgICAgICBmb250V2VpZ2h0ID0gRm9udFdlaWdodC5Cb2xkLAogICAgICAgICAgICBjb2xvciA9IE1hdGVyaWFsVGhlbWUuY29sb3JTY2hlbWUucHJpbWFyeSwKICAgICAgICApCiAgICB9Cn0KCkBDb21wb3NhYmxlCmZ1biBCdXR0b25Sb3codGl0bGU6IFN0cmluZywgaWNvbjogSW1hZ2VWZWN0b3I/ID0gbnVsbCwgb25DbGljazogKCkgLT4gVW5pdCkgewogICAgUm93KAogICAgICAgIE1vZGlmaWVyLmZpbGxNYXhXaWR0aCgpLmNsaWNrYWJsZShvbkNsaWNrID0gb25DbGljaykucGFkZGluZyhob3Jpem9udGFsID0gMjAuZHAsIHZlcnRpY2FsID0gMTQuZHApLAogICAgICAgIHZlcnRpY2FsQWxpZ25tZW50ID0gQWxpZ25tZW50LkNlbnRlclZlcnRpY2FsbHksCiAgICApIHsKICAgICAgICBpZiAoaWNvbiAhPSBudWxsKSB7CiAgICAgICAgICAgIEljb24oaWNvbiwgbnVsbCwgdGludCA9IE1hdGVyaWFsVGhlbWUuY29sb3JTY2hlbWUub25TdXJmYWNlVmFyaWFudCkKICAgICAgICAgICAgU3BhY2VyKE1vZGlmaWVyLndpZHRoKDEwLmRwKSkKICAgICAgICB9CiAgICAgICAgVGV4dCh0aXRsZSwgc3R5bGUgPSBNYXRlcmlhbFRoZW1lLnR5cG9ncmFwaHkuYm9keUxhcmdlKQogICAgfQp9CgpAQ29tcG9zYWJsZQpmdW4gRW1wdHlTdGF0ZSh0aXRsZTogU3RyaW5nLCBzdWJ0aXRsZTogU3RyaW5nKSB7CiAgICBDb2x1bW4oCiAgICAgICAgTW9kaWZpZXIuZmlsbE1heFdpZHRoKCkucGFkZGluZyg0OC5kcCksCiAgICAgICAgaG9yaXpvbnRhbEFsaWdubWVudCA9IEFsaWdubWVudC5DZW50ZXJIb3Jpem9udGFsbHksCiAgICApIHsKICAgICAgICBJY29uKEljb25zLlJvdW5kZWQuU2VhcmNoLCBudWxsLCBNb2RpZmllci5zaXplKDQwLmRwKSwgdGludCA9IE1hdGVyaWFsVGhlbWUuY29sb3JTY2hlbWUub3V0bGluZSkKICAgICAgICBTcGFjZXIoTW9kaWZpZXIuaGVpZ2h0KDEyLmRwKSkKICAgICAgICBUZXh0KHRpdGxlLCBzdHlsZSA9IE1hdGVyaWFsVGhlbWUudHlwb2dyYXBoeS50aXRsZU1lZGl1bSwgY29sb3IgPSBNYXRlcmlhbFRoZW1lLmNvbG9yU2NoZW1lLm9uU3VyZmFjZVZhcmlhbnQpCiAgICAgICAgVGV4dCgKICAgICAgICAgICAgc3VidGl0bGUsCiAgICAgICAgICAgIHN0eWxlID0gTWF0ZXJpYWxUaGVtZS50eXBvZ3JhcGh5LmJvZHlTbWFsbCwKICAgICAgICAgICAgY29sb3IgPSBNYXRlcmlhbFRoZW1lLmNvbG9yU2NoZW1lLm91dGxpbmUsCiAgICAgICAgICAgIHRleHRBbGlnbiA9IFRleHRBbGlnbi5DZW50ZXIsCiAgICAgICAgKQogICAgfQp9Cg==
+package com.nova.browser.ui
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+
+@Composable
+fun HeaderRow(title: String, onBack: () -> Unit, trailing: (@Composable () -> Unit)? = null) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") }
+        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.weight(1f))
+        trailing?.invoke()
+    }
+}
+
+@Composable
+fun SectionHeader(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+    )
+}
+
+@Composable
+fun SettingBlock(title: String, subtitle: String? = null, content: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp)) {
+        Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        subtitle?.let {
+            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Spacer(Modifier.height(4.dp))
+        content()
+    }
+}
+
+@Composable
+fun RadioRow(options: List<String>, values: List<String>, selected: String, onSelect: (String) -> Unit) {
+    options.forEachIndexed { i, label ->
+        Row(
+            Modifier.fillMaxWidth().clickable { onSelect(values[i]) }.padding(vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RadioButton(selected = selected == values[i], onClick = { onSelect(values[i]) })
+            Spacer(Modifier.width(8.dp))
+            Text(label, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+@Composable
+fun StatRow(title: String, value: String) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(title, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
+}
+
+@Composable
+fun ButtonRow(title: String, icon: ImageVector? = null, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (icon != null) {
+            Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.width(10.dp))
+        }
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@Composable
+fun EmptyState(title: String, subtitle: String) {
+    Column(
+        Modifier.fillMaxWidth().padding(48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(Icons.Rounded.Search, null, Modifier.size(40.dp), tint = MaterialTheme.colorScheme.outline)
+        Spacer(Modifier.height(12.dp))
+        Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            subtitle,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.outline,
+            textAlign = TextAlign.Center,
+        )
+    }
+}

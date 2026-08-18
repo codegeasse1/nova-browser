@@ -1,1 +1,4 @@
-cGx1Z2lucyB7CiAgICBpZCAnY29tLmFuZHJvaWQuYXBwbGljYXRpb24nIHZlcnNpb24gJzkuMy4xJyBhcHBseSBmYWxzZQogICAgaWQgJ29yZy5qZXRicmFpbnMua290bGluLnBsdWdpbi5jb21wb3NlJyB2ZXJzaW9uICcyLjIuMTAnIGFwcGx5IGZhbHNlCn0K
+plugins {
+    id 'com.android.application' version '9.3.1' apply false
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.2.10' apply false
+}

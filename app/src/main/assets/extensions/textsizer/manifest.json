@@ -1,1 +1,18 @@
-ewogICJtYW5pZmVzdF92ZXJzaW9uIjogMiwKICAibmFtZSI6ICJUZXh0IFNpemVyIiwKICAidmVyc2lvbiI6ICIxLjAuMCIsCiAgImRlc2NyaXB0aW9uIjogIkVubGFyZ2VzIHBhZ2UgdGV4dCB0byAxMTIlIGZvciBlYXNpZXIgcmVhZGluZy4iLAogICJwZXJtaXNzaW9ucyI6IFsiPGFsbF91cmxzPiJdLAogICJjb250ZW50X3NjcmlwdHMiOiBbCiAgICB7CiAgICAgICJtYXRjaGVzIjogWyI8YWxsX3VybHM+Il0sCiAgICAgICJjc3MiOiBbImNvbnRlbnQuY3NzIl0KICAgIH0KICBdLAogICJicm93c2VyX3NwZWNpZmljX3NldHRpbmdzIjogewogICAgImdlY2tvIjogewogICAgICAiaWQiOiAidGV4dHNpemVyQG5vdmEuYnJvd3NlciIKICAgIH0KICB9Cn0K
+{
+  "manifest_version": 2,
+  "name": "Text Sizer",
+  "version": "1.0.0",
+  "description": "Enlarges page text to 112% for easier reading.",
+  "permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["content.css"]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "textsizer@nova.browser"
+    }
+  }
+}

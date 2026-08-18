@@ -1,1 +1,36 @@
-bmFtZTogQnVpbGQgQVBLCgpvbjoKICBwdXNoOgogICAgYnJhbmNoZXM6IFsgYnVpbGQgXQogIHdvcmtmbG93X2Rpc3BhdGNoOgoKcGVybWlzc2lvbnM6CiAgY29udGVudHM6IHJlYWQKCmpvYnM6CiAgYnVpbGQ6CiAgICBydW5zLW9uOiB1YnVudHUtbGF0ZXN0CiAgICB0aW1lb3V0LW1pbnV0ZXM6IDEyMAogICAgc3RlcHM6CiAgICAgIC0gbmFtZTogQ2hlY2tvdXQKICAgICAgICB1c2VzOiBhY3Rpb25zL2NoZWNrb3V0QHY0CgogICAgICAtIG5hbWU6IFNldCB1cCBKREsgMjEKICAgICAgICB1c2VzOiBhY3Rpb25zL3NldHVwLWphdmFAdjQKICAgICAgICB3aXRoOgogICAgICAgICAgZGlzdHJpYnV0aW9uOiB0ZW11cmluCiAgICAgICAgICBqYXZhLXZlcnNpb246ICcyMScKCiAgICAgIC0gbmFtZTogU2V0IHVwIEdyYWRsZQogICAgICAgIHVzZXM6IGdyYWRsZS9hY3Rpb25zL3NldHVwLWdyYWRsZUB2MwoKICAgICAgLSBuYW1lOiBCdWlsZCBkZWJ1ZyBBUEsKICAgICAgICBydW46IGNobW9kICt4IGdyYWRsZXcgJiYgLi9ncmFkbGV3IC0tbm8tZGFlbW9uIGFzc2VtYmxlRGVidWcKCiAgICAgIC0gbmFtZTogVXBsb2FkIEFQSyBhcnRpZmFjdAogICAgICAgIHVzZXM6IGFjdGlvbnMvdXBsb2FkLWFydGlmYWN0QHY0CiAgICAgICAgd2l0aDoKICAgICAgICAgIG5hbWU6IG5vdmEtYnJvd3Nlci1kZWJ1Zy1hcGsKICAgICAgICAgIHBhdGg6IGFwcC9idWlsZC9vdXRwdXRzL2Fway9kZWJ1Zy8qLmFwawogICAgICAgICAgaWYtbm8tZmlsZXMtZm91bmQ6IGVycm9yCg==
+name: Build APK
+
+on:
+  push:
+    branches: [ build ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build debug APK
+        run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-browser-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

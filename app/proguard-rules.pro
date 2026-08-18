@@ -1,1 +1,11 @@
-LWtlZXAgY2xhc3Mgb3JnLmFwYWNoZS5wb2kuKiogeyAqOyB9Ci1rZWVwIGNsYXNzIG9yZy5hcGFjaGUueG1sYmVhbnMuKiogeyAqOyB9Ci1rZWVwIGNsYXNzIGNvbS50b21fcm91c2guKiogeyAqOyB9Ci1rZWVwIGNsYXNzIGNvbS5nb29nbGUubWxraXQuKiogeyAqOyB9Ci1kb250d2FybiBvcmcuYXBhY2hlLnBvaS4qKgotZG9udHdhcm4gb3JnLmFwYWNoZS54bWxiZWFucy4qKgotZG9udHdhcm4gamF2YS5hd3QuKioKLWRvbnR3YXJuIGphdmEubGFuZy5tYW5hZ2VtZW50LioqCi1kb250d2FybiBqYXZhLmJlYW5zLioqCi1kb250d2FybiBqYXZheC54bWwuKioKLWRvbnR3YXJuIGphdmF4Lm1hbmFnZW1lbnQuKioK
+-keep class org.apache.poi.** { *; }
+-keep class org.apache.xmlbeans.** { *; }
+-keep class com.tom_roush.** { *; }
+-keep class com.google.mlkit.** { *; }
+-dontwarn org.apache.poi.**
+-dontwarn org.apache.xmlbeans.**
+-dontwarn java.awt.**
+-dontwarn java.lang.management.**
+-dontwarn java.beans.**
+-dontwarn javax.xml.**
+-dontwarn javax.management.**

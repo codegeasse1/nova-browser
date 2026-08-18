@@ -1,1 +1,63 @@
-cGFja2FnZSBjb20ubm92YS5icm93c2VyCgppbXBvcnQgYW5kcm9pZC5jb250ZW50LnBtLkFjdGl2aXR5SW5mbwppbXBvcnQgYW5kcm9pZC5uZXQuVXJpCmltcG9ydCBhbmRyb2lkLm9zLkJ1bmRsZQppbXBvcnQgYW5kcm9pZHguYWN0aXZpdHkuQ29tcG9uZW50QWN0aXZpdHkKaW1wb3J0IGFuZHJvaWR4LmFjdGl2aXR5LmNvbXBvc2Uuc2V0Q29udGVudAppbXBvcnQgYW5kcm9pZHguYWN0aXZpdHkuZW5hYmxlRWRnZVRvRWRnZQppbXBvcnQgYW5kcm9pZHguYWN0aXZpdHkucmVzdWx0LmNvbnRyYWN0LkFjdGl2aXR5UmVzdWx0Q29udHJhY3RzCmltcG9ydCBhbmRyb2lkeC5jb3JlLnZpZXcuV2luZG93SW5zZXRzQ29tcGF0CmltcG9ydCBhbmRyb2lkeC5jb3JlLnZpZXcuV2luZG93SW5zZXRzQ29udHJvbGxlckNvbXBhdAppbXBvcnQgY29tLm5vdmEuYnJvd3Nlci51aS5Ccm93c2VyQXBwCgpjbGFzcyBNYWluQWN0aXZpdHkgOiBDb21wb25lbnRBY3Rpdml0eSgpIHsKCiAgICBwcml2YXRlIHZhbCBwZXJtaXNzaW9uTGF1bmNoZXIgPQogICAgICAgIHJlZ2lzdGVyRm9yQWN0aXZpdHlSZXN1bHQoQWN0aXZpdHlSZXN1bHRDb250cmFjdHMuUmVxdWVzdE11bHRpcGxlUGVybWlzc2lvbnMoKSkgeyByZXN1bHQgLT4KICAgICAgICAgICAgQXBwLmZpbmlzaEFuZHJvaWRQZXJtaXNzaW9uUmVxdWVzdChyZXN1bHQudmFsdWVzLmFsbCB7IGl0IH0pCiAgICAgICAgfQoKICAgIHByaXZhdGUgdmFsIGZpbGVQaWNrZXIgPQogICAgICAgIHJlZ2lzdGVyRm9yQWN0aXZpdHlSZXN1bHQoQWN0aXZpdHlSZXN1bHRDb250cmFjdHMuT3BlbkRvY3VtZW50KCkpIHsgdXJpOiBVcmk/IC0+CiAgICAgICAgICAgIEFwcC5maWxlUGF0aENhbGxiYWNrPy5vblJlY2VpdmVWYWx1ZShpZiAodXJpICE9IG51bGwpIGFycmF5T2YodXJpKSBlbHNlIG51bGwpCiAgICAgICAgICAgIEFwcC5maWxlUGF0aENhbGxiYWNrID0gbnVsbAogICAgICAgICAgICBBcHAuZmluaXNoRmlsZVByb21wdCh1cmkpCiAgICAgICAgfQoKICAgIG92ZXJyaWRlIGZ1biBvbkNyZWF0ZShzYXZlZEluc3RhbmNlU3RhdGU6IEJ1bmRsZT8pIHsKICAgICAgICBzdXBlci5vbkNyZWF0ZShzYXZlZEluc3RhbmNlU3RhdGUpCiAgICAgICAgQXBwLmFjdGl2aXR5ID0gdGhpcwogICAgICAgIEFwcC5pbml0KGFwcGxpY2F0aW9uQ29udGV4dCkKICAgICAgICBlbmFibGVFZGdlVG9FZGdlKCkKICAgICAgICBzZXRDb250ZW50IHsgQnJvd3NlckFwcCgpIH0KICAgIH0KCiAgICBmdW4gc2V0RnVsbHNjcmVlblVpKG9uOiBCb29sZWFuKSB7CiAgICAgICAgcnVuQ2F0Y2hpbmcgewogICAgICAgICAgICBpZiAob24pIHsKICAgICAgICAgICAgICAgIHJlcXVlc3RlZE9yaWVudGF0aW9uID0gQWN0aXZpdHlJbmZvLlNDUkVFTl9PUklFTlRBVElPTl9TRU5TT1JfTEFORFNDQVBFCiAgICAgICAgICAgICAgICBXaW5kb3dJbnNldHNDb250cm9sbGVyQ29tcGF0KHdpbmRvdywgd2luZG93LmRlY29yVmlldykuYXBwbHkgewogICAgICAgICAgICAgICAgICAgIHN5c3RlbUJhcnNCZWhhdmlvciA9IFdpbmRvd0luc2V0c0NvbnRyb2xsZXJDb21wYXQuQkVIQVZJT1JfU0hPV19UUkFOU0lFTlRfQkFSU19CWV9TV0lQRQogICAgICAgICAgICAgICAgICAgIGhpZGUoV2luZG93SW5zZXRzQ29tcGF0LlR5cGUuc3lzdGVtQmFycygpKQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9IGVsc2UgewogICAgICAgICAgICAgICAgcmVxdWVzdGVkT3JpZW50YXRpb24gPSBBY3Rpdml0eUluZm8uU0NSRUVOX09SSUVOVEFUSU9OX1VOU1BFQ0lGSUVECiAgICAgICAgICAgICAgICBXaW5kb3dJbnNldHNDb250cm9sbGVyQ29tcGF0KHdpbmRvdywgd2luZG93LmRlY29yVmlldykuc2hvdyhXaW5kb3dJbnNldHNDb21wYXQuVHlwZS5zeXN0ZW1CYXJzKCkpCiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICB9CgogICAgZnVuIGxhdW5jaFBlcm1pc3Npb25SZXF1ZXN0KHBlcm1pc3Npb25zOiBBcnJheTxTdHJpbmc+KSB7CiAgICAgICAgcGVybWlzc2lvbkxhdW5jaGVyLmxhdW5jaChwZXJtaXNzaW9ucykKICAgIH0KCiAgICBmdW4gb3BlbkZpbGVDaG9vc2VyKCkgewogICAgICAgIHJ1bkNhdGNoaW5nIHsgZmlsZVBpY2tlci5sYXVuY2goYXJyYXlPZigiKi8qIikpIH0KICAgIH0KCiAgICBvdmVycmlkZSBmdW4gb25EZXN0cm95KCkgewogICAgICAgIEFwcC5hY3Rpdml0eSA9IG51bGwKICAgICAgICBzdXBlci5vbkRlc3Ryb3koKQogICAgfQp9Cg==
+package com.nova.browser
+
+import android.content.pm.ActivityInfo
+import android.net.Uri
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import com.nova.browser.ui.BrowserApp
+
+class MainActivity : ComponentActivity() {
+
+    private val permissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+            App.finishAndroidPermissionRequest(result.values.all { it })
+        }
+
+    private val filePicker =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            App.filePathCallback?.onReceiveValue(if (uri != null) arrayOf(uri) else null)
+            App.filePathCallback = null
+            App.finishFilePrompt(uri)
+        }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        App.activity = this
+        App.init(applicationContext)
+        enableEdgeToEdge()
+        setContent { BrowserApp() }
+    }
+
+    fun setFullscreenUi(on: Boolean) {
+        runCatching {
+            if (on) {
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                WindowInsetsControllerCompat(window, window.decorView).apply {
+                    systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    hide(WindowInsetsCompat.Type.systemBars())
+                }
+            } else {
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                WindowInsetsControllerCompat(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
+            }
+        }
+    }
+
+    fun launchPermissionRequest(permissions: Array<String>) {
+        permissionLauncher.launch(permissions)
+    }
+
+    fun openFileChooser() {
+        runCatching { filePicker.launch(arrayOf("*/*")) }
+    }
+
+    override fun onDestroy() {
+        App.activity = null
+        super.onDestroy()
+    }
+}

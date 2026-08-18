@@ -1,1 +1,29 @@
-InVzZSBzdHJpY3QiOwoKY29uc3QgUkVRVUVTVF9UWVBFUyA9IFsKICAic2NyaXB0IiwgImltYWdlIiwgInhtbGh0dHByZXF1ZXN0IiwgInN0eWxlc2hlZXQiLCAibWVkaWEiLCAiZm9udCIsCiAgIm9iamVjdCIsICJvdGhlciIsICJzdWJfZnJhbWUiLCAiYmVhY29uIgpdOwoKYnJvd3Nlci53ZWJSZXF1ZXN0Lm9uQmVmb3JlUmVxdWVzdC5hZGRMaXN0ZW5lcigKICBhc3luYyAoZGV0YWlscykgPT4gewogICAgdHJ5IHsKICAgICAgY29uc3QgcGFnZVVybCA9IGRldGFpbHMuZG9jdW1lbnRVcmwgfHwgZGV0YWlscy5pbml0aWF0b3IgfHwgZGV0YWlscy5vcmlnaW5VcmwgfHwgIiI7CiAgICAgIGNvbnN0IHRhYklkID0gdHlwZW9mIGRldGFpbHMudGFiSWQgPT09ICJudW1iZXIiID8gZGV0YWlscy50YWJJZCA6IC0xOwogICAgICBjb25zdCByZXMgPSBhd2FpdCBicm93c2VyLnJ1bnRpbWUuc2VuZE5hdGl2ZU1lc3NhZ2UoIm5vdmEiLCB7CiAgICAgICAgdHlwZTogImNoZWNrIiwKICAgICAgICB1cmw6IGRldGFpbHMudXJsLAogICAgICAgIHBhZ2VVcmw6IHBhZ2VVcmwsCiAgICAgICAgdGFiSWQ6IHRhYklkCiAgICAgIH0pOwogICAgICBpZiAocmVzICYmIHJlcy5ibG9jaykgewogICAgICAgIHJldHVybiB7IGNhbmNlbDogdHJ1ZSB9OwogICAgICB9CiAgICB9IGNhdGNoIChlKSB7CiAgICAgIC8vIE5hdGl2ZSBzaWRlIHVuYXZhaWxhYmxlIG9yIGVycm9yIOKAlCBhbGxvdyB0aGUgcmVxdWVzdC4KICAgIH0KICAgIHJldHVybiB1bmRlZmluZWQ7CiAgfSwKICB7IHVybHM6IFsiPGFsbF91cmxzPiJdLCB0eXBlczogUkVRVUVTVF9UWVBFUyB9LAogIFsiYmxvY2tpbmciXQopOwo=
+"use strict";
+
+const REQUEST_TYPES = [
+  "script", "image", "xmlhttprequest", "stylesheet", "media", "font",
+  "object", "other", "sub_frame", "beacon"
+];
+
+browser.webRequest.onBeforeRequest.addListener(
+  async (details) => {
+    try {
+      const pageUrl = details.documentUrl || details.initiator || details.originUrl || "";
+      const tabId = typeof details.tabId === "number" ? details.tabId : -1;
+      const res = await browser.runtime.sendNativeMessage("nova", {
+        type: "check",
+        url: details.url,
+        pageUrl: pageUrl,
+        tabId: tabId
+      });
+      if (res && res.block) {
+        return { cancel: true };
+      }
+    } catch (e) {
+      // Native side unavailable or error — allow the request.
+    }
+    return undefined;
+  },
+  { urls: ["<all_urls>"], types: REQUEST_TYPES },
+  ["blocking"]
+);

@@ -1,1 +1,18 @@
-ewogICJtYW5pZmVzdF92ZXJzaW9uIjogMiwKICAibmFtZSI6ICJOaWdodCBTaGlmdCIsCiAgInZlcnNpb24iOiAiMS4wLjAiLAogICJkZXNjcmlwdGlvbiI6ICJEYXJrIG1vZGUgZm9yIGV2ZXJ5IHdlYnNpdGUuIEludmVydHMgcGFnZSBjb2xvcnMgd2hpbGUga2VlcGluZyBpbWFnZXMgYW5kIHZpZGVvIG5hdHVyYWwuIiwKICAicGVybWlzc2lvbnMiOiBbIjxhbGxfdXJscz4iXSwKICAiY29udGVudF9zY3JpcHRzIjogWwogICAgewogICAgICAibWF0Y2hlcyI6IFsiPGFsbF91cmxzPiJdLAogICAgICAianMiOiBbImNvbnRlbnQuanMiXQogICAgfQogIF0sCiAgImJyb3dzZXJfc3BlY2lmaWNfc2V0dGluZ3MiOiB7CiAgICAiZ2Vja28iOiB7CiAgICAgICJpZCI6ICJuaWdodHNoaWZ0QG5vdmEuYnJvd3NlciIKICAgIH0KICB9Cn0K
+{
+  "manifest_version": 2,
+  "name": "Night Shift",
+  "version": "1.0.0",
+  "description": "Dark mode for every website. Inverts page colors while keeping images and video natural.",
+  "permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "nightshift@nova.browser"
+    }
+  }
+}

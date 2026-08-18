@@ -1,1 +1,75 @@
-cGFja2FnZSBjb20ubm92YS5icm93c2VyLnVpCgppbXBvcnQgYW5kcm9pZC5ncmFwaGljcy5CaXRtYXAKaW1wb3J0IGFuZHJvaWQuZ3JhcGhpY3MuQml0bWFwRmFjdG9yeQppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLkltYWdlCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLmZvdW5kYXRpb24uYmFja2dyb3VuZAppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLmxheW91dC5Cb3gKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UuZm91bmRhdGlvbi5sYXlvdXQuc2l6ZQppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5mb3VuZGF0aW9uLnNoYXBlLkNpcmNsZVNoYXBlCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLm1hdGVyaWFsMy5NYXRlcmlhbFRoZW1lCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLm1hdGVyaWFsMy5UZXh0CmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnJ1bnRpbWUuQ29tcG9zYWJsZQppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5ydW50aW1lLkxhdW5jaGVkRWZmZWN0CmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnJ1bnRpbWUuZ2V0VmFsdWUKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UucnVudGltZS5tdXRhYmxlU3RhdGVPZgppbXBvcnQgYW5kcm9pZHguY29tcG9zZS5ydW50aW1lLnJlbWVtYmVyCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnJ1bnRpbWUuc2V0VmFsdWUKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UudWkuQWxpZ25tZW50CmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnVpLk1vZGlmaWVyCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnVpLmRyYXcuY2xpcAppbXBvcnQgYW5kcm9pZHguY29tcG9zZS51aS5ncmFwaGljcy5hc0ltYWdlQml0bWFwCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnVpLmxheW91dC5Db250ZW50U2NhbGUKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UudWkudGV4dC5mb250LkZvbnRXZWlnaHQKaW1wb3J0IGFuZHJvaWR4LmNvbXBvc2UudWkudW5pdC5EcAppbXBvcnQgYW5kcm9pZHguY29tcG9zZS51aS51bml0LmRwCmltcG9ydCBhbmRyb2lkeC5jb21wb3NlLnVpLnVuaXQuc3AKaW1wb3J0IGtvdGxpbnguY29yb3V0aW5lcy5EaXNwYXRjaGVycwppbXBvcnQga290bGlueC5jb3JvdXRpbmVzLndpdGhDb250ZXh0CmltcG9ydCBqYXZhLm5ldC5IdHRwVVJMQ29ubmVjdGlvbgppbXBvcnQgamF2YS5uZXQuVVJMCgpAQ29tcG9zYWJsZQpmdW4gRmF2aWNvbkltYWdlKHVybDogU3RyaW5nLCBmYWxsYmFja0xhYmVsOiBTdHJpbmcgPSAiIiwgc2l6ZTogRHAgPSAyMC5kcCkgewogICAgdmFyIGJpdG1hcCBieSByZW1lbWJlcih1cmwpIHsgbXV0YWJsZVN0YXRlT2Y8Qml0bWFwPz4obnVsbCkgfQogICAgTGF1bmNoZWRFZmZlY3QodXJsKSB7CiAgICAgICAgaWYgKHVybC5pc0JsYW5rKCkpIHsKICAgICAgICAgICAgYml0bWFwID0gbnVsbAogICAgICAgICAgICByZXR1cm5ATGF1bmNoZWRFZmZlY3QKICAgICAgICB9CiAgICAgICAgdmFsIGhvc3QgPSBydW5DYXRjaGluZyB7IGFuZHJvaWQubmV0LlVyaS5wYXJzZSh1cmwpLmhvc3QgPzogIiIgfS5nZXRPckRlZmF1bHQoIiIpCiAgICAgICAgaWYgKGhvc3QuaXNCbGFuaygpKSByZXR1cm5ATGF1bmNoZWRFZmZlY3QKICAgICAgICBiaXRtYXAgPSB3aXRoQ29udGV4dChEaXNwYXRjaGVycy5JTykgewogICAgICAgICAgICBydW5DYXRjaGluZyB7CiAgICAgICAgICAgICAgICB2YWwgY29ubiA9IFVSTCgiaHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS9zMi9mYXZpY29ucz9kb21haW49JHtob3N0fSZzej02NCIpLm9wZW5Db25uZWN0aW9uKCkgYXMgSHR0cFVSTENvbm5lY3Rpb24KICAgICAgICAgICAgICAgIGNvbm4uY29ubmVjdFRpbWVvdXQgPSA1MDAwCiAgICAgICAgICAgICAgICBjb25uLnJlYWRUaW1lb3V0ID0gNTAwMAogICAgICAgICAgICAgICAgY29ubi5zZXRSZXF1ZXN0UHJvcGVydHkoIlVzZXItQWdlbnQiLCAiTW96aWxsYS81LjAgKEFuZHJvaWQpIikKICAgICAgICAgICAgICAgIGNvbm4uaW5wdXRTdHJlYW0udXNlIHsgQml0bWFwRmFjdG9yeS5kZWNvZGVTdHJlYW0oaXQpIH0KICAgICAgICAgICAgfS5nZXRPck51bGwoKQogICAgICAgIH0KICAgIH0KICAgIHZhbCBibXAgPSBiaXRtYXAKICAgIGlmIChibXAgIT0gbnVsbCkgewogICAgICAgIEltYWdlKAogICAgICAgICAgICBiaXRtYXAgPSBibXAuYXNJbWFnZUJpdG1hcCgpLAogICAgICAgICAgICBjb250ZW50RGVzY3JpcHRpb24gPSBudWxsLAogICAgICAgICAgICBtb2RpZmllciA9IE1vZGlmaWVyLnNpemUoc2l6ZSkuY2xpcChDaXJjbGVTaGFwZSksCiAgICAgICAgICAgIGNvbnRlbnRTY2FsZSA9IENvbnRlbnRTY2FsZS5Dcm9wLAogICAgICAgICkKICAgIH0gZWxzZSB7CiAgICAgICAgQm94KAogICAgICAgICAgICBNb2RpZmllci5zaXplKHNpemUpLmNsaXAoQ2lyY2xlU2hhcGUpLmJhY2tncm91bmQoTWF0ZXJpYWxUaGVtZS5jb2xvclNjaGVtZS5zdXJmYWNlVmFyaWFudCksCiAgICAgICAgICAgIGNvbnRlbnRBbGlnbm1lbnQgPSBBbGlnbm1lbnQuQ2VudGVyLAogICAgICAgICkgewogICAgICAgICAgICBpZiAoZmFsbGJhY2tMYWJlbC5pc05vdEJsYW5rKCkpIHsKICAgICAgICAgICAgICAgIFRleHQoCiAgICAgICAgICAgICAgICAgICAgZmFsbGJhY2tMYWJlbC50YWtlKDEpLnVwcGVyY2FzZSgpLAogICAgICAgICAgICAgICAgICAgIGZvbnRTaXplID0gKHNpemUudmFsdWUgKiAwLjQ1Zikuc3AsCiAgICAgICAgICAgICAgICAgICAgZm9udFdlaWdodCA9IEZvbnRXZWlnaHQuQm9sZCwKICAgICAgICAgICAgICAgICAgICBjb2xvciA9IE1hdGVyaWFsVGhlbWUuY29sb3JTY2hlbWUub25TdXJmYWNlVmFyaWFudCwKICAgICAgICAgICAgICAgICkKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KfQo=
+package com.nova.browser.ui
+
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
+
+@Composable
+fun FaviconImage(url: String, fallbackLabel: String = "", size: Dp = 20.dp) {
+    var bitmap by remember(url) { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(url) {
+        if (url.isBlank()) {
+            bitmap = null
+            return@LaunchedEffect
+        }
+        val host = runCatching { android.net.Uri.parse(url).host ?: "" }.getOrDefault("")
+        if (host.isBlank()) return@LaunchedEffect
+        bitmap = withContext(Dispatchers.IO) {
+            runCatching {
+                val conn = URL("https://www.google.com/s2/favicons?domain=${host}&sz=64").openConnection() as HttpURLConnection
+                conn.connectTimeout = 5000
+                conn.readTimeout = 5000
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Android)")
+                conn.inputStream.use { BitmapFactory.decodeStream(it) }
+            }.getOrNull()
+        }
+    }
+    val bmp = bitmap
+    if (bmp != null) {
+        Image(
+            bitmap = bmp.asImageBitmap(),
+            contentDescription = null,
+            modifier = Modifier.size(size).clip(CircleShape),
+            contentScale = ContentScale.Crop,
+        )
+    } else {
+        Box(
+            Modifier.size(size).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (fallbackLabel.isNotBlank()) {
+                Text(
+                    fallbackLabel.take(1).uppercase(),
+                    fontSize = (size.value * 0.45f).sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
