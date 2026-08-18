@@ -80,7 +80,7 @@ object ExtensionManager {
         controller.list().accept(
             { list ->
                 extensions.clear()
-                for (ext in list) extensions.add(toUi(ext))
+                for (ext in list.orEmpty()) extensions.add(toUi(ext))
             },
             { _ -> },
         )
@@ -91,9 +91,9 @@ object ExtensionManager {
         return ExtensionUi(
             webExtension = ext,
             id = ext.id,
-            name = md.name.ifBlank { ext.id },
+            name = (md.name ?: "").ifBlank { ext.id },
             version = md.version,
-            description = md.description,
+            description = md.description ?: "",
             enabled = md.enabled,
             isBuiltIn = ext.isBuiltIn,
             permissions = (md.requiredPermissions.toList() + md.requiredOrigins.toList()).distinct(),
@@ -124,13 +124,13 @@ object ExtensionManager {
                 result.accept(
                     { ext ->
                         busy = false
-                        message = "Installed \"${ext.metaData.name}\""
+                        message = "Installed \"${ext?.metaData?.name ?: "extension"}\""
                         refresh()
                         onDone(true)
                     },
                     { e ->
                         busy = false
-                        message = "Could not install extension: ${e.message}"
+                        message = "Could not install extension: ${e?.message}"
                         onDone(false)
                     },
                 )
@@ -144,16 +144,16 @@ object ExtensionManager {
 
     fun uninstall(ext: ExtensionUi) {
         controller.uninstall(ext.webExtension)
-            .accept({ refresh() }, { message = "Uninstall failed: ${it.message}" })
+            .accept({ refresh() }, { message = "Uninstall failed: ${it?.message}" })
     }
 
     fun setEnabled(ext: ExtensionUi, enabled: Boolean) {
         if (enabled) {
             controller.enable(ext.webExtension, WebExtensionController.EnableSource.USER)
-                .accept({ refresh() }, { message = "Enable failed: ${it.message}" })
+                .accept({ refresh() }, { message = "Enable failed: ${it?.message}" })
         } else {
             controller.disable(ext.webExtension, WebExtensionController.EnableSource.USER)
-                .accept({ refresh() }, { message = "Disable failed: ${it.message}" })
+                .accept({ refresh() }, { message = "Disable failed: ${it?.message}" })
         }
     }
 

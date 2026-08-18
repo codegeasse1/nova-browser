@@ -160,7 +160,7 @@ object BrowserCore {
         return "https://www.google.com/s2/favicons?domain=${Uri.encode(host)}&sz=64"
     }
 
-    private fun patch(id: Int, transform: (TabState) -> TabState) {
+    private fun patch(id: Int, transform: TabState.() -> TabState) {
         val i = tabs.indexOfFirst { it.id == id }
         if (i < 0) return
         tabs[i] = transform(tabs[i])
@@ -181,7 +181,7 @@ object BrowserCore {
             override fun onLocationChange(
                 session: GeckoSession,
                 url: String?,
-                permissions: MutableList<GeckoSession.PermissionDelegate.ContentPermission>?,
+                permissions: List<GeckoSession.PermissionDelegate.ContentPermission>,
                 hasUserGesture: Boolean,
             ) {
                 if (!url.isNullOrBlank()) {
@@ -210,7 +210,7 @@ object BrowserCore {
                 return GeckoResult.fromValue(AllowOrDeny.ALLOW)
             }
 
-            override fun onNewSession(session: GeckoSession, uri: String?): GeckoResult<GeckoSession>? {
+            override fun onNewSession(session: GeckoSession, uri: String): GeckoResult<GeckoSession>? {
                 val isPriv = tabs.firstOrNull { it.id == id }?.isPrivate ?: false
                 val newSettings = GeckoSessionSettings.Builder().usePrivateMode(isPriv).build()
                 val newSession = GeckoSession(newSettings)
@@ -226,7 +226,7 @@ object BrowserCore {
         }
 
         session.contentDelegate = object : GeckoSession.ContentDelegate {
-            override fun onTitleChange(session: GeckoSession, title: String) = patch(id) { copy(title = title) }
+            override fun onTitleChange(session: GeckoSession, title: String?) = patch(id) { copy(title = title ?: "") }
 
             override fun onExternalResponse(session: GeckoSession, response: WebResponse) {
                 Downloads.start(App.context, response) { msg -> lastDownloadMessage = msg }
@@ -260,10 +260,10 @@ object BrowserCore {
 
             override fun onAndroidPermissionsRequest(
                 session: GeckoSession,
-                permissions: Array<String>,
+                permissions: Array<String>?,
                 callback: GeckoSession.PermissionDelegate.Callback,
             ) {
-                App.requestAndroidPermissions(permissions.toList()) { granted ->
+                App.requestAndroidPermissions((permissions ?: emptyArray()).toList()) { granted ->
                     if (granted) callback.grant() else callback.reject()
                 }
             }
@@ -271,11 +271,11 @@ object BrowserCore {
             override fun onMediaPermissionRequest(
                 session: GeckoSession,
                 uri: String,
-                video: Array<GeckoSession.PermissionDelegate.MediaSource>,
-                audio: Array<GeckoSession.PermissionDelegate.MediaSource>,
+                video: Array<GeckoSession.PermissionDelegate.MediaSource>?,
+                audio: Array<GeckoSession.PermissionDelegate.MediaSource>?,
                 callback: GeckoSession.PermissionDelegate.MediaCallback,
             ) {
-                val chosen = video.firstOrNull() ?: audio.firstOrNull()
+                val chosen = video?.firstOrNull() ?: audio?.firstOrNull()
                 if (chosen != null) callback.grant(chosen) else callback.reject()
             }
         }

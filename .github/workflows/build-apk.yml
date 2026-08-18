@@ -27,21 +27,15 @@ jobs:
 
       - name: Install Android SDK 37 platform
         run: |
-          curl -sSfL -o /tmp/platform-37.zip https://dl.google.com/android/repository/platform-37.0_r02.zip
           curl -sSfL -o /tmp/platform-371.zip https://dl.google.com/android/repository/platform-37.1_r01.zip
-          mkdir -p /tmp/plat37 /tmp/plat371 "$ANDROID_SDK_ROOT/platforms"
-          unzip -q /tmp/platform-37.zip -d /tmp/plat37
+          mkdir -p /tmp/plat371 "$ANDROID_SDK_ROOT/platforms"
           unzip -q /tmp/platform-371.zip -d /tmp/plat371
-          # 37.1 platform goes into BOTH android-37 (primary lookup dir for compileSdk 37) and android-37.1
-          rm -rf "$ANDROID_SDK_ROOT/platforms/android-37" "$ANDROID_SDK_ROOT/platforms/android-37.1"
+          rm -rf "$ANDROID_SDK_ROOT/platforms"/android-37*
           top=$(find /tmp/plat371 -mindepth 1 -maxdepth 1 -type d | head -1)
-          cp -r "$top" "$ANDROID_SDK_ROOT/platforms/android-37"
           mv "$top" "$ANDROID_SDK_ROOT/platforms/android-37.1"
-          # also keep the plain 37.0 platform for completeness
-          top=$(find /tmp/plat37 -mindepth 1 -maxdepth 1 -type d | head -1)
-          mv "$top" "$ANDROID_SDK_ROOT/platforms/android-37.0"
           ls "$ANDROID_SDK_ROOT/platforms"
-          grep AndroidVersion.ApiLevel "$ANDROID_SDK_ROOT/platforms/android-37/source.properties"
+          grep AndroidVersion.ApiLevel "$ANDROID_SDK_ROOT/platforms/android-37.1/source.properties"
+          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "build-tools;37.0.0" "platform-tools" || true
 
       - name: Build debug APK
         run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug

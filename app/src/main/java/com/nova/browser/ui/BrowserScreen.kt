@@ -164,10 +164,11 @@ fun BrowserApp() {
 }
 
 private fun Context.hideKeyboard() {
-    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+    val imm = getSystemService(InputMethodManager::class.java)
     imm.hideSoftInputFromWindow(0, 0)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BrowserShell(
     addressEditing: Boolean,
@@ -201,6 +202,7 @@ private fun BrowserShell(
             onOpenTabs = onOpenTabs,
             onOpenBookmarks = onOpenBookmarks,
             onOpenHistory = onOpenHistory,
+            onOpenExtensions = onOpenExtensions,
             onAddBookmark = { showBookmarkDialog = true },
         )
 
@@ -264,6 +266,7 @@ private fun BrowserShell(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ToolbarArea(
     tab: TabState?,
@@ -276,6 +279,7 @@ private fun ToolbarArea(
     onOpenTabs: () -> Unit,
     onOpenBookmarks: () -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenExtensions: () -> Unit,
     onAddBookmark: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -394,8 +398,7 @@ private fun ToolbarArea(
 
         if (addressEditing && addressText.isNotBlank()) {
             SuggestionsList(query = addressText, onPick = { label, url, isSearch ->
-                val context2 = LocalContext.current
-                context2.hideKeyboard()
+                context.hideKeyboard()
                 setAddressEditing(false)
                 if (isSearch) BrowserCore.navigate(label) else BrowserCore.navigate(url)
                 setAddressText("")

@@ -30,23 +30,23 @@ object App {
             else -> ContentBlocking.EtpLevel.DEFAULT
         }
         val cb = ContentBlocking.Settings.Builder()
-            .setAntiTracking(etp)
-            .setCookieBehavior(ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY_AND_ISOLATE_OTHERS)
-            .setStrictSocialTrackingProtection(etp == ContentBlocking.EtpLevel.STRICT)
+            .antiTracking(etp)
+            .cookieBehavior(ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY_AND_ISOLATE_OTHERS)
+            .strictSocialTrackingProtection(etp == ContentBlocking.EtpLevel.STRICT)
             .build()
 
         val builder = GeckoRuntimeSettings.Builder()
-            .setJavaScriptEnabled(true)
-            .setAllowInsecureConnections(GeckoRuntimeSettings.ALLOW_ALL)
+            .javaScriptEnabled(true)
+            .allowInsecureConnections(GeckoRuntimeSettings.ALLOW_ALL)
             .contentBlocking(cb)
 
         when (Store.dohMode) {
-            "first" -> builder.setTrustedRecursiveResolverMode(GeckoRuntimeSettings.TRR_MODE_FIRST)
-            "only" -> builder.setTrustedRecursiveResolverMode(GeckoRuntimeSettings.TRR_MODE_ONLY)
-            else -> builder.setTrustedRecursiveResolverMode(GeckoRuntimeSettings.TRR_MODE_OFF)
+            "first" -> builder.trustedRecursiveResolverMode(GeckoRuntimeSettings.TRR_MODE_FIRST)
+            "only" -> builder.trustedRecursiveResolverMode(GeckoRuntimeSettings.TRR_MODE_ONLY)
+            else -> builder.trustedRecursiveResolverMode(GeckoRuntimeSettings.TRR_MODE_OFF)
         }
         val dohUri = Store.dohProvider
-        if (dohUri.isNotBlank()) builder.setTrustedRecursiveResolverUri(dohUri)
+        if (dohUri.isNotBlank()) builder.trustedRecursiveResolverUri(dohUri)
 
         runtime = GeckoRuntime.create(context, builder.build())
         ExtensionManager.attach()
