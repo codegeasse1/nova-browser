@@ -164,35 +164,37 @@ fun StartPage(
                 }
             }
             Spacer(Modifier.height(30.dp))
-            Text(
-                "Quick access",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(14.dp))
-            dials.value.chunked(4).forEach { row ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    row.forEach { (title, url) ->
-                        DialTile(
-                            title = title,
-                            modifier = Modifier.weight(1f),
-                            onOpen = { BrowserCore.newTab(url) },
-                            onLongRemove = {
-                                Store.removeSpeedDial(url)
-                                dials.value = Store.speedDials()
-                            },
-                        )
+            if (Store.quickAccessEnabled) {
+                Text(
+                    "Quick access",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(14.dp))
+                dials.value.chunked(4).forEach { row ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        row.forEach { (title, url) ->
+                            DialTile(
+                                title = title,
+                                modifier = Modifier.weight(1f),
+                                onOpen = { BrowserCore.newTab(url) },
+                                onLongRemove = {
+                                    Store.removeSpeedDial(url)
+                                    dials.value = Store.speedDials()
+                                },
+                            )
+                        }
+                        repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
                     }
-                    repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
+                    Spacer(Modifier.height(18.dp))
                 }
-                Spacer(Modifier.height(18.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    AddDialTile(Modifier.weight(1f)) { showAdd = true }
+                    repeat(3) { Spacer(Modifier.weight(1f)) }
+                }
+                Spacer(Modifier.height(26.dp))
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                AddDialTile(Modifier.weight(1f)) { showAdd = true }
-                repeat(3) { Spacer(Modifier.weight(1f)) }
-            }
-            Spacer(Modifier.height(26.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 QuickAction("Bookmarks", Icons.Rounded.Bookmark, Modifier.weight(1f), onOpenBookmarks)
                 QuickAction("History", Icons.Rounded.History, Modifier.weight(1f), onOpenHistory)

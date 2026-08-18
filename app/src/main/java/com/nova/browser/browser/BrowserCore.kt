@@ -55,7 +55,7 @@ object BrowserCore {
         val session = sessionFor(tabId)
         if (v.getSession() !== session) {
             runCatching { v.releaseSession() }
-            v.setSession(session)
+            runCatching { v.setSession(session) }
         }
         return v
     }
@@ -108,6 +108,7 @@ object BrowserCore {
             ) {
                 val u = url ?: return
                 runCatching {
+                    sessionLoads[tabId] = u
                     patch(tabId) { copy(url = u, secure = u.startsWith("https://")) }
                     offerStoreInstall(u)
                 }
@@ -138,6 +139,7 @@ object BrowserCore {
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
             override fun onPageStart(session: GeckoSession, url: String) {
                 runCatching {
+                    sessionLoads[tabId] = url
                     if (storeOffer != null) storeOffer = null
                     patch(tabId) {
                         copy(url = url, title = "", progress = 0, secure = url.startsWith("https://"), blocked = 0)
@@ -149,14 +151,18 @@ object BrowserCore {
                 runCatching {
                     val tab = tabs.firstOrNull { it.id == tabId } ?: return
                     patch(tabId) { copy(progress = 100) }
-                    if (!tab.isPrivate && tab.url.startsWith("http")) {
+                    if (Store.historyEnabled && !tab.isPrivate && tab.url.startsWith("http")) {
                         Store.addHistory(tab.title.ifBlank { tab.url }, tab.url)
                     }
                 }
             }
 
             override fun onProgressChange(session: GeckoSession, progress: Int) {
-                runCatching { patch(tabId) { copy(progress = progress.coerceIn(0, 100)) } }
+                runCatching {
+                    val cur = tabs.firstOrNull { it.id == tabId }?.progress ?: return
+                    if (kotlin.math.abs(progress - cur) < 3 && progress < 100) return
+                    patch(tabId) { copy(progress = progress.coerceIn(0, 100)) }
+                }
             }
 
             override fun onSecurityChange(session: GeckoSession, securityInfo: GeckoSession.ProgressDelegate.SecurityInformation) {
@@ -314,6 +320,21 @@ object BrowserCore {
             newTab()
         } else if (activeIndex >= tabs.size) {
             activeIndex = tabs.lastIndex
+        }
+    }
+
+    fun closeAllSessions() {
+        sessions.values.forEach { runCatching { it.close() } }
+        sessions.clear()
+        sessionLoads.clear()
+    }
+
+    fun reopenActiveSession() {
+        val tab = activeTab ?: return
+        val session = sessionFor(tab.id)
+        geckoView?.let { v ->
+            runCatching { v.releaseSession() }
+            runCatching { v.setSession(session) }
         }
     }
 

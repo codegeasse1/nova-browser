@@ -41,33 +41,63 @@ object App {
         context = ctx.applicationContext
         installCrashHandler()
         Store.init(context)
+        if (Store.autoClearHistory) Store.clearHistory()
         AdBlocker.init(context)
         com.nova.browser.browser.Downloads.restore()
         createGeckoRuntime()
         ExtensionManager.attach()
     }
 
+    private fun buildSettings(): GeckoRuntimeSettings {
+        val cb = ContentBlocking.Settings.Builder()
+        when (Store.adblockLevel) {
+            "off" -> {
+                cb.antiTracking(0)
+                cb.enhancedTrackingProtectionCategory(ContentBlocking.EtpCategory.CUSTOM)
+            }
+            "strict" -> cb.enhancedTrackingProtectionCategory(ContentBlocking.EtpCategory.STRICT)
+            else -> cb.enhancedTrackingProtectionCategory(ContentBlocking.EtpCategory.STANDARD)
+        }
+        cb.safeBrowsing(if (Store.safeBrowsing) ContentBlocking.SafeBrowsing.DEFAULT else ContentBlocking.SafeBrowsing.NONE)
+        val builder = GeckoRuntimeSettings.Builder()
+            .contentBlocking(cb.build())
+        val dns = dnsSettings()
+        if (dns != null) {
+            builder.trustedRecursiveResolverMode(dns.first)
+            builder.trustedRecursiveResolverUri(dns.second)
+        }
+        return builder.build()
+    }
+
+    fun dnsSettings(): Pair<Int, String>? = when (Store.dnsMode) {
+        "cloudflare" -> GeckoRuntimeSettings.TRR_MODE_FIRST to "https://cloudflare-dns.com/dns-query"
+        "google" -> GeckoRuntimeSettings.TRR_MODE_FIRST to "https://dns.google/dns-query"
+        "quad9" -> GeckoRuntimeSettings.TRR_MODE_FIRST to "https://dns.quad9.net/dns-query"
+        else -> null
+    }
+
     private fun createGeckoRuntime() {
         if (geckoCreated) return
         geckoCreated = true
         runCatching {
-            val cb = ContentBlocking.Settings.Builder()
-            when (Store.adblockLevel) {
-                "off" -> {
-                    cb.antiTracking(0)
-                    cb.enhancedTrackingProtectionCategory(ContentBlocking.EtpCategory.CUSTOM)
-                }
-                "strict" -> cb.enhancedTrackingProtectionCategory(ContentBlocking.EtpCategory.STRICT)
-                else -> cb.enhancedTrackingProtectionCategory(ContentBlocking.EtpCategory.STANDARD)
-            }
-            cb.safeBrowsing(if (Store.safeBrowsing) ContentBlocking.SafeBrowsing.DEFAULT else ContentBlocking.SafeBrowsing.NONE)
-            val settings = GeckoRuntimeSettings.Builder()
-                .contentBlocking(cb.build())
-                .build()
-            geckoRuntime = GeckoRuntime.create(context, settings)
-            Log.i("Nova", "GeckoRuntime created")
+            geckoRuntime = GeckoRuntime.create(context, buildSettings())
+            Log.i("Nova", "GeckoRuntime created (dns=${Store.dnsMode})")
         }.onFailure { t ->
             Log.e("Nova", "GeckoRuntime creation failed", t)
+        }
+    }
+
+    fun recreateGeckoRuntime() {
+        if (!geckoCreated) return
+        runCatching {
+            com.nova.browser.browser.BrowserCore.closeAllSessions()
+            geckoCreated = false
+            geckoRuntime = GeckoRuntime.create(context, buildSettings())
+            ExtensionManager.attach()
+            com.nova.browser.browser.BrowserCore.reopenActiveSession()
+            Log.i("Nova", "GeckoRuntime recreated (dns=${Store.dnsMode})")
+        }.onFailure { t ->
+            Log.e("Nova", "GeckoRuntime recreate failed", t)
         }
     }
 

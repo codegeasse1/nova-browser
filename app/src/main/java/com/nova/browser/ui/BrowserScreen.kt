@@ -57,6 +57,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -87,6 +88,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.nova.browser.browser.BrowserCore
 import com.nova.browser.browser.TabState
+import com.nova.browser.engine.AdBlocker
 import com.nova.browser.ext.ExtensionManager
 import com.nova.browser.store.Store
 import kotlinx.coroutines.delay
@@ -120,6 +122,10 @@ fun BrowserApp() {
         while (true) {
             BrowserCore.lastDownloadMessage?.let { snackMsg = it; BrowserCore.lastDownloadMessage = null }
             ExtensionManager.message?.let { snackMsg = it; ExtensionManager.message = null }
+            ExtensionManager.openAmoSearch?.let { q ->
+                ExtensionManager.openAmoSearch = null
+                BrowserCore.navigate("https://addons.mozilla.org/firefox/search/?q=${android.net.Uri.encode(q)}")
+            }
             BrowserCore.pendingExternalIntent?.let {
                 snackMsg = "No app found to open \"$it\""
                 BrowserCore.pendingExternalIntent = null
@@ -560,7 +566,7 @@ private fun RowScope.AddressBar(
             color = MaterialTheme.colorScheme.surfaceVariant,
             modifier = Modifier.weight(1f),
             onClick = {
-                setText(tab?.url?.takeIf { !it.isBlank() } ?: "")
+                setText("")
                 setEditing(true)
             },
         ) {
@@ -757,6 +763,37 @@ private fun ShieldPanel(tab: TabState?) {
                 checked = tab?.desktopSite == true,
                 onCheckedChange = { BrowserCore.toggleDesktopSite() },
             )
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(
+                onClick = {
+                    val host = tab?.host
+                    if (!host.isNullOrBlank()) {
+                        Store.addBlockedDomain(host)
+                        AdBlocker.reload()
+                        BrowserCore.reload()
+                        BrowserCore.lastShieldNotice = "\"$host\" added to blocked domains. Reloading…"
+                    }
+                },
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("Block this site")
+            }
+            OutlinedButton(
+                onClick = {
+                    val host = tab?.host
+                    if (!host.isNullOrBlank()) {
+                        Store.addWhitelistedDomain(host)
+                        AdBlocker.reload()
+                        BrowserCore.reload()
+                        BrowserCore.lastShieldNotice = "\"$host\" added to allowed domains. Reloading…"
+                    }
+                },
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("Allow this site")
+            }
         }
         Spacer(Modifier.height(12.dp))
         Text(

@@ -77,9 +77,9 @@ fun ExtensionsScreen(onBack: () -> Unit) {
                     Text(
                         "Nova runs on Mozilla GeckoView — the same engine as Firefox for Android — so it supports real Firefox add-ons.\n\n" +
                             "• One-tap install: open any add-on page on addons.mozilla.org inside Nova — an \"Install in Nova?\" banner appears and installs it.\n" +
-                            "• Paste an add-on link or ID below to install it directly.\n" +
-                            "• Chrome Web Store extensions run on Chrome's engine (Blink), not Gecko — those can only run on a full Chromium fork like Kiwi, which needs a desktop-class build farm. Nova's banner on Chrome store pages instead finds the add-on on the Firefox store.\n" +
-                            "• Nova Shield (EasyList ad blocking) and the bundled tools are built-in extensions.",
+                            "• Paste an add-on link or slug (e.g. ublock-origin) below to install it directly.\n" +
+                            "• Install from a file (.xpi/.zip/.crx): Mozilla-signed add-ons install directly. Chrome Web Store extensions run on Chrome's engine (Blink), not Gecko — if you pick one, Nova finds its Firefox version on the Add-ons store for you.\n" +
+                            "• Nova Shield (EasyList + AdHost ad blocking) and the bundled tools are built-in extensions.",
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(16.dp),
                     )

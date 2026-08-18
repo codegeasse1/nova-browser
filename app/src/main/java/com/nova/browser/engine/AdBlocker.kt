@@ -24,12 +24,19 @@ object AdBlocker {
     var loadedRules = 0
         private set
 
+    private var contextRef: Context? = null
+
     fun init(context: Context) {
+        contextRef = context.applicationContext
         load(context)
     }
 
     fun applyLevel(context: Context) {
         load(context)
+    }
+
+    fun reload() {
+        contextRef?.let { load(it) }
     }
 
     private var loadJob: Job? = null
@@ -41,8 +48,8 @@ object AdBlocker {
             runCatching {
                 val names = when (Store.adblockLevel) {
                     "off" -> emptyList()
-                    "strict" -> listOf("easylist.txt", "easyprivacy.txt", "annoyances.txt")
-                    else -> listOf("easylist.txt", "easyprivacy.txt")
+                    "strict" -> listOf("easylist.txt", "easyprivacy.txt", "annoyances.txt", "nova-extra.txt")
+                    else -> listOf("easylist.txt", "easyprivacy.txt", "nova-extra.txt")
                 }
                 synchronized(parseLock) {
                     clearRules()
@@ -141,7 +148,7 @@ object AdBlocker {
         var p = pattern.trim()
         if (p.length < 3) return null
 
-        if (p.startsWith("/") && p.length > 2 && p.endsWith("/") && !p.endsWith("\\/")) {
+        if (p.startsWith("/") && p.length > 2 && p.endsWith("/") && !p.endsWith("\\\\/")) {
             val inner = p.substring(1, p.length - 1)
             val re = runCatching { Regex(inner) }.getOrNull() ?: return null
             return Rule(Kind.REGEX, inner, null, null, re, thirdParty, firstParty, allowedPages, excludedPages)
@@ -178,14 +185,32 @@ object AdBlocker {
         return Rule(Kind.PLAIN, p, null, null, null, thirdParty, firstParty, allowedPages, excludedPages)
     }
 
+    private fun hostListMatches(host: String, list: List<String>): Boolean {
+        var h = host
+        while (h.isNotEmpty()) {
+            if (h in list) return true
+            val dot = h.indexOf('.')
+            if (dot < 0 || dot == h.lastIndex) break
+            h = h.substring(dot + 1)
+        }
+        return false
+    }
+
     fun shouldBlock(url: String, pageUrl: String): Boolean {
         if (!ready || url.isBlank()) return false
-        if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("about:") || url.startsWith("chrome:")) return false
+        if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("about:") || url.startsWith("chrome:") || url.startsWith("resource:")) return false
 
         val host = hostOf(url) ?: return false
         val pageHost = hostOf(pageUrl) ?: host
         val thirdParty = host != pageHost &&
             !host.endsWith(".$pageHost") && !pageHost.endsWith(".$host")
+
+        val blockList = Store.blockedDomains()
+        val allowList = Store.whitelistedDomains()
+
+        if (allowList.isNotEmpty() && (hostListMatches(pageHost, allowList) || hostListMatches(host, allowList))) return false
+
+        if (blockList.isNotEmpty() && hostListMatches(host, blockList)) return true
 
         synchronized(parseLock) {
             if (matchesList(exceptions, url, host, pageHost, thirdParty)) return false
