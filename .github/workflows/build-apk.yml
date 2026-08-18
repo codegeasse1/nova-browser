@@ -29,12 +29,6 @@ jobs:
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
           ls "$ANDROID_HOME/platforms" || true
-          sdkmanager --install "platforms;android-37" "extensions;android37;1" || {
-            echo "--- sdkmanager list (extensions) ---"
-            sdkmanager --list | grep -i "extensions;android" | head -30 || true
-            echo "--- retry without extension ---"
-            sdkmanager --install "platforms;android-37" || true
-          }
           echo "--- platforms after install ---"
           ls "$ANDROID_HOME/platforms" || true
           echo "--- extensions after install ---"
@@ -42,6 +36,18 @@ jobs:
 
       - name: Build debug APK
         run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug
+
+      - name: Inspect geckoview aar metadata
+        if: always()
+        run: |
+          for d in $HOME/.gradle/caches/modules-2/files-2.1/org.mozilla.geckoview/geckoview/154.0.20260814215756/*/; do
+            find "$d" -name "*.aar" | while read aar; do
+              echo "=== AAR: $aar"
+              unzip -p "$aar" META-INF/com/android/build/gradle/aar-metadata.properties 2>/dev/null || echo "(no metadata entry)"
+            done
+          done
+          echo "--- AGP resolved platforms ---"
+          ls "$ANDROID_HOME/platforms" | grep -E "android-37" || true
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
