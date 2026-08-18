@@ -161,6 +161,11 @@ fun StartPage(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Text(
+                "v" + com.nova.browser.BuildConfig.VERSION_NAME,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            )
             Spacer(Modifier.height(26.dp))
             Text(timeText, style = MaterialTheme.typography.displayLarge, fontWeight = FontWeight.Bold)
             Text(dateText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

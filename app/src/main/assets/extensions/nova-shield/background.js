@@ -2,22 +2,30 @@
 
 /* Nova Shield — self-contained ad/tracker blocker.
  * Rules are matched entirely inside the extension (bundled filter lists), so
- * no page request ever waits on a native round-trip. */
+ * no page request ever waits on a native round-trip.
+ *
+ * Performance: GeckoView runs this background script in the browser's main
+ * process, so every page request must stay cheap. Host rules (the vast
+ * majority of EasyList/EasyPrivacy) are indexed per-domain in a Map -> O(1)
+ * lookups. Generic rules are only kept from the tiny curated nova-extra list.
+ * List loading is chunked with yields so startup never freezes the app. */
 
 const REQUEST_TYPES = [
   "script", "image", "xmlhttprequest", "stylesheet", "font",
-  "object", "other", "sub_frame", "beacon"
+  "object", "other", "sub_frame"
 ];
 
 const TIMEOUT_MS = 1500;
+const PARSE_CHUNK = 5000;
 
 let ready = false;
 let level = "standard";
 let blockList = [];
 let allowList = [];
 
-const exceptions = [];
-const hostRules = new Map();
+const exceptionsHost = new Map();   // domainKey -> [rule]
+const exceptionsGeneric = [];       // generic exception rules (rare)
+const hostRules = new Map();        // domainKey -> [rule]
 const exactRules = [];
 const prefixRules = [];
 const regexRules = [];
@@ -72,6 +80,22 @@ function matchRule(r, url, host, pageHost, thirdParty) {
   return false;
 }
 
+function matchesIndex(index, host, url, pageHost, thirdParty) {
+  let h = host;
+  while (h) {
+    const rules = index.get(h);
+    if (rules) {
+      for (const r of rules) {
+        if (matchRule(r, url, host, pageHost, thirdParty)) return true;
+      }
+    }
+    const dot = h.indexOf(".");
+    if (dot < 0 || dot === h.length - 1) break;
+    h = h.slice(dot + 1);
+  }
+  return false;
+}
+
 function matchesList(rules, url, host, pageHost, thirdParty) {
   for (const r of rules) {
     if (matchRule(r, url, host, pageHost, thirdParty)) return true;
@@ -92,16 +116,10 @@ function shouldBlock(url, pageUrl) {
   if (allowList.length && (hostListMatches(pageHost, allowList) || hostListMatches(host, allowList))) return false;
   if (blockList.length && hostListMatches(host, blockList)) return true;
 
-  if (matchesList(exceptions, url, host, pageHost, thirdParty)) return false;
+  if (matchesIndex(exceptionsHost, host, url, pageHost, thirdParty)) return false;
+  if (matchesList(exceptionsGeneric, url, host, pageHost, thirdParty)) return false;
 
-  let h = host;
-  while (h) {
-    const rules = hostRules.get(h);
-    if (rules && matchesList(rules, url, host, pageHost, thirdParty)) return true;
-    const dot = h.indexOf(".");
-    if (dot < 0 || dot === h.length - 1) break;
-    h = h.slice(dot + 1);
-  }
+  if (matchesIndex(hostRules, host, url, pageHost, thirdParty)) return true;
 
   if (matchesList(exactRules, url, host, pageHost, thirdParty)) return true;
   if (matchesList(prefixRules, url, host, pageHost, thirdParty)) return true;
@@ -165,7 +183,8 @@ function buildRule(pattern, options) {
 }
 
 function clearRules() {
-  exceptions.length = 0;
+  exceptionsHost.clear();
+  exceptionsGeneric.length = 0;
   hostRules.clear();
   exactRules.length = 0;
   prefixRules.length = 0;
@@ -173,47 +192,60 @@ function clearRules() {
   plainRules.length = 0;
 }
 
-function parseList(text) {
-  const lines = text.split("\n");
-  for (let k = 0; k < lines.length; k++) {
-    let line = lines[k].trim();
-    if (!line || line[0] === "!" || line[0] === "[") continue;
-    if (line.indexOf("##") !== -1 || line.indexOf("#@#") !== -1 || line.indexOf("#?#") !== -1) continue;
-
-    let isException = false;
-    if (line[0] === "@") {
-      if (line.indexOf("@@") !== 0) continue;
-      isException = true;
-      line = line.slice(2);
-    }
-
-    let options = "";
-    const dollar = line.lastIndexOf("$");
-    if (dollar > 0) {
-      const opt = line.slice(dollar + 1);
-      if (opt && opt.length < 120 && opt.indexOf("://") === -1) {
-        options = opt;
-        line = line.slice(0, dollar);
-      }
-    }
-
-    const rule = buildRule(line, options);
-    if (!rule) continue;
-    if (isException) {
-      exceptions.push(rule);
-    } else if (rule.kind === "host") {
-      let arr = hostRules.get(rule.domainKey);
-      if (!arr) { arr = []; hostRules.set(rule.domainKey, arr); }
+function indexRule(rule, isException, keepGeneric) {
+  if (isException) {
+    if (rule.kind === "host") {
+      let arr = exceptionsHost.get(rule.domainKey);
+      if (!arr) { arr = []; exceptionsHost.set(rule.domainKey, arr); }
       arr.push(rule);
-    } else if (rule.kind === "exact") {
-      exactRules.push(rule);
-    } else if (rule.kind === "prefix") {
-      prefixRules.push(rule);
-    } else if (rule.kind === "regex") {
-      regexRules.push(rule);
     } else {
-      plainRules.push(rule);
+      exceptionsGeneric.push(rule);
     }
+    return;
+  }
+  if (rule.kind === "host") {
+    let arr = hostRules.get(rule.domainKey);
+    if (!arr) { arr = []; hostRules.set(rule.domainKey, arr); }
+    arr.push(rule);
+  } else if (keepGeneric) {
+    if (rule.kind === "exact") exactRules.push(rule);
+    else if (rule.kind === "prefix") prefixRules.push(rule);
+    else if (rule.kind === "regex") regexRules.push(rule);
+    else plainRules.push(rule);
+  }
+}
+
+async function parseList(text, keepGeneric) {
+  const lines = text.split("\n");
+  for (let k = 0; k < lines.length; k += PARSE_CHUNK) {
+    const end = Math.min(k + PARSE_CHUNK, lines.length);
+    for (let j = k; j < end; j++) {
+      let line = lines[j].trim();
+      if (!line || line[0] === "!" || line[0] === "[") continue;
+      if (line.indexOf("##") !== -1 || line.indexOf("#@#") !== -1 || line.indexOf("#?#") !== -1) continue;
+
+      let isException = false;
+      if (line[0] === "@") {
+        if (line.indexOf("@@") !== 0) continue;
+        isException = true;
+        line = line.slice(2);
+      }
+
+      let options = "";
+      const dollar = line.lastIndexOf("$");
+      if (dollar > 0) {
+        const opt = line.slice(dollar + 1);
+        if (opt && opt.length < 120 && opt.indexOf("://") === -1) {
+          options = opt;
+          line = line.slice(0, dollar);
+        }
+      }
+
+      const rule = buildRule(line, options);
+      if (!rule) continue;
+      indexRule(rule, isException, keepGeneric);
+    }
+    await new Promise(res => setTimeout(res, 0));
   }
 }
 
@@ -226,7 +258,7 @@ async function loadLists() {
     try {
       const res = await fetch(browser.runtime.getURL("filters/" + name));
       if (res.ok) {
-        parseList(await res.text());
+        await parseList(await res.text(), name === "nova-extra.txt");
       }
     } catch (e) { /* skip */ }
   }
@@ -259,20 +291,33 @@ function reportStats() {
   browser.runtime.sendNativeMessage("nova", { type: "stats", tabs: tabs }).catch(() => {});
 }
 
-browser.webRequest.onBeforeRequest.addListener(
-  (details) => {
-    if (!ready) return undefined;
-    const pageUrl = details.documentUrl || details.originUrl || details.initiator || "";
-    if (shouldBlock(details.url, pageUrl)) {
-      const tabId = typeof details.tabId === "number" ? details.tabId : -1;
-      if (tabId > 0) pendingBlocks.set(tabId, (pendingBlocks.get(tabId) || 0) + 1);
-      return { cancel: true };
-    }
-    return undefined;
-  },
-  { urls: ["<all_urls>"], types: REQUEST_TYPES },
-  ["blocking"]
-);
+function handleRequest(details) {
+  if (!ready) return undefined;
+  const pageUrl = details.documentUrl || details.originUrl || details.initiator || "";
+  if (shouldBlock(details.url, pageUrl)) {
+    const tabId = typeof details.tabId === "number" ? details.tabId : -1;
+    if (tabId > 0) pendingBlocks.set(tabId, (pendingBlocks.get(tabId) || 0) + 1);
+    return { cancel: true };
+  }
+  return undefined;
+}
+
+/* Some GeckoView builds reject the "blocking" extraInfoSpec; if so, degrade to
+ * observing only (no ad blocking, but never a crash). */
+try {
+  browser.webRequest.onBeforeRequest.addListener(
+    handleRequest,
+    { urls: ["<all_urls>"], types: REQUEST_TYPES },
+    ["blocking"]
+  );
+} catch (e) {
+  try {
+    browser.webRequest.onBeforeRequest.addListener(
+      handleRequest,
+      { urls: ["<all_urls>"], types: REQUEST_TYPES }
+    );
+  } catch (e2) { /* no webRequest support at all */ }
+}
 
 syncConfig();
 loadLists();

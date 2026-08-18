@@ -34,6 +34,7 @@ object BrowserCore {
 
     private val sessions = HashMap<Int, GeckoSession>()
     private val sessionLoads = HashMap<Int, String?>()
+    private val crashTimes = HashMap<Int, MutableList<Long>>()
     private var geckoView: GeckoView? = null
     private var nextId = 1
 
@@ -64,6 +65,11 @@ object BrowserCore {
         sessions[tabId]?.let { s ->
             if (autoLoad) maybeLoad(tabId, s)
             return s
+        }
+        if (!App.geckoRuntimeReady) {
+            val placeholder = GeckoSession(GeckoSessionSettings.Builder().build())
+            sessions[tabId] = placeholder
+            return placeholder
         }
         val runtime = App.geckoRuntime
         val tab = tabs.firstOrNull { it.id == tabId }
@@ -211,9 +217,18 @@ object BrowserCore {
             override fun onCrash(session: GeckoSession) {
                 runCatching {
                     val url = tabs.firstOrNull { it.id == tabId }?.url ?: "about:blank"
-                    patch(tabId) { copy(progress = 100, title = "Page crashed") }
-                    lastShieldNotice = "The page crashed — reloading…"
-                    session.loadUri(url)
+                    val now = System.currentTimeMillis()
+                    val times = crashTimes.getOrPut(tabId) { mutableListOf() }
+                    times.add(now)
+                    val recent = times.count { now - it < 10_000 }
+                    if (recent > 2) {
+                        patch(tabId) { copy(progress = 100, title = "This page keeps crashing") }
+                        lastShieldNotice = "This page crashed repeatedly, so it was stopped. Tap reload to try once more."
+                    } else {
+                        patch(tabId) { copy(progress = 100, title = "Page crashed") }
+                        lastShieldNotice = "The page crashed — reloading…"
+                        session.loadUri(url)
+                    }
                 }
             }
 
@@ -315,6 +330,7 @@ object BrowserCore {
             }
         }
         sessionLoads.remove(tab.id)
+        crashTimes.remove(tab.id)
         tabs.removeAt(index)
         if (tabs.isEmpty()) {
             activeIndex = -1
@@ -343,6 +359,7 @@ object BrowserCore {
         sessions.values.forEach { runCatching { it.close() } }
         sessions.clear()
         sessionLoads.clear()
+        crashTimes.clear()
     }
 
     fun reopenActiveSession() {

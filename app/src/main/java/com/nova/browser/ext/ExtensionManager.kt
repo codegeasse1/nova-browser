@@ -263,6 +263,12 @@ object ExtensionManager {
 
     private fun installFile(context: Context, file: File, onDone: (Boolean) -> Unit) {
         message = null
+        if (!App.geckoRuntimeReady) {
+            busy = false
+            message = "The browser engine is still starting — try installing again in a moment."
+            onDone(false)
+            return
+        }
         safe {
             controller().install(Uri.fromFile(file).toString()).accept({ ext ->
                 safe {

@@ -76,15 +76,23 @@ object App {
         else -> null
     }
 
+    val geckoRuntimeReady: Boolean get() = ::geckoRuntime.isInitialized
+
     private fun createGeckoRuntime() {
         if (geckoCreated) return
-        geckoCreated = true
         runCatching {
             geckoRuntime = GeckoRuntime.create(context, buildSettings())
             applyStabilityPrefs()
+            geckoCreated = true
             Log.i("Nova", "GeckoRuntime created (dns=${Store.dnsMode})")
         }.onFailure { t ->
+            geckoCreated = false
             Log.e("Nova", "GeckoRuntime creation failed", t)
+            runCatching {
+                val f = File(context.filesDir, "crashlog.txt")
+                val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
+                f.appendText("[$stamp] FAILED to start browser engine: $t\n")
+            }
         }
     }
 
