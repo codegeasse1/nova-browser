@@ -5,8 +5,7 @@ plugins {
 
 android {
     namespace 'com.nova.browser'
-    compileSdk 37
-    compileSdkExtension 1
+    compileSdkVersion "android-37.1"
 
     defaultConfig {
         applicationId "com.nova.browser"
