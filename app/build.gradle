@@ -44,3 +44,11 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
     implementation 'org.mozilla.geckoview:geckoview-nightly:156.0.20260818092026'
 }
+
+configurations.all {
+    resolutionStrategy {
+        force 'org.jetbrains.kotlin:kotlin-stdlib:2.3.0'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.3.0'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.3.0'
+    }
+}
