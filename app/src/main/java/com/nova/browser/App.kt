@@ -62,6 +62,8 @@ object App {
             .contentBlocking(cb.build())
             .crashHandler(NovaCrashHandler::class.java)
             .extensionsProcessEnabled(true)
+            .extensionsWebAPIEnabled(true)
+            .aboutConfigEnabled(true)
         val dns = dnsSettings()
         if (dns != null) {
             builder.trustedRecursiveResolverMode(dns.first)
@@ -83,7 +85,7 @@ object App {
         if (geckoCreated) return
         runCatching {
             geckoRuntime = GeckoRuntime.create(context, buildSettings())
-            applyStabilityPrefs()
+            resetLegacyMediaPref()
             geckoCreated = true
             Log.i("Nova", "GeckoRuntime created (dns=${Store.dnsMode})")
         }.onFailure { t ->
@@ -97,28 +99,25 @@ object App {
         }
     }
 
-    private fun applyStabilityPrefs() {
-        runCatching {
-            GeckoPreferenceController.setGeckoPref(
-                "media.hardware-video-decoding.enabled",
-                false,
-                GeckoPreferenceController.PREF_BRANCH_USER,
-            ).accept({}, { t -> Log.w("Nova", "Could not set media pref: ${t?.message}") })
-        }
-    }
-
     fun recreateGeckoRuntime() {
         if (!geckoCreated) return
         runCatching {
             com.nova.browser.browser.BrowserCore.closeAllSessions()
             geckoCreated = false
             geckoRuntime = GeckoRuntime.create(context, buildSettings())
-            applyStabilityPrefs()
+            resetLegacyMediaPref()
             ExtensionManager.attach()
             com.nova.browser.browser.BrowserCore.reopenActiveSession()
             Log.i("Nova", "GeckoRuntime recreated (dns=${Store.dnsMode})")
         }.onFailure { t ->
             Log.e("Nova", "GeckoRuntime recreate failed", t)
+        }
+    }
+
+    private fun resetLegacyMediaPref() {
+        runCatching {
+            GeckoPreferenceController.clearGeckoUserPref("media.hardware-video-decoding.enabled")
+                .accept({}, { t -> Log.w("Nova", "Could not clear media pref: ${t?.message}") })
         }
     }
 
