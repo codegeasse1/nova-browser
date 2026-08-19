@@ -82,13 +82,15 @@ jobs:
 
       - name: Sign APK with generated debug key
         run: |
-          APK_PATH=$(find iceraven -path "*outputs/apk/forkRelease*" -name "app-arm64-v8a-forkRelease.apk" | head -1)
+          find iceraven/gradle/build/app/outputs/apk -maxdepth 3 -type f -name "*.apk" | head -20
+          APK_PATH=$(find iceraven -name "app-arm64-v8a-forkRelease.apk" | head -1)
           echo "Found: $APK_PATH"
           ls -alh "$APK_PATH"
           keytool -genkeypair -v -keystore $HOME/android-debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner sign --ks $HOME/android-debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out app-debug.apk "$APK_PATH"
           $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner verify app-debug.apk
           ls -alh app-debug.apk
+          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/aapt dump badging app-debug.apk | head -3
 
       - name: Upload APK to v3.0 release
         env:
