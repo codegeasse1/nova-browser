@@ -349,6 +349,84 @@ object NovaDebugLog {
 }
 ''')
 
+# --- New file: shared close-cleanup (tabs + browsing data + session snapshot) --
+write(BASE + "components/NovaCloseCleanup.kt", r'''/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.components
+
+import android.content.Context
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import org.mozilla.fenix.settings.deletebrowsingdata.DefaultDeleteBrowsingDataController
+import org.mozilla.fenix.settings.deletebrowsingdata.DefaultDeleteBrowsingDataController.DataStorage
+import org.mozilla.fenix.settings.deletebrowsingdata.DefaultDeleteBrowsingDataController.DeleteDataUseCases
+import org.mozilla.fenix.settings.deletebrowsingdata.DefaultDeleteBrowsingDataController.Stores
+
+/**
+ * Applies the "the app was closed" cleanup: if "Clear tabs on close" is on, removes
+ * every tab AND deletes the persisted session snapshot so the tabs cannot come back
+ * on the next launch; if "Delete browsing data on quit" is on, runs IceRaven's own
+ * delete-on-quit controller (the same one the Quit menu item uses).
+ *
+ * A deliberately small shared helper so the exact same cleanup runs whether the close
+ * was detected while the process was alive (Application.onTaskRemoved) or at the next
+ * launch (task id mismatch, e.g. after the process was killed on swipe).
+ */
+object NovaCloseCleanup {
+    fun run(context: Context, components: Components) {
+        try {
+            val settings = components.settings
+            if (settings.novaClearTabsOnExit) {
+                NovaDebugLog.log(context, "NovaCloseCleanup: clearing all tabs")
+                components.useCases.tabsUseCases.removeAllTabs.invoke(false)
+                // The session snapshot on disk would otherwise restore the tabs on the
+                // next launch (especially when the process is killed on swipe before
+                // the empty state is saved), so delete it explicitly.
+                CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+                    try {
+                        components.core.sessionStorage.clear()
+                        NovaDebugLog.log(context, "NovaCloseCleanup: session snapshot deleted")
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+            if (settings.shouldDeleteBrowsingDataOnQuit) {
+                // The same controller (and settings) used by the Quit menu item, so the
+                // user's "Delete browsing data on quit" choices are honoured here too.
+                val controller = DefaultDeleteBrowsingDataController(
+                    deleteDataUseCases = DeleteDataUseCases(
+                        removeAllTabs = components.useCases.tabsUseCases.removeAllTabs,
+                        removeAllDownloads = components.useCases.downloadUseCases.removeAllDownloads,
+                    ),
+                    dataStorage = DataStorage(
+                        history = components.core.historyStorage,
+                        permissions = components.core.permissionStorage,
+                    ),
+                    stores = Stores(
+                        appStore = components.appStore,
+                        browserStore = components.core.store,
+                    ),
+                    engine = components.core.engine,
+                    settings = settings,
+                )
+                NovaDebugLog.log(context, "NovaCloseCleanup: delete browsing data on quit running")
+                CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+                    try {
+                        controller.clearBrowsingDataOnQuit { }
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+        } catch (_: Exception) {
+        }
+    }
+}
+''')
+
 # --- New file: history hook that understands the Nova options ----------------
 write(BASE + "components/NovaHistoryTrackingDelegate.kt", r'''/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -660,6 +738,7 @@ patch(
 patch(
     BASE + "HomeActivity.kt",
     "import org.mozilla.fenix.settings.SupportUtils",
+    "import org.mozilla.fenix.components.NovaCloseCleanup\n" +
     "import org.mozilla.fenix.components.NovaDebugLog\n" +
     "import org.mozilla.fenix.settings.SupportUtils\n" +
     "import org.mozilla.fenix.settings.deletebrowsingdata.DefaultDeleteBrowsingDataController\n" +
@@ -675,26 +754,17 @@ patch(
 patch(
     BASE + "HomeActivity.kt",
     "        super.onStop()",
-    "        super.onStop()\n        armNovaClearOnExitCheck()\n        scheduleNovaClearOnCloseCheck()",
-)
-patch(
-    BASE + "HomeActivity.kt",
-    "        super.onDestroy()",
-    "        super.onDestroy()\n        scheduleNovaClearOnCloseCheck()",
+    "        super.onStop()\n        armNovaClearOnExitCheck()",
 )
 patch(
     BASE + "HomeActivity.kt",
     "    final override fun onStart() {",
-    """    // Set once per activity so onStop + onDestroy (both fire when the app is
-    // closed) don't run the cleanup twice.
-    private var novaCloseCleanupHandled = false
-
-    /**
+    """    /**
      * Persists the "close armed" flag plus the current task id every time the app
-     * leaves the foreground. If the process is later killed (Android does this
-     * aggressively on some devices), a relaunch compares its new task id against
-     * this saved one: same task -> the app was only backgrounded; different task ->
-     * the app was closed from the app switcher (or Quit) and must start clean.
+     * leaves the foreground. A relaunch compares its new task id against this
+     * saved one: same task -> the app was only backgrounded (possibly killed in
+     * the background); different task -> the app was really closed (swiped from
+     * the app switcher, or Quit) and must start clean.
      */
     private fun armNovaClearOnExitCheck() {
         if (this is ExternalAppBrowserActivity) return
@@ -705,88 +775,8 @@ patch(
         NovaDebugLog.log(this, "arm: armed=true task=$taskId")
     }
 
-    @Suppress("DEPRECATION")
-    private fun scheduleNovaClearOnCloseCheck() {
-        // Called on every stop/destroy. We check whether the app's task is still
-        // in the recents list: if it is, the app was just backgrounded or the
-        // device rotated, so everything is kept. If the task is gone, the app was
-        // really closed (swiped away from the app switcher, or Quit), so we apply
-        // the "clear tabs on close" setting and the stock "delete browsing data on
-        // quit" settings - exactly as if Quit was tapped.
-        // Not for the external-app browser activity (custom tabs), which is a
-        // separate task and must not clear the user's tabs when it is dismissed.
-        if (novaCloseCleanupHandled) return
-        if (this is ExternalAppBrowserActivity) return
-        val settings = components.settings
-        if (!settings.novaClearTabsOnExit && !settings.shouldDeleteBrowsingDataOnQuit) return
-        val appContext = applicationContext
-        val myTaskId = taskId
-        val activityManager = appContext.getSystemService(ActivityManager::class.java)
-            ?: return
-        // Immediate check: after a swipe-away the task is usually already gone from
-        // the recents list, so we can clean up right away - even if Android kills
-        // the process a moment later, the cleanup has already started.
-        if (!activityManager.appTasks.any { it.taskInfo?.id == myTaskId }) {
-            novaCloseCleanupHandled = true
-            NovaDebugLog.log(this, "task gone at close - cleaning up now")
-            runNovaCloseCleanup()
-            return
-        }
-        // Task still present: this can be a plain background, or the task removal
-        // briefly lagging behind the swipe. Re-check shortly afterwards.
-        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-            delay(1500L)
-            try {
-                val am = appContext.getSystemService(ActivityManager::class.java)
-                    ?: return@launch
-                if (!am.appTasks.any { it.taskInfo?.id == myTaskId }) {
-                    novaCloseCleanupHandled = true
-                    NovaDebugLog.log(appContext, "task gone at delayed check - cleaning up")
-                    runNovaCloseCleanup()
-                }
-            } catch (_: Exception) {
-            }
-        }
-    }
-
     private fun runNovaCloseCleanup() {
-        try {
-            val settings = components.settings
-            if (settings.novaClearTabsOnExit) {
-                // Arm the flag so even a relaunch in a fresh process starts empty.
-                settings.novaClearTabsOnExitArmed = true
-                NovaDebugLog.log(this, "clearing all tabs")
-                components.useCases.tabsUseCases.removeAllTabs.invoke(false)
-            }
-            if (settings.shouldDeleteBrowsingDataOnQuit) {
-                // Same controller (and settings) used by the Quit menu item, so the
-                // user's "Delete browsing data on quit" choices are honoured here too.
-                val controller = DefaultDeleteBrowsingDataController(
-                    deleteDataUseCases = DeleteDataUseCases(
-                        removeAllTabs = components.useCases.tabsUseCases.removeAllTabs,
-                        removeAllDownloads = components.useCases.downloadUseCases.removeAllDownloads,
-                    ),
-                    dataStorage = DataStorage(
-                        history = components.core.historyStorage,
-                        permissions = components.core.permissionStorage,
-                    ),
-                    stores = Stores(
-                        appStore = components.appStore,
-                        browserStore = components.core.store,
-                    ),
-                    engine = components.core.engine,
-                    settings = settings,
-                )
-                NovaDebugLog.log(this, "delete browsing data on quit running")
-                CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-                    try {
-                        controller.clearBrowsingDataOnQuit { }
-                    } catch (_: Exception) {
-                    }
-                }
-            }
-        } catch (_: Exception) {
-        }
+        NovaCloseCleanup.run(this, components)
     }
 
     private fun consumeNovaClearTabsOnExit() {
@@ -824,36 +814,7 @@ patch(
         }
         // Different task: the app was really closed (swiped away / Quit). Start fresh.
         NovaDebugLog.log(this, "consume: new task $taskId (was $lastTaskId) - clearing")
-        if (settings.novaClearTabsOnExit) {
-            try {
-                components.useCases.tabsUseCases.removeAllTabs.invoke(false)
-            } catch (e: Exception) {
-            }
-        }
-        if (settings.shouldDeleteBrowsingDataOnQuit) {
-            val controller = DefaultDeleteBrowsingDataController(
-                deleteDataUseCases = DeleteDataUseCases(
-                    removeAllTabs = components.useCases.tabsUseCases.removeAllTabs,
-                    removeAllDownloads = components.useCases.downloadUseCases.removeAllDownloads,
-                ),
-                dataStorage = DataStorage(
-                    history = components.core.historyStorage,
-                    permissions = components.core.permissionStorage,
-                ),
-                stores = Stores(
-                    appStore = components.appStore,
-                    browserStore = components.core.store,
-                ),
-                engine = components.core.engine,
-                settings = settings,
-            )
-            CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-                try {
-                    controller.clearBrowsingDataOnQuit { }
-                } catch (_: Exception) {
-                }
-            }
-        }
+        NovaCloseCleanup.run(this, components)
         runCatching {
             android.widget.Toast.makeText(
                 this,
@@ -866,7 +827,11 @@ patch(
     final override fun onStart() {""",
 )
 
-# --- FenixApplication.kt: consume the armed flag after restore ----------------
+patch(
+    BASE + "FenixApplication.kt",
+    "import org.mozilla.fenix.components.Components",
+    "import org.mozilla.fenix.components.Components\nimport org.mozilla.fenix.components.NovaCloseCleanup\nimport org.mozilla.fenix.components.NovaDebugLog",
+)
 patch(
     BASE + "FenixApplication.kt",
     "        components.useCases.tabsUseCases.restore(sessionStorage, components.settings.getTabTimeout())",
@@ -889,6 +854,26 @@ patch(
          */
         var initialSessionRestoreCompleted = false
             private set
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        // The user swiped this app away from the app switcher (or pressed "Clear
+        // all"): apply the "clear tabs on close" and "delete browsing data on quit"
+        // settings right now, exactly as if Quit was tapped. We only act when the
+        // flag was armed (i.e. the app was backgrounded at least once) so a mere
+        // backgrounding or a system task cleanup does not wipe anything. Custom-tab
+        // tasks (ExternalAppBrowserActivity) are separate tasks and are skipped.
+        try {
+            if (rootIntent?.component?.className?.endsWith("ExternalAppBrowserActivity") == true) return
+            val settings = components.settings
+            if (!settings.novaClearTabsOnExit && !settings.shouldDeleteBrowsingDataOnQuit) return
+            if (!settings.novaClearTabsOnExitArmed) return
+            settings.novaClearTabsOnExitArmed = false
+            NovaDebugLog.log(this, "onTaskRemoved: app removed from recents - cleaning up")
+            NovaCloseCleanup.run(this, components)
+        } catch (_: Exception) {
+        }
     }
 """,
 )
