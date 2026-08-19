@@ -283,6 +283,29 @@ class NovaStudyStorage(context: Context) {
         }
     }
 
+    fun delete(url: String) {
+        val newList = JSONArray().apply {
+            readAll().forEach {
+                if (it.optString("url") != url) put(it)
+            }
+        }
+        prefs.edit().putString(KEY_ITEMS, newList.toString()).apply()
+    }
+
+    fun deleteVisitsBetween(startTime: Long, endTime: Long) {
+        val newList = JSONArray().apply {
+            readAll().forEach {
+                val visitedAt = it.optLong("visitedAt")
+                if (visitedAt < startTime || visitedAt > endTime) put(it)
+            }
+        }
+        prefs.edit().putString(KEY_ITEMS, newList.toString()).apply()
+    }
+
+    fun clear() {
+        prefs.edit().remove(KEY_ITEMS).apply()
+    }
+
     companion object {
         const val PREFS_NAME = "nova_study"
         private const val KEY_ITEMS = "study_items"
@@ -326,28 +349,27 @@ class NovaHistoryTrackingDelegate(
 
     private val studyStorage by lazy { NovaStudyStorage(context.applicationContext) }
 
-    private fun canRecord() = !settings.novaPauseHistory
-
     override suspend fun onVisited(uri: String, visit: PageVisit) {
-        if (!canRecord()) return
         if (settings.novaStudyMode) {
             studyStorage.recordVisit(uri, title = null)
-        } else {
-            delegate.onVisited(uri, visit)
+            return
         }
+        if (settings.novaPauseHistory) return
+        delegate.onVisited(uri, visit)
     }
 
     override suspend fun onTitleChanged(uri: String, title: String) {
-        if (!canRecord()) return
         if (settings.novaStudyMode) {
             studyStorage.recordTitle(uri, title)
-        } else {
-            delegate.onTitleChanged(uri, title)
+            return
         }
+        if (settings.novaPauseHistory) return
+        delegate.onTitleChanged(uri, title)
     }
 
     override suspend fun onPreviewImageChange(uri: String, previewImageUrl: String) {
-        if (!canRecord()) return
+        if (settings.novaStudyMode) return
+        if (settings.novaPauseHistory) return
         delegate.onPreviewImageChange(uri, previewImageUrl)
     }
 
@@ -416,6 +438,7 @@ patch(
 patch(
     BASE + "library/history/HistoryFragment.kt",
     "import org.mozilla.fenix.components.history.DefaultPagedHistoryProvider",
+    "import org.mozilla.fenix.components.NovaStudyStorage\n" +
     "import org.mozilla.fenix.components.history.DefaultPagedHistoryProvider\n" +
     "import org.mozilla.fenix.components.history.PagedHistoryProvider\n" +
     "import org.mozilla.fenix.components.history.StudyPagedHistoryProvider",
@@ -438,6 +461,48 @@ patch(
     BASE + "library/history/HistoryFragment.kt",
     "                    historyProvider.deleteMetadataSearchGroup(item)",
     "                    (historyProvider as? DefaultPagedHistoryProvider)?.deleteMetadataSearchGroup(item)",
+)
+patch(
+    BASE + "library/history/HistoryFragment.kt",
+    "                is History.Regular -> historyStorage.deleteVisitsFor(item.url)",
+    "                is History.Regular -> {\n" +
+    "                    historyStorage.deleteVisitsFor(item.url)\n" +
+    "                    if (requireContext().components.settings.novaStudyMode) {\n" +
+    "                        NovaStudyStorage(requireContext()).delete(item.url)\n" +
+    "                    }\n" +
+    "                }",
+)
+patch(
+    BASE + "library/history/HistoryFragment.kt",
+    "            if (selectedTimeFrame == null) {\n" +
+    "                historyStorage.deleteEverything()\n" +
+    "            } else {\n" +
+    "                val longRange = selectedTimeFrame.toLongRange()\n" +
+    "                historyStorage.deleteVisitsBetween(\n" +
+    "                    startTime = longRange.first,\n" +
+    "                    endTime = longRange.last,\n" +
+    "                )\n" +
+    "            }\n" +
+    "            browserStore.dispatch(RecentlyClosedAction.RemoveAllClosedTabAction)",
+    "            if (selectedTimeFrame == null) {\n" +
+    "                historyStorage.deleteEverything()\n" +
+    "            } else {\n" +
+    "                val longRange = selectedTimeFrame.toLongRange()\n" +
+    "                historyStorage.deleteVisitsBetween(\n" +
+    "                    startTime = longRange.first,\n" +
+    "                    endTime = longRange.last,\n" +
+    "                )\n" +
+    "            }\n" +
+    "            if (requireContext().components.settings.novaStudyMode) {\n" +
+    "                val studyStorage = NovaStudyStorage(requireContext())\n" +
+    "                if (selectedTimeFrame == null) {\n" +
+    "                    studyStorage.clear()\n" +
+    "                } else {\n" +
+    "                    val longRange = selectedTimeFrame.toLongRange()\n" +
+    "                    studyStorage.deleteVisitsBetween(longRange.first, longRange.last)\n" +
+    "                }\n" +
+    "            }\n" +
+    "            browserStore.dispatch(RecentlyClosedAction.RemoveAllClosedTabAction)",
 )
 
 # --- Settings.kt: new Nova options -------------------------------------------
@@ -532,7 +597,31 @@ patch(
         android:title="@string/preferences_category_about\"""",
 )
 
-# --- HomeActivity.kt: clear tabs when the app is closed (swiped away) ---------
+# --- HomeActivity.kt: clear tabs + browsing data when the app is closed -------
+patch(
+    BASE + "HomeActivity.kt",
+    "import android.app.assist.AssistContent",
+    "import android.app.ActivityManager\nimport android.app.assist.AssistContent",
+)
+patch(
+    BASE + "HomeActivity.kt",
+    "import kotlinx.coroutines.Dispatchers",
+    "import kotlinx.coroutines.CoroutineScope\nimport kotlinx.coroutines.Dispatchers",
+)
+patch(
+    BASE + "HomeActivity.kt",
+    "import kotlinx.coroutines.Job\n",
+    "import kotlinx.coroutines.Job\nimport kotlinx.coroutines.SupervisorJob\n",
+)
+patch(
+    BASE + "HomeActivity.kt",
+    "import org.mozilla.fenix.settings.SupportUtils",
+    "import org.mozilla.fenix.settings.SupportUtils\n" +
+    "import org.mozilla.fenix.settings.deletebrowsingdata.DefaultDeleteBrowsingDataController\n" +
+    "import org.mozilla.fenix.settings.deletebrowsingdata.DefaultDeleteBrowsingDataController.DataStorage\n" +
+    "import org.mozilla.fenix.settings.deletebrowsingdata.DefaultDeleteBrowsingDataController.DeleteDataUseCases\n" +
+    "import org.mozilla.fenix.settings.deletebrowsingdata.DefaultDeleteBrowsingDataController.Stores",
+)
 patch(
     BASE + "HomeActivity.kt",
     "        checkAndExitPiP()",
@@ -540,27 +629,82 @@ patch(
 )
 patch(
     BASE + "HomeActivity.kt",
+    "        super.onStop()",
+    "        super.onStop()\n        scheduleNovaClearOnCloseCheck()",
+)
+patch(
+    BASE + "HomeActivity.kt",
     "        super.onDestroy()",
-    "        super.onDestroy()\n        handleNovaClearTabsOnClose()",
+    "        super.onDestroy()\n        scheduleNovaClearOnCloseCheck()",
 )
 patch(
     BASE + "HomeActivity.kt",
     "    final override fun onStart() {",
-    """    private fun handleNovaClearTabsOnClose() {
-        // Not for the external-app browser activity, which finishes frequently.
+    """    private fun scheduleNovaClearOnCloseCheck() {
+        // Called on every stop/destroy. A few seconds later we check whether the
+        // app's task is still in the recents list. If it is, the app was just
+        // backgrounded or the device rotated, so everything is kept. If the task
+        // is gone, the app was really closed (swiped away from the app switcher,
+        // or Quit), so we apply the "clear tabs on close" setting and the stock
+        // "delete browsing data on quit" settings - exactly as if Quit was tapped.
+        // Not for the external-app browser activity (custom tabs), which is a
+        // separate task and must not clear the user's tabs when it is dismissed.
         if (this is ExternalAppBrowserActivity) return
-        if (!components.settings.novaClearTabsOnExit) return
-        // Backgrounding (Home button, screen off, split-screen) does NOT finish the
-        // activity, so tabs are kept. The activity is only finished when the app is
-        // really closed: swiped away from the app switcher, back button at the root,
-        // or the Quit menu. Configuration changes (rotation etc.) are excluded too.
-        if (isChangingConfigurations || !isFinishing) return
-        // Clear all tabs and arm the flag so a relaunch in a fresh process also
-        // starts empty (even if this process dies before the tab save completes).
-        components.settings.novaClearTabsOnExitArmed = true
+        val settings = components.settings
+        if (!settings.novaClearTabsOnExit && !settings.shouldDeleteBrowsingDataOnQuit) return
+        val appContext = applicationContext
+        val myTaskId = taskId
+        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        scope.launch {
+            delay(2000L)
+            try {
+                val activityManager = appContext.getSystemService(ActivityManager::class.java)
+                    ?: return@launch
+                if (activityManager.appTasks.any { it.taskInfo.id == myTaskId }) {
+                    // Task still in recents: only backgrounded / configuration change.
+                    return@launch
+                }
+                runNovaCloseCleanup()
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun runNovaCloseCleanup() {
         try {
-            components.useCases.tabsUseCases.removeAllTabs.invoke(false)
-        } catch (e: Exception) {
+            val settings = components.settings
+            if (settings.novaClearTabsOnExit) {
+                // Arm the flag so even a relaunch in a fresh process starts empty.
+                settings.novaClearTabsOnExitArmed = true
+                components.useCases.tabsUseCases.removeAllTabs.invoke(false)
+            }
+            if (settings.shouldDeleteBrowsingDataOnQuit) {
+                // Same controller (and settings) used by the Quit menu item, so the
+                // user's "Delete browsing data on quit" choices are honoured here too.
+                val controller = DefaultDeleteBrowsingDataController(
+                    deleteDataUseCases = DeleteDataUseCases(
+                        removeAllTabs = components.useCases.tabsUseCases.removeAllTabs,
+                        removeAllDownloads = components.useCases.downloadUseCases.removeAllDownloads,
+                    ),
+                    dataStorage = DataStorage(
+                        history = components.core.historyStorage,
+                        permissions = components.core.permissionStorage,
+                    ),
+                    stores = Stores(
+                        appStore = components.appStore,
+                        browserStore = components.core.store,
+                    ),
+                    engine = components.core.engine,
+                    settings = settings,
+                )
+                CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+                    try {
+                        controller.clearBrowsingDataOnQuit { }
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+        } catch (_: Exception) {
         }
     }
 
