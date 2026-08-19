@@ -8,14 +8,19 @@ layer** on top: name, icon, colors, package, and a few extra Nova options.
 - **Build:** exactly upstream's own CI steps (`install-sdk.sh`, `patch_android_components.sh`,
   the branding string replacements), then `./gradlew app:assembleForkRelease -PversionName=...`
 - **Nova layer:** [`nova-branding.sh`](nova-branding.sh) — app name "Nova Browser", package
-  `com.nova.browser`, version `2.46.0`, teal accent palette, custom "N" launcher icon + splash,
+  `com.nova.browser`, version `2.46.0`, teal accent palette, custom "N" launcher icon + splash
+  (icons pre-baked in [`nova-icons/`](nova-icons/), no ImageMagick needed at build time),
   "What's new" pointing at this repo. Cosmetic only.
 - **Nova options (Settings → Nova Browser):**
   - **Pause history** — stops saving your browsing history while on.
   - **Study mode** — keeps a study list of visited sites instead of normal history; the History
-    screen shows that study list.
+    screen shows that study list. Works even while Pause history is on, and deletions from the
+    History screen (individual items or clear-all) also clean the study list.
   - **Clear tabs on close** — closes all tabs when you remove Nova Browser from the app switcher
-    (backgrounding alone does not clear them).
+    (backgrounding alone does not clear them). Closing the app this way also runs the built-in
+    "Delete browsing data on quit" cleanup (Settings → Delete browsing data on quit → check
+    **Open tabs** and **Browsing history**), so you get the same wipe as "Quit Nova Browser"
+    without having to tap Quit — just swipe Nova away from your recent apps.
 - **Output:** `app-debug.apk` (arm64-v8a, debug-signed) → uploaded to release **v3.0**
 
 ## Download
