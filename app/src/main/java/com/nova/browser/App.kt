@@ -61,6 +61,7 @@ object App {
         val builder = GeckoRuntimeSettings.Builder()
             .contentBlocking(cb.build())
             .crashHandler(NovaCrashHandler::class.java)
+            .extensionsProcessEnabled(true)
         val dns = dnsSettings()
         if (dns != null) {
             builder.trustedRecursiveResolverMode(dns.first)
