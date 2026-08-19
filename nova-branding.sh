@@ -722,6 +722,11 @@ patch(
 # --- HomeActivity.kt: clear tabs + browsing data when the app is closed -------
 patch(
     BASE + "HomeActivity.kt",
+    "import android.app.assist.AssistContent",
+    "import android.app.ActivityManager\nimport android.app.assist.AssistContent",
+)
+patch(
+    BASE + "HomeActivity.kt",
     "import kotlinx.coroutines.Dispatchers",
     "import kotlinx.coroutines.CoroutineScope\nimport kotlinx.coroutines.Dispatchers",
 )
@@ -749,7 +754,7 @@ patch(
 patch(
     BASE + "HomeActivity.kt",
     "        super.onStop()",
-    "        super.onStop()\n        armNovaClearOnExitCheck()",
+    "        super.onStop()\n        armNovaClearOnExitCheck()\n        scheduleNovaClearOnCloseCheck()",
 )
 patch(
     BASE + "HomeActivity.kt",
@@ -768,6 +773,44 @@ patch(
         settings.novaLastTaskId = taskId
         settings.novaClearTabsOnExitArmed = true
         NovaDebugLog.log(this, "arm: armed=true task=$taskId")
+    }
+
+    @Suppress("DEPRECATION")
+    private fun scheduleNovaClearOnCloseCheck() {
+        // Called on every stop, AFTER the app has fully backgrounded. A short while
+        // later, if the app's task is no longer in the recents list, the user really
+        // closed it (swiped it away from the app switcher, or pressed "Clear all").
+        // A plain background keeps the task, so nothing is cleared then. The check is
+        // deliberately delayed (no immediate check) so momentary transitions - e.g.
+        // an activity being recreated - never look like a close. If the process is
+        // killed before this check runs, consumeNovaClearTabsOnExit handles it at the
+        // next launch by comparing the task id.
+        // Not for the external-app browser activity (custom tabs), which is a
+        // separate task and must not clear the user's tabs when it is dismissed.
+        if (this is ExternalAppBrowserActivity) return
+        val settings = components.settings
+        if (!settings.novaClearTabsOnExit && !settings.shouldDeleteBrowsingDataOnQuit) return
+        if (!settings.novaClearTabsOnExitArmed) return
+        val appContext = applicationContext
+        val myTaskId = taskId
+        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+            delay(2500L)
+            try {
+                val am = appContext.getSystemService(ActivityManager::class.java)
+                    ?: return@launch
+                if (am.appTasks.any { it.taskInfo?.id == myTaskId }) {
+                    NovaDebugLog.log(appContext, "delayed check: task still present - kept")
+                    return@launch
+                }
+                // Task gone: the app was really closed. Clean up exactly once.
+                val s = appContext.components.settings
+                if (!s.novaClearTabsOnExitArmed) return@launch
+                s.novaClearTabsOnExitArmed = false
+                NovaDebugLog.log(appContext, "task gone at delayed check - cleaning up")
+                NovaCloseCleanup.run(appContext, appContext.components)
+            } catch (_: Exception) {
+            }
+        }
     }
 
     private fun consumeNovaClearTabsOnExit() {
@@ -820,11 +863,6 @@ patch(
 
 patch(
     BASE + "FenixApplication.kt",
-    "import org.mozilla.fenix.components.Components",
-    "import org.mozilla.fenix.components.Components\nimport org.mozilla.fenix.components.NovaCloseCleanup\nimport org.mozilla.fenix.components.NovaDebugLog",
-)
-patch(
-    BASE + "FenixApplication.kt",
     "        components.useCases.tabsUseCases.restore(sessionStorage, components.settings.getTabTimeout())",
     """        components.useCases.tabsUseCases.restore(sessionStorage, components.settings.getTabTimeout())
 
@@ -845,26 +883,6 @@ patch(
          */
         var initialSessionRestoreCompleted = false
             private set
-    }
-
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        super.onTaskRemoved(rootIntent)
-        // The user swiped this app away from the app switcher (or pressed "Clear
-        // all"): apply the "clear tabs on close" and "delete browsing data on quit"
-        // settings right now, exactly as if Quit was tapped. We only act when the
-        // flag was armed (i.e. the app was backgrounded at least once) so a mere
-        // backgrounding or a system task cleanup does not wipe anything. Custom-tab
-        // tasks (ExternalAppBrowserActivity) are separate tasks and are skipped.
-        try {
-            if (rootIntent?.component?.className?.endsWith("ExternalAppBrowserActivity") == true) return
-            val settings = components.settings
-            if (!settings.novaClearTabsOnExit && !settings.shouldDeleteBrowsingDataOnQuit) return
-            if (!settings.novaClearTabsOnExitArmed) return
-            settings.novaClearTabsOnExitArmed = false
-            NovaDebugLog.log(this, "onTaskRemoved: app removed from recents - cleaning up")
-            NovaCloseCleanup.run(this, components)
-        } catch (_: Exception) {
-        }
     }
 """,
 )
