@@ -22,6 +22,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Clone Iceraven source (exact upstream release)
+        timeout-minutes: 30
         run: |
           git clone --depth 1 --branch iceraven-2.46.0 https://github.com/fork-maintainers/iceraven-browser iceraven
           cd iceraven
@@ -58,7 +59,13 @@ jobs:
           sed -i '/<string name="trackers_blocked_panel_categorical_num_trackers_blocked">/s/%s/%1$s/g; /<string name="trackers_blocked_panel_categorical_num_trackers_blocked">/s/%d/%2$d/g' app/src/*/res/values*/*strings.xml
 
       - name: Install ImageMagick (for icon/wordmark generation)
-        run: sudo apt-get update && sudo apt-get install -y imagemagick
+        timeout-minutes: 5
+        run: |
+          if command -v convert >/dev/null 2>&1; then
+            echo "ImageMagick already installed on runner"
+          else
+            sudo apt-get update -o Acquire::Retries=3 && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -o Acquire::Retries=3 imagemagick
+          fi
 
       - name: Nova branding overlay
         run: |
@@ -67,6 +74,7 @@ jobs:
           bash nova-branding.sh
 
       - name: Build forkRelease variant of app
+        timeout-minutes: 90
         env:
           GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=4g -Xms1g -Xmx7g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dev/stderr"
         run: |
@@ -93,6 +101,7 @@ jobs:
           $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/aapt dump badging app-debug.apk | head -3
 
       - name: Upload APK to v3.0 release
+        timeout-minutes: 20
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
