@@ -57,6 +57,9 @@ jobs:
           sed -i '/about_content/s/Mozilla/@forkmaintainers/' app/src/*/res/values*/*strings.xml
           sed -i '/<string name="trackers_blocked_panel_categorical_num_trackers_blocked">/s/%s/%1$s/g; /<string name="trackers_blocked_panel_categorical_num_trackers_blocked">/s/%d/%2$d/g' app/src/*/res/values*/*strings.xml
 
+      - name: Install ImageMagick (for icon/wordmark generation)
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
+
       - name: Nova branding overlay
         run: |
           cp nova-branding.sh iceraven/nova-branding.sh
