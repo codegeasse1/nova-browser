@@ -58,18 +58,10 @@ jobs:
           sed -i '/about_content/s/Mozilla/@forkmaintainers/' app/src/*/res/values*/*strings.xml
           sed -i '/<string name="trackers_blocked_panel_categorical_num_trackers_blocked">/s/%s/%1$s/g; /<string name="trackers_blocked_panel_categorical_num_trackers_blocked">/s/%d/%2$d/g' app/src/*/res/values*/*strings.xml
 
-      - name: Install ImageMagick (for icon/wordmark generation)
-        timeout-minutes: 5
-        run: |
-          if command -v convert >/dev/null 2>&1; then
-            echo "ImageMagick already installed on runner"
-          else
-            sudo apt-get update -o Acquire::Retries=3 && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -o Acquire::Retries=3 imagemagick
-          fi
-
       - name: Nova branding overlay
         run: |
           cp nova-branding.sh iceraven/nova-branding.sh
+          cp -r nova-icons iceraven/nova-icons
           cd iceraven
           bash nova-branding.sh
 

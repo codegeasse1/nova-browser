@@ -7,8 +7,6 @@ set -euo pipefail
 
 NOVA_PRIMARY="#0B7E78"
 NOVA_SLATE="#17343C"
-DEJAVU="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-[ -f "$DEJAVU" ] || DEJAVU="DejaVu-Sans-Bold"
 
 echo ">> Nova branding: product name"
 # Upstream's CI already replaced "Firefox" -> "Iceraven"; we turn that into "Nova"
@@ -60,29 +58,23 @@ cat > app/src/forkRelease/res/values/colors.xml <<'XML'
 XML
 
 echo ">> Nova branding: launcher icons (teal + white N)"
-ICON_SIZES="mdpi 48 hdpi 72 xhdpi 96 xxhdpi 144 xxxhdpi 192"
-set -- $ICON_SIZES
-while [ $# -gt 0 ]; do
-  d=$1; px=$2; shift 2
+for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
   mip=app/src/forkRelease/res/mipmap-$d
-  convert -size ${px}x${px} xc:$NOVA_PRIMARY -font $DEJAVU -pointsize $((px*72/100)) -fill white -gravity center -annotate +0+0 "N" $mip/ic_launcher.png
-  cp $mip/ic_launcher.png $mip/ic_launcher_round.png
-  convert -size ${px}x${px} xc:$NOVA_SLATE -font $DEJAVU -pointsize $((px*72/100)) -fill white -gravity center -annotate +0+0 "N" $mip/ic_launcher_private.png
-  cp $mip/ic_launcher_private.png $mip/ic_launcher_private_round.png
+  cp nova-icons/mipmap-$d/ic_launcher.png $mip/ic_launcher.png
+  cp nova-icons/mipmap-$d/ic_launcher.png $mip/ic_launcher_round.png
+  cp nova-icons/mipmap-$d/ic_launcher_private.png $mip/ic_launcher_private.png
+  cp nova-icons/mipmap-$d/ic_launcher_private.png $mip/ic_launcher_private_round.png
 done
-convert -size 96x96 xc:$NOVA_PRIMARY -font $DEJAVU -pointsize 69 -fill white -gravity center -annotate +0+0 "N" app/src/forkRelease/res/drawable-hdpi/fenix_search_widget.png
+cp nova-icons/drawable-hdpi/fenix_search_widget.png app/src/forkRelease/res/drawable-hdpi/fenix_search_widget.png
 
 echo ">> Nova branding: wordmarks"
-convert -size 108x108 xc:$NOVA_PRIMARY -font $DEJAVU -pointsize 78 -fill white -gravity center -annotate +0+0 "N" app/src/forkRelease/res/drawable/ic_wordmark_logo.png
-convert -size 240x90 xc:none -font $DEJAVU -pointsize 64 -fill $NOVA_PRIMARY -gravity center -annotate +0+0 "Nova" app/src/forkRelease/res/drawable/ic_wordmark_text_normal.png
-convert -size 240x90 xc:none -font $DEJAVU -pointsize 64 -fill white -gravity center -annotate +0+0 "Nova" app/src/forkRelease/res/drawable/ic_wordmark_text_private.png
-LOGO_SIZES="mdpi 120 hdpi 180 xhdpi 240 xxhdpi 360 xxxhdpi 480"
-set -- $LOGO_SIZES
-while [ $# -gt 0 ]; do
-  d=$1; px=$2; shift 2
+cp nova-icons/drawable/ic_wordmark_logo.png app/src/forkRelease/res/drawable/ic_wordmark_logo.png
+cp nova-icons/drawable/ic_wordmark_text_normal.png app/src/forkRelease/res/drawable/ic_wordmark_text_normal.png
+cp nova-icons/drawable/ic_wordmark_text_private.png app/src/forkRelease/res/drawable/ic_wordmark_text_private.png
+for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
   dw=app/src/forkRelease/res/drawable-$d
-  convert -size ${px}x${px} xc:none -font $DEJAVU -pointsize $((px*28/100)) -fill $NOVA_PRIMARY -gravity center -annotate +0+0 "Nova" $dw/ic_logo_wordmark_normal.png
-  convert -size ${px}x${px} xc:none -font $DEJAVU -pointsize $((px*28/100)) -fill white -gravity center -annotate +0+0 "Nova" $dw/ic_logo_wordmark_private.png
+  cp nova-icons/drawable-$d/ic_logo_wordmark_normal.png $dw/ic_logo_wordmark_normal.png
+  cp nova-icons/drawable-$d/ic_logo_wordmark_private.png $dw/ic_logo_wordmark_private.png
 done
 
 echo ">> Nova branding: vector layers"
