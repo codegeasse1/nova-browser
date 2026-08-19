@@ -632,7 +632,8 @@ patch(
 patch(
     BASE + "HomeActivity.kt",
     "    final override fun onStart() {",
-    """    private fun scheduleNovaClearOnCloseCheck() {
+    """    @Suppress("DEPRECATION")
+    private fun scheduleNovaClearOnCloseCheck() {
         // Called on every stop/destroy. A few seconds later we check whether the
         // app's task is still in the recents list. If it is, the app was just
         // backgrounded or the device rotated, so everything is kept. If the task
