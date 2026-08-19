@@ -83,7 +83,7 @@ jobs:
       - name: Sign APK with generated debug key
         run: |
           find iceraven/gradle/build/app/outputs/apk -maxdepth 3 -type f -name "*.apk" | head -20
-          APK_PATH=$(find iceraven -name "app-arm64-v8a-forkRelease.apk" | head -1)
+          APK_PATH=$(find iceraven -name "app-arm64-v8a-forkRelease-unsigned.apk" | head -1)
           echo "Found: $APK_PATH"
           ls -alh "$APK_PATH"
           keytool -genkeypair -v -keystore $HOME/android-debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
