@@ -1,4 +1,4 @@
-name: Build Iceraven APK
+name: Build Nova Browser APK
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build Nova Browser (IceRaven 2.46.0 + Nova branding)
+    name: Build Nova Browser 2.46.0
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
@@ -41,7 +41,7 @@ jobs:
       - name: Create version name
         run: |
           cd iceraven
-          VERSION_NAME=$(git describe --tags HEAD 2>/dev/null || echo iceraven-2.46.0)
+          VERSION_NAME="2.46.0"
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "Building $VERSION_NAME"
 
