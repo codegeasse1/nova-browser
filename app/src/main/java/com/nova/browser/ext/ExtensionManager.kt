@@ -10,13 +10,11 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.nova.browser.App
-import com.nova.browser.browser.BrowserCore
 import com.nova.browser.store.Store
 import org.mozilla.geckoview.AllowOrDeny
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.WebExtension
 import org.mozilla.geckoview.WebExtensionController
-import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -42,14 +40,10 @@ object ExtensionManager {
 
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    private const val NATIVE_APP = "nova"
-    const val SHIELD_ID = "nova-shield@nova.browser"
-
     private val BUILT_INS = listOf(
         "nightshift@nova.browser",
         "imageblocker@nova.browser",
         "textsizer@nova.browser",
-        SHIELD_ID,
     )
 
     private val DEFAULT_OFF = listOf(
@@ -96,7 +90,7 @@ object ExtensionManager {
                 DEFAULT_OFF.forEach { Store.setExtensionEnabled(it, false) }
             }
             BUILT_INS.forEach { ensureBuiltIn(it) }
-            setShieldEnabled(Store.adblockLevel != "off")
+            removeOrphanedShield()
             refresh()
         }
     }
@@ -111,7 +105,6 @@ object ExtensionManager {
                         if (id in Store.disabledExtensions()) {
                             voidOp(controller().disable(ext, WebExtensionController.EnableSource.USER), "disable built-in $id")
                         }
-                        if (id == SHIELD_ID) attachShieldBridge(ext)
                         refresh()
                     }
                 }
@@ -120,44 +113,18 @@ object ExtensionManager {
             })
     }
 
-    private fun attachShieldBridge(ext: WebExtension) {
-        ext.setMessageDelegate(object : WebExtension.MessageDelegate {
-            override fun onMessage(
-                nativeApp: String,
-                message: Any,
-                sender: WebExtension.MessageSender,
-            ): GeckoResult<Any>? {
-                if (message !is JSONObject) return null
-                when (message.optString("type", "")) {
-                    "getConfig" -> {
-                        val out = JSONObject()
-                        out.put("level", Store.adblockLevel)
-                        out.put("blockedDomains", JSONArray(Store.blockedDomains()))
-                        out.put("whitelistedDomains", JSONArray(Store.whitelistedDomains()))
-                        return GeckoResult.fromValue<Any>(out)
-                    }
-                    "stats" -> {
-                        val tabsArr = message.optJSONArray("tabs")
-                        if (tabsArr != null) {
-                            mainHandler.post {
-                                safe {
-                                    for (i in 0 until tabsArr.length()) {
-                                        val pair = tabsArr.optJSONArray(i) ?: continue
-                                        val tid = pair.optInt(0)
-                                        val n = pair.optInt(1)
-                                        if (tid > 0 && n > 0) {
-                                            val target = BrowserCore.tabs.firstOrNull { it.id == tid }
-                                            if (target != null) BrowserCore.reportBlocked(tid, n)
-                                        }
-                                    }
-                                }
-                            }
+    private fun removeOrphanedShield() {
+        safe {
+            controller().list().accept({ list ->
+                safe {
+                    for (ext in list ?: emptyList()) {
+                        if (ext.id == "nova-shield@nova.browser") {
+                            voidOp(controller().uninstall(ext), "remove legacy shield")
                         }
                     }
                 }
-                return GeckoResult.fromValue<Any>(JSONObject())
-            }
-        }, NATIVE_APP)
+            }, {})
+        }
     }
 
     fun refresh() {
@@ -193,15 +160,6 @@ object ExtensionManager {
             }, { t ->
                 Log.w("Nova", "Could not list extensions: ${t?.message}")
             })
-        }
-    }
-
-    fun setShieldEnabled(on: Boolean) {
-        val ext = live[SHIELD_ID] ?: return
-        safe {
-            val src = WebExtensionController.EnableSource.USER
-            if (on) voidOp(controller().enable(ext, src), "enable shield")
-            else voidOp(controller().disable(ext, src), "disable shield")
         }
     }
 

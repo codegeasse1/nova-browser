@@ -59,7 +59,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -805,7 +804,7 @@ private fun ShieldPanel(tab: TabState?) {
             Icon(Icons.Rounded.Shield, null, tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(8.dp))
             Column {
-                Text("Nova Shield", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Site settings", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
                     tab?.host ?: "Start page",
                     style = MaterialTheme.typography.bodySmall,
@@ -816,7 +815,7 @@ private fun ShieldPanel(tab: TabState?) {
         Spacer(Modifier.height(16.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column {
-                Text("Tracking & ad blocking", style = MaterialTheme.typography.bodyLarge)
+                Text("Tracking protection", style = MaterialTheme.typography.bodyLarge)
                 Text("Blocked on this page: ${tab?.blocked ?: 0}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Switch(
@@ -836,37 +835,8 @@ private fun ShieldPanel(tab: TabState?) {
             )
         }
         Spacer(Modifier.height(12.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedButton(
-                onClick = {
-                    val host = tab?.host
-                    if (!host.isNullOrBlank()) {
-                        Store.addBlockedDomain(host)
-                        BrowserCore.reload()
-                        BrowserCore.lastShieldNotice = "\"$host\" added to blocked domains. Reloading…"
-                    }
-                },
-                modifier = Modifier.weight(1f),
-            ) {
-                Text("Block this site")
-            }
-            OutlinedButton(
-                onClick = {
-                    val host = tab?.host
-                    if (!host.isNullOrBlank()) {
-                        Store.addWhitelistedDomain(host)
-                        BrowserCore.reload()
-                        BrowserCore.lastShieldNotice = "\"$host\" added to allowed domains. Reloading…"
-                    }
-                },
-                modifier = Modifier.weight(1f),
-            ) {
-                Text("Allow this site")
-            }
-        }
-        Spacer(Modifier.height(12.dp))
         Text(
-            "Powered by the EasyList, EasyPrivacy and (in Strict mode) annoyance lists — the same community lists used by uBlock Origin.",
+            "The same engine-level protection Firefox for Android and IceRaven use. For stronger ad blocking, install uBlock Origin from the Add-ons store.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

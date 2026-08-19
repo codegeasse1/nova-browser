@@ -434,7 +434,7 @@ object BrowserCore {
             }
         }
         if (Store.adblockLevel != "off") {
-            lastShieldNotice = "Ad blocking turned ${if (next) "on" else "off"} for this site. Reload the page."
+            lastShieldNotice = "Tracking protection turned ${if (next) "on" else "off"} for this site. Reload the page."
         }
     }
 
@@ -447,9 +447,9 @@ object BrowserCore {
             }
         }
         if (Store.adblockLevel == "off") {
-            lastShieldNotice = "Ad blocking is off for all tabs. Reload pages to apply."
+            lastShieldNotice = "Tracking protection is off for all tabs. Reload pages to apply."
         } else {
-            lastShieldNotice = "Ad blocking updated for all tabs. Reload pages to apply."
+            lastShieldNotice = "Tracking protection updated for all tabs. Reload pages to apply."
         }
     }
 

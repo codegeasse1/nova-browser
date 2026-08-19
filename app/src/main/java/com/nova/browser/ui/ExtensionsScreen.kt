@@ -79,7 +79,7 @@ fun ExtensionsScreen(onBack: () -> Unit) {
                             "• One-tap install: open any add-on page on addons.mozilla.org inside Nova — an \"Install in Nova?\" banner appears and installs it.\n" +
                             "• Paste an add-on link or slug (e.g. ublock-origin) below to install it directly.\n" +
                             "• Install from a file (.xpi/.zip/.crx): Mozilla-signed add-ons install directly. Chrome Web Store extensions run on Chrome's engine (Blink), not Gecko — if you pick one, Nova finds its Firefox version on the Add-ons store for you.\n" +
-                            "• Nova Shield (EasyList + AdHost ad blocking) and the bundled tools are built-in extensions.",
+                            "• Tracker blocking is built in (GeckoView's Enhanced Tracking Protection — the same engine-level protection Firefox for Android and IceRaven use). To also block ads, install uBlock Origin from the Add-ons store.",
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(16.dp),
                     )
