@@ -660,7 +660,7 @@ patch(
             try {
                 val activityManager = appContext.getSystemService(ActivityManager::class.java)
                     ?: return@launch
-                if (activityManager.appTasks.any { it.taskInfo.id == myTaskId }) {
+                if (activityManager.appTasks.any { it.taskInfo?.id == myTaskId }) {
                     // Task still in recents: only backgrounded / configuration change.
                     return@launch
                 }
