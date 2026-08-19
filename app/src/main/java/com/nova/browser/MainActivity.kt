@@ -57,6 +57,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        App.markCleanShutdown()
         App.activity = null
         super.onDestroy()
     }

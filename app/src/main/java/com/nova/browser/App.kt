@@ -40,6 +40,7 @@ object App {
         if (::context.isInitialized) return
         context = ctx.applicationContext
         installCrashHandler()
+        detectSilentKill()
         Store.init(context)
         if (Store.autoClearHistory) Store.clearHistory()
         com.nova.browser.browser.Downloads.restore()
@@ -64,6 +65,9 @@ object App {
             .extensionsProcessEnabled(true)
             .extensionsWebAPIEnabled(true)
             .aboutConfigEnabled(true)
+            .isolatedProcessEnabled(true)
+            .appZygoteProcessEnabled(true)
+            .fissionEnabled(true)
         val dns = dnsSettings()
         if (dns != null) {
             builder.trustedRecursiveResolverMode(dns.first)
@@ -140,6 +144,27 @@ object App {
         }
     }
 
+    private fun detectSilentKill() {
+        runCatching {
+            val dir = context.filesDir
+            val marker = File(dir, "shutdown.marker")
+            val prevWasKilled = marker.exists()
+            marker.writeText("1")
+            if (prevWasKilled) {
+                val f = File(dir, "crashlog.txt")
+                val recent = runCatching { f.readText().trim().isNotBlank() }.getOrDefault(false)
+                if (!recent) {
+                    val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
+                    f.appendText("[$stamp] Nova was stopped by the system with no crash log. On most phones this means Android ran out of memory and killed Nova (not a code crash) — playing video and installing add-ons both need extra memory.\n")
+                }
+            }
+        }
+    }
+
+    fun markCleanShutdown() {
+        runCatching { File(context.filesDir, "shutdown.marker").delete() }
+    }
+
     private fun installCrashHandler() {
         if (crashHandlerInstalled) return
         crashHandlerInstalled = true
@@ -157,6 +182,7 @@ object App {
                     val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
                     val entry = "[$stamp] $throwable\n${Log.getStackTraceString(throwable)}\n\n"
                     f.appendText(entry)
+                    runCatching { File(context.filesDir, "shutdown.marker").delete() }
                 }
                 previous?.uncaughtException(thread, throwable)
             }
@@ -165,7 +191,9 @@ object App {
 
     fun lastCrash(): String? {
         val f = File(context.filesDir, "crashlog.txt")
-        return if (f.exists()) f.readText().trim().take(4000) else null
+        if (!f.exists()) return null
+        val t = f.readText().trim()
+        return if (t.isEmpty()) null else t.take(4000)
     }
 
     fun clearCrashLog() {

@@ -23,6 +23,14 @@ class NovaCrashHandler : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         runCatching {
+            val minidump = intent?.getStringExtra(GeckoRuntime.EXTRA_MINIDUMP_PATH)
+            val processType = intent?.getStringExtra(GeckoRuntime.EXTRA_CRASH_PROCESS_TYPE)
+            val remoteType = intent?.getStringExtra(GeckoRuntime.EXTRA_CRASH_REMOTE_TYPE)
+            val visibility = intent?.getStringExtra(GeckoRuntime.EXTRA_CRASH_PROCESS_VISIBILITY)
+            val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
+            File(filesDir, "crashlog.txt")
+                .appendText("[$stamp] NATIVE CRASH process=$processType remote=$remoteType visibility=$visibility minidump=$minidump\n")
+            runCatching { File(filesDir, "shutdown.marker").delete() }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                 manager.createNotificationChannel(
@@ -37,13 +45,6 @@ class NovaCrashHandler : Service() {
                         .build(),
                 )
             }
-            val minidump = intent?.getStringExtra(GeckoRuntime.EXTRA_MINIDUMP_PATH)
-            val processType = intent?.getStringExtra(GeckoRuntime.EXTRA_CRASH_PROCESS_TYPE)
-            val remoteType = intent?.getStringExtra(GeckoRuntime.EXTRA_CRASH_REMOTE_TYPE)
-            val visibility = intent?.getStringExtra(GeckoRuntime.EXTRA_CRASH_PROCESS_VISIBILITY)
-            val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
-            File(filesDir, "crashlog.txt")
-                .appendText("[$stamp] NATIVE CRASH process=$processType remote=$remoteType visibility=$visibility minidump=$minidump\n")
         }
         runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) stopForeground(STOP_FOREGROUND_REMOVE)
