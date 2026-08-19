@@ -632,32 +632,47 @@ patch(
 patch(
     BASE + "HomeActivity.kt",
     "    final override fun onStart() {",
-    """    @Suppress("DEPRECATION")
+    """    // Set once per activity so onStop + onDestroy (both fire when the app is
+    // closed) don't run the cleanup twice.
+    private var novaCloseCleanupHandled = false
+
+    @Suppress("DEPRECATION")
     private fun scheduleNovaClearOnCloseCheck() {
-        // Called on every stop/destroy. A few seconds later we check whether the
-        // app's task is still in the recents list. If it is, the app was just
-        // backgrounded or the device rotated, so everything is kept. If the task
-        // is gone, the app was really closed (swiped away from the app switcher,
-        // or Quit), so we apply the "clear tabs on close" setting and the stock
-        // "delete browsing data on quit" settings - exactly as if Quit was tapped.
+        // Called on every stop/destroy. We check whether the app's task is still
+        // in the recents list: if it is, the app was just backgrounded or the
+        // device rotated, so everything is kept. If the task is gone, the app was
+        // really closed (swiped away from the app switcher, or Quit), so we apply
+        // the "clear tabs on close" setting and the stock "delete browsing data on
+        // quit" settings - exactly as if Quit was tapped.
         // Not for the external-app browser activity (custom tabs), which is a
         // separate task and must not clear the user's tabs when it is dismissed.
+        if (novaCloseCleanupHandled) return
         if (this is ExternalAppBrowserActivity) return
         val settings = components.settings
         if (!settings.novaClearTabsOnExit && !settings.shouldDeleteBrowsingDataOnQuit) return
         val appContext = applicationContext
         val myTaskId = taskId
-        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-        scope.launch {
-            delay(2000L)
+        val activityManager = appContext.getSystemService(ActivityManager::class.java)
+            ?: return
+        // Immediate check: after a swipe-away the task is usually already gone from
+        // the recents list, so we can clean up right away - even if Android kills
+        // the process a moment later, the cleanup has already started.
+        if (!activityManager.appTasks.any { it.taskInfo?.id == myTaskId }) {
+            novaCloseCleanupHandled = true
+            runNovaCloseCleanup()
+            return
+        }
+        // Task still present: this can be a plain background, or the task removal
+        // briefly lagging behind the swipe. Re-check shortly afterwards.
+        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+            delay(1500L)
             try {
-                val activityManager = appContext.getSystemService(ActivityManager::class.java)
+                val am = appContext.getSystemService(ActivityManager::class.java)
                     ?: return@launch
-                if (activityManager.appTasks.any { it.taskInfo?.id == myTaskId }) {
-                    // Task still in recents: only backgrounded / configuration change.
-                    return@launch
+                if (!am.appTasks.any { it.taskInfo?.id == myTaskId }) {
+                    novaCloseCleanupHandled = true
+                    runNovaCloseCleanup()
                 }
-                runNovaCloseCleanup()
             } catch (_: Exception) {
             }
         }
