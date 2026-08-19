@@ -722,11 +722,6 @@ patch(
 # --- HomeActivity.kt: clear tabs + browsing data when the app is closed -------
 patch(
     BASE + "HomeActivity.kt",
-    "import android.app.assist.AssistContent",
-    "import android.app.ActivityManager\nimport android.app.assist.AssistContent",
-)
-patch(
-    BASE + "HomeActivity.kt",
     "import kotlinx.coroutines.Dispatchers",
     "import kotlinx.coroutines.CoroutineScope\nimport kotlinx.coroutines.Dispatchers",
 )
@@ -773,10 +768,6 @@ patch(
         settings.novaLastTaskId = taskId
         settings.novaClearTabsOnExitArmed = true
         NovaDebugLog.log(this, "arm: armed=true task=$taskId")
-    }
-
-    private fun runNovaCloseCleanup() {
-        NovaCloseCleanup.run(this, components)
     }
 
     private fun consumeNovaClearTabsOnExit() {
