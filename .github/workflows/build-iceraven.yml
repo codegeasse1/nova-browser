@@ -1,0 +1,101 @@
+name: Build Iceraven APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ build ]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: iceraven-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Nova Browser (IceRaven 2.46.0 + Nova branding)
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Clone Iceraven source (exact upstream release)
+        run: |
+          git clone --depth 1 --branch iceraven-2.46.0 https://github.com/fork-maintainers/iceraven-browser iceraven
+          cd iceraven
+          git submodule update --init --recursive --depth 1
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Install Android SDK with pieces Gradle skips
+        run: |
+          cd iceraven
+          ./automation/iceraven/install-sdk.sh
+
+      - name: Create version name
+        run: |
+          cd iceraven
+          VERSION_NAME=$(git describe --tags HEAD 2>/dev/null || echo iceraven-2.46.0)
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "Building $VERSION_NAME"
+
+      - name: Patch on the fly (upstream Iceraven CI step)
+        run: |
+          cd iceraven
+          ./automation/iceraven/patch_android_components.sh
+
+      - name: Replace strings (upstream Iceraven CI step)
+        run: |
+          cd iceraven
+          sed -i 's/Firefox/Iceraven/g' app/src/*/res/values*/*strings.xml
+          sed -i '/about_content/s/Mozilla/@forkmaintainers/' app/src/*/res/values*/*strings.xml
+          sed -i '/<string name="trackers_blocked_panel_categorical_num_trackers_blocked">/s/%s/%1$s/g; /<string name="trackers_blocked_panel_categorical_num_trackers_blocked">/s/%d/%2$d/g' app/src/*/res/values*/*strings.xml
+
+      - name: Nova branding overlay
+        run: |
+          cp nova-branding.sh iceraven/nova-branding.sh
+          cd iceraven
+          bash nova-branding.sh
+
+      - name: Build forkRelease variant of app
+        env:
+          GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=4g -Xms1g -Xmx7g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dev/stderr"
+        run: |
+          export ANDROID_HOME=$HOME/android-sdk/android-sdk-linux
+          export ANDROID_SDK_ROOT=$HOME/android-sdk/android-sdk-linux
+          cd iceraven
+          ./gradlew app:assembleForkRelease -PversionName=$VERSION_NAME --stacktrace --no-daemon
+
+      - name: Setup build tool version variable
+        run: |
+          BUILD_TOOL_VERSION=$(ls $HOME/android-sdk/android-sdk-linux/build-tools/ | tail -n 1)
+          echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
+
+      - name: Sign APK with generated debug key
+        run: |
+          APK_PATH=$(find iceraven -path "*outputs/apk/forkRelease*" -name "app-arm64-v8a-forkRelease.apk" | head -1)
+          echo "Found: $APK_PATH"
+          ls -alh "$APK_PATH"
+          keytool -genkeypair -v -keystore $HOME/android-debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner sign --ks $HOME/android-debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out app-debug.apk "$APK_PATH"
+          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner verify app-debug.apk
+          ls -alh app-debug.apk
+
+      - name: Upload APK to v3.0 release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload v3.0 app-debug.apk --clobber
+          gh release view v3.0 --json assets --jq '.assets[] | .name + " " + (.size|tostring)'
+
+      - name: Upload APK as artifact (backup)
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug.apk
+          path: app-debug.apk
