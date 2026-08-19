@@ -371,7 +371,6 @@ package org.mozilla.fenix.components.history
 import android.content.Context
 import mozilla.components.support.ktx.kotlin.tryGetHostFromUrl
 import org.mozilla.fenix.components.NovaStudyStorage
-import org.mozilla.fenix.library.history.HistoryDB
 
 /**
  * A paginated list of "study" items. When Study mode is on, the History screen
@@ -533,7 +532,7 @@ patch(
         android:title="@string/preferences_category_about\"""",
 )
 
-# --- HomeActivity.kt: clear tabs when swiped away -----------------------------
+# --- HomeActivity.kt: clear tabs when the app is closed (swiped away) ---------
 patch(
     BASE + "HomeActivity.kt",
     "        checkAndExitPiP()",
@@ -541,19 +540,27 @@ patch(
 )
 patch(
     BASE + "HomeActivity.kt",
+    "        super.onDestroy()",
+    "        super.onDestroy()\n        handleNovaClearTabsOnClose()",
+)
+patch(
+    BASE + "HomeActivity.kt",
     "    final override fun onStart() {",
-    """    final override fun onTaskRemoved(rootIntent: Intent) {
-        super.onTaskRemoved(rootIntent)
-        if (components.settings.novaClearTabsOnExit) {
-            // Remember that the app was closed from the app switcher, so tabs are
-            // cleared on the next launch even if the process dies before the save
-            // below finishes.
-            components.settings.novaClearTabsOnExitArmed = true
-            try {
-                components.useCases.tabsUseCases.removeAllTabs.invoke(false)
-            } catch (e: Exception) {
-                // The armed flag clears the tabs on the next launch instead.
-            }
+    """    private fun handleNovaClearTabsOnClose() {
+        // Not for the external-app browser activity, which finishes frequently.
+        if (this is ExternalAppBrowserActivity) return
+        if (!components.settings.novaClearTabsOnExit) return
+        // Backgrounding (Home button, screen off, split-screen) does NOT finish the
+        // activity, so tabs are kept. The activity is only finished when the app is
+        // really closed: swiped away from the app switcher, back button at the root,
+        // or the Quit menu. Configuration changes (rotation etc.) are excluded too.
+        if (isChangingConfigurations || !isFinishing) return
+        // Clear all tabs and arm the flag so a relaunch in a fresh process also
+        // starts empty (even if this process dies before the tab save completes).
+        components.settings.novaClearTabsOnExitArmed = true
+        try {
+            components.useCases.tabsUseCases.removeAllTabs.invoke(false)
+        } catch (e: Exception) {
         }
     }
 
