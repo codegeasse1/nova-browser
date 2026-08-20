@@ -1222,6 +1222,13 @@ patch(
             android:title="@string/preferences_install_local_extension" />""",
 )
 
+# --- About page: show version as "v1.0" (no IceRaven/fix version strings) -----
+patch(
+    BASE + "settings/about/AboutFragment.kt",
+    '"%s (Build #%s)%s\\n%s: %s\\n%s: %s\\n%s: %s",',
+    '"v%s (Build #%s)%s\\n%s: %s\\n%s: %s\\n%s: %s",',
+)
+
 print("All Nova source patches applied.")
 
 PY
