@@ -97,21 +97,21 @@ jobs:
             --ks-key-alias "$ALIAS" \
             --ks-pass env:KEY_STORE_PASSWORD \
             --key-pass env:KEY_PASSWORD \
-            --out app-debug.apk "$APK_PATH"
-          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner verify --print-certs app-debug.apk
-          ls -alh app-debug.apk
-          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/aapt dump badging app-debug.apk | head -3
+            --out nova-browser.apk "$APK_PATH"
+          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner verify --print-certs nova-browser.apk
+          ls -alh nova-browser.apk
+          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/aapt dump badging nova-browser.apk | head -3
 
       - name: Upload APK to v3.0 release
         timeout-minutes: 20
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload v3.0 app-debug.apk --clobber
+          gh release upload v3.0 "nova-browser.apk#Nova Browser ${VERSION_NAME}.apk" --clobber
           gh release view v3.0 --json assets --jq '.assets[] | .name + " " + (.size|tostring)'
 
       - name: Upload APK as artifact (backup)
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
-          path: app-debug.apk
+          name: nova-browser.apk
+          path: nova-browser.apk
