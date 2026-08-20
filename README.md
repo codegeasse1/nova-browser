@@ -21,8 +21,7 @@ set up, no host files to manage by hand.
 - **Delete browsing data on quit** — clear history, cookies and cache when you close the app.
 - **Install local add-ons** — Settings → Advanced → *Install local add-on* accepts
   Firefox-format extensions (`.zip` / `.xpi`).
-- **Your build, your name** — signed with your own key, package `com.nova.browser`,
-  and the About screen reads **v1.0**.
+
 
 ## Install
 
