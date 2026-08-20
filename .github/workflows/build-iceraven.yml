@@ -107,8 +107,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          cp nova-browser.apk "Nova Browser ${VERSION_NAME}.apk"
           gh release edit v3.0 --title "Nova Browser ${VERSION_NAME}" --repo codegeasse1/nova-browser 2>/dev/null || true
-          gh release upload v3.0 "nova-browser.apk#Nova Browser ${VERSION_NAME}.apk" --clobber
+          gh release upload v3.0 "Nova Browser ${VERSION_NAME}.apk" --clobber
           gh release view v3.0 --json assets --jq '.assets[] | .name + " " + (.size|tostring)'
 
       - name: Upload APK as artifact (backup)
