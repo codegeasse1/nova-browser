@@ -1340,30 +1340,68 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import mozilla.components.browser.engine.gecko.GeckoEngineSession
 import org.mozilla.fenix.R
+import org.mozilla.fenix.ext.components
 
 /**
- * Nova: foreground service that keeps the CPU awake while the app is in the
- * background with an enabled site open. Holds a partial wake lock so the page
- * keeps working with the screen locked. Stops when the app returns to the
- * foreground, when no enabled site is open any more, or when the user removes
- * the app from the recent apps list.
+ * Nova: foreground service that keeps the browser alive while the app is in the
+ * background with an enabled site open. Three jobs while it runs:
+ *  - keeps the process at foreground priority so Android does not kill it,
+ *  - periodically re-activates the enabled site's engine session so the page
+ *    stays reported as visible even though its surface is gone (sites like
+ *    YouTube pause when the page reports itself hidden),
+ *  - holds a partial wake lock so the CPU keeps running with the screen off
+ *    (the lock is only held while the screen is off).
+ * Stops when the app returns to the foreground or when no enabled site is open.
  */
 class NovaBackgroundService : Service() {
 
     private var wakeLock: PowerManager.WakeLock? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private val keepAliveRunnable = object : Runnable {
+        override fun run() {
+            try {
+                keepEnabledSitesVisible()
+            } catch (_: Exception) {
+            }
+            handler.postDelayed(this, KEEP_ALIVE_INTERVAL_MS)
+        }
+    }
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_ON -> releaseWakeLock()
+                Intent.ACTION_SCREEN_OFF -> acquireWakeLock()
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
         createChannel()
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(screenReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("DEPRECATION")
+            registerReceiver(screenReceiver, filter)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -1378,15 +1416,46 @@ class NovaBackgroundService : Service() {
             startForeground(NOTIFICATION_ID, notification)
         }
         acquireWakeLock()
+        try {
+            keepEnabledSitesVisible()
+        } catch (_: Exception) {
+        }
+        handler.removeCallbacks(keepAliveRunnable)
+        handler.postDelayed(keepAliveRunnable, FIRST_REASSERT_DELAY_MS)
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
+        handler.removeCallbacks(keepAliveRunnable)
+        try {
+            unregisterReceiver(screenReceiver)
+        } catch (_: Exception) {
+        }
         releaseWakeLock()
         super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    /**
+     * When the app is backgrounded, the browser's surface is destroyed and the
+     * engine session is marked inactive (page hidden), which makes pages like
+     * YouTube pause playback. Re-activate the enabled site's sessions so the
+     * pages keep believing they are visible and their media and timers keep
+     * running.
+     */
+    private fun keepEnabledSitesVisible() {
+        val hosts = NovaBackgroundSites.enabledHosts(applicationContext)
+        if (hosts.isEmpty()) return
+        val store = applicationContext.components.core.store
+        for (tab in store.state.tabs) {
+            val url = tab.content.url
+            if (url.isNotBlank() && NovaBackgroundSites.hostOf(url) in hosts) {
+                (tab.engineState.engineSession as? GeckoEngineSession)
+                    ?.keepVisibleInBackground()
+            }
+        }
+    }
 
     private fun acquireWakeLock() {
         if (wakeLock?.isHeld == true) return
@@ -1444,6 +1513,8 @@ class NovaBackgroundService : Service() {
     companion object {
         private const val CHANNEL_ID = "nova_background"
         private const val NOTIFICATION_ID = 1000
+        private const val KEEP_ALIVE_INTERVAL_MS = 2000L
+        private const val FIRST_REASSERT_DELAY_MS = 800L
 
         fun start(context: Context) {
             ContextCompat.startForegroundService(
@@ -1839,6 +1910,35 @@ patch(
             org.mozilla.fenix.components.NovaUpdateChecker.check(this)
         }
     }""",
+)
+
+# --- android-components (submodule): let Nova re-activate a session ------------
+# GeckoView marks a session inactive (page hidden) when its surface is destroyed,
+# e.g. when the app is backgrounded, which makes sites like YouTube pause their
+# playback. Nova's keep-alive service periodically calls keepVisibleInBackground()
+# so the page keeps believing it is visible and keeps playing (Brave-style).
+patch(
+    "android-components/components/browser/engine-gecko/src/main/java/mozilla/components/browser/engine/gecko/GeckoEngineSession.kt",
+    """    /**
+     * See [EngineSession.updateSessionPriority].
+     */
+    override fun updateSessionPriority(priority: SessionPriority) {""",
+    """    /**
+     * Nova: re-activate this session so the page is reported as visible while the
+     * app is in the background. GeckoView marks a session inactive (page hidden)
+     * when its surface is destroyed, e.g. when the app is backgrounded, which
+     * makes sites like YouTube pause their playback. Re-activating it keeps the
+     * page running - Brave-style forced background playback.
+     */
+    fun keepVisibleInBackground() {
+        geckoSession.setActive(true)
+        geckoSession.setFocused(true)
+    }
+
+    /**
+     * See [EngineSession.updateSessionPriority].
+     */
+    override fun updateSessionPriority(priority: SessionPriority) {""",
 )
 
 print("All Nova source patches applied.")
