@@ -378,8 +378,8 @@ import org.mozilla.fenix.settings.deletebrowsingdata.DefaultDeleteBrowsingDataCo
  */
 object NovaCloseCleanup {
     fun run(context: Context, components: Components) {
+        val settings = components.settings
         try {
-            val settings = components.settings
             if (settings.novaClearTabsOnExit) {
                 NovaDebugLog.log(context, "NovaCloseCleanup: clearing all tabs")
                 components.useCases.tabsUseCases.removeAllTabs.invoke(false)
@@ -966,7 +966,7 @@ patch(
         // HomeActivity cleanup handles it instead.)
         if (novaPendingCleanStart) {
             novaPendingCleanStart = false
-            org.mozilla.fenix.components.NovaDebugLog.log(this, "restore: dropping saved tabs (pending clean start)")
+            org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "restore: dropping saved tabs (pending clean start)")
             sessionStorage.clear()
         }
         components.useCases.tabsUseCases.restore(sessionStorage, components.settings.getTabTimeout())
