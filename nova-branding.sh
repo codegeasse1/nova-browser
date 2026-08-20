@@ -1017,6 +1017,20 @@ patch(
             }""",
 )
 
+# --- Settings: make the "Install local add-on" row visible --------------------
+patch(
+    "app/src/main/res/xml/preferences.xml",
+    """        <androidx.preference.Preference
+            android:key="@string/pref_key_install_local_addon"
+            app:iconSpaceReserved="false"
+            app:isPreferenceVisible="false"
+            android:title="@string/preferences_install_local_extension" />""",
+    """        <androidx.preference.Preference
+            android:key="@string/pref_key_install_local_addon"
+            app:iconSpaceReserved="false"
+            android:title="@string/preferences_install_local_extension" />""",
+)
+
 print("All Nova source patches applied.")
 
 PY
