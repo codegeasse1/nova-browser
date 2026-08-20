@@ -423,6 +423,18 @@ object NovaCloseCleanup {
             }
         } catch (_: Exception) {
         }
+        // Visible confirmation for every cleanup path (delayed background check,
+        // task-removal consume at next launch, and restore-time drop).
+        try {
+            val msg = when {
+                settings.novaClearTabsOnExit && settings.shouldDeleteBrowsingDataOnQuit ->
+                    "Nova cleared your tabs and browsing data on close."
+                settings.novaClearTabsOnExit -> "Nova cleared your tabs on close."
+                else -> "Nova cleared your browsing data on close."
+            }
+            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+        } catch (_: Exception) {
+        }
     }
 }
 ''')
@@ -466,10 +478,15 @@ class NovaHistoryTrackingDelegate(
     override suspend fun onVisited(uri: String, visit: PageVisit) {
         NovaDebugLog.log(context, "visited ${uri.take(80)} study=${settings.novaStudyMode} pause=${settings.novaPauseHistory}")
         if (settings.novaStudyMode) {
+            settings.novaVisitsStudy = settings.novaVisitsStudy + 1
             studyStorage.recordVisit(uri, title = null)
             return
         }
-        if (settings.novaPauseHistory) return
+        if (settings.novaPauseHistory) {
+            settings.novaVisitsPaused = settings.novaVisitsPaused + 1
+            return
+        }
+        settings.novaVisitsForwarded = settings.novaVisitsForwarded + 1
         delegate.onVisited(uri, visit)
     }
 
@@ -657,6 +674,22 @@ patch(
     var novaLastTaskId by intPreference(
         appContext.getPreferenceKey(R.string.pref_key_nova_last_task_id),
         default = 0,
+    )
+
+    // Nova: diagnostic counters so the state can be read on screen (Settings -> Nova).
+    var novaVisitsStudy by intPreference(
+        appContext.getPreferenceKey(R.string.pref_key_nova_visits_study),
+        default = 0,
+    )
+
+    var novaVisitsPaused by intPreference(
+        appContext.getPreferenceKey(R.string.pref_key_nova_visits_paused),
+        default = 0,
+    )
+
+    var novaVisitsForwarded by intPreference(
+        appContext.getPreferenceKey(R.string.pref_key_nova_visits_forwarded),
+        default = 0,
     )""",
 )
 
@@ -669,6 +702,10 @@ patch(
     <string name="pref_key_nova_clear_tabs_on_exit" translatable="false">pref_key_nova_clear_tabs_on_exit</string>
     <string name="pref_key_nova_clear_tabs_on_exit_armed" translatable="false">pref_key_nova_clear_tabs_on_exit_armed</string>
     <string name="pref_key_nova_last_task_id" translatable="false">pref_key_nova_last_task_id</string>
+    <string name="pref_key_nova_visits_study" translatable="false">pref_key_nova_visits_study</string>
+    <string name="pref_key_nova_visits_paused" translatable="false">pref_key_nova_visits_paused</string>
+    <string name="pref_key_nova_visits_forwarded" translatable="false">pref_key_nova_visits_forwarded</string>
+    <string name="pref_key_nova_status" translatable="false">pref_key_nova_status</string>
 </resources>""",
 )
 
@@ -682,7 +719,8 @@ patch(
     <string name="pref_nova_study_mode_title">Study mode</string>
     <string name="pref_nova_study_mode_summary">Keep a study list of the sites you visit instead of normal history. The History screen shows this study list.</string>
     <string name="pref_nova_clear_tabs_title">Clear tabs on close</string>
-    <string name="pref_nova_clear_tabs_summary">Close all tabs when you remove Nova Browser from the app switcher.</string>
+    <string name="pref_nova_clear_tabs_summary">Close all tabs when you close Nova Browser: swipe it from the app switcher, quit it, or leave it closed in the background.</string>
+    <string name="pref_nova_status_title">Nova status</string>
 </resources>""",
 )
 
@@ -713,10 +751,67 @@ patch(
             android:summary="@string/pref_nova_clear_tabs_summary"
             app:iconSpaceReserved="false"
             android:defaultValue="false" />
+        <androidx.preference.Preference
+            android:key="@string/pref_key_nova_status"
+            android:title="@string/pref_nova_status_title"
+            android:selectable="false"
+            app:iconSpaceReserved="false" />
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory
         android:title="@string/preferences_category_about\"""",
+)
+
+# --- SettingsFragment.kt: Nova toggle feedback + on-screen status readout ------
+patch(
+    BASE + "settings/SettingsFragment.kt",
+    "        setPreferencesFromResource(R.xml.preferences, rootKey)",
+    """        setPreferencesFromResource(R.xml.preferences, rootKey)
+
+        // Nova: confirm each Nova switch with a toast, so it is obvious the
+        // settings are wired to real code.
+        fun novaSwitchFeedback(keyRes: Int, onMsg: String, offMsg: String) {
+            findPreference<SwitchPreferenceCompat>(getPreferenceKey(keyRes))?.setOnPreferenceChangeListener { _, newValue ->
+                Toast.makeText(
+                    requireContext(),
+                    if (newValue == true) onMsg else offMsg,
+                    Toast.LENGTH_LONG,
+                ).show()
+                true
+            }
+        }
+        novaSwitchFeedback(
+            R.string.pref_key_nova_pause_history,
+            "Pause history: ON - new visits are not saved.",
+            "Pause history: OFF - history is saved again.",
+        )
+        novaSwitchFeedback(
+            R.string.pref_key_nova_study_mode,
+            "Study mode: ON - new visits go to your private study list.",
+            "Study mode: OFF - normal history again.",
+        )
+        novaSwitchFeedback(
+            R.string.pref_key_nova_clear_tabs_on_exit,
+            "Clear tabs on close: ON - closing Nova Browser clears its tabs.",
+            "Clear tabs on close: OFF - tabs are kept when you close Nova Browser.",
+        )""",
+)
+patch(
+    BASE + "settings/SettingsFragment.kt",
+    "        // Consider finish of `onResume` to be the point at which we consider this fragment as 'created'.\n        creatingFragment = false",
+    """        // Consider finish of `onResume` to be the point at which we consider this fragment as 'created'.
+        creatingFragment = false
+
+        // Nova: refresh the on-screen status readout in the "Nova Browser" category.
+        runCatching {
+            val s = requireComponents.settings
+            val curTask = (activity as? HomeActivity)?.taskId ?: -1
+            findPreference<Preference>(getPreferenceKey(R.string.pref_key_nova_status))?.summary =
+                "Nova ${org.mozilla.fenix.BuildConfig.VERSION_NAME} | pause:${s.novaPauseHistory} | " +
+                    "study:${s.novaStudyMode} | cleartabs:${s.novaClearTabsOnExit} | " +
+                    "armed:${s.novaClearTabsOnExitArmed} | lastTask:${s.novaLastTaskId} | now:$curTask | " +
+                    "studyList:${s.novaVisitsStudy} | paused:${s.novaVisitsPaused} | saved:${s.novaVisitsForwarded}"
+        }""",
 )
 
 # --- HomeActivity.kt: clear tabs + browsing data when the app is closed -------
@@ -766,6 +861,8 @@ patch(
      * the background); different task -> the app was really closed (swiped from
      * the app switcher, or Quit) and must start clean.
      */
+    private var novaScheduledCheck: Job? = null
+
     private fun armNovaClearOnExitCheck() {
         if (this is ExternalAppBrowserActivity) return
         val settings = components.settings
@@ -775,16 +872,12 @@ patch(
         NovaDebugLog.log(this, "arm: armed=true task=$taskId")
     }
 
-    @Suppress("DEPRECATION")
     private fun scheduleNovaClearOnCloseCheck() {
-        // Called on every stop, AFTER the app has fully backgrounded. A short while
-        // later, if the app's task is no longer in the recents list, the user really
-        // closed it (swiped it away from the app switcher, or pressed "Clear all").
-        // A plain background keeps the task, so nothing is cleared then. The check is
-        // deliberately delayed (no immediate check) so momentary transitions - e.g.
-        // an activity being recreated - never look like a close. If the process is
-        // killed before this check runs, consumeNovaClearTabsOnExit handles it at the
-        // next launch by comparing the task id.
+        // Called on every stop, AFTER the app has fully backgrounded. If the app is
+        // still in the background when the grace period elapses, the user has really
+        // closed it (pressed Home and left it, swiped it from the app switcher, or
+        // pressed "Clear all"), so the cleanup runs right away. Returning to the app
+        // within the grace period cancels the timer and nothing is cleared.
         // Not for the external-app browser activity (custom tabs), which is a
         // separate task and must not clear the user's tabs when it is dismissed.
         if (this is ExternalAppBrowserActivity) return
@@ -792,36 +885,45 @@ patch(
         if (!settings.novaClearTabsOnExit && !settings.shouldDeleteBrowsingDataOnQuit) return
         if (!settings.novaClearTabsOnExitArmed) return
         val appContext = applicationContext
-        val myTaskId = taskId
-        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-            delay(2500L)
-            try {
-                val am = appContext.getSystemService(ActivityManager::class.java)
-                    ?: return@launch
-                if (am.appTasks.any { it.taskInfo?.id == myTaskId }) {
-                    NovaDebugLog.log(appContext, "delayed check: task still present - kept")
-                    return@launch
-                }
-                // Task gone: the app was really closed. Clean up exactly once.
-                val s = appContext.components.settings
-                if (!s.novaClearTabsOnExitArmed) return@launch
-                s.novaClearTabsOnExitArmed = false
-                NovaDebugLog.log(appContext, "task gone at delayed check - cleaning up")
-                NovaCloseCleanup.run(appContext, appContext.components)
-            } catch (_: Exception) {
-            }
+        novaScheduledCheck?.cancel()
+        novaScheduledCheck = CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+            delay(10_000L)
+            val s = appContext.components.settings
+            if (!s.novaClearTabsOnExitArmed) return@launch
+            s.novaClearTabsOnExitArmed = false
+            NovaDebugLog.log(appContext, "still backgrounded after 10s - treating as closed, cleaning up")
+            NovaCloseCleanup.run(appContext, appContext.components)
         }
     }
 
     private fun consumeNovaClearTabsOnExit() {
+        // Runs at the start of every HomeActivity launch. Decides whether the tabs
+        // restored at startup were supposed to come back:
+        //  - same task id as when the app last stopped  -> the app was only
+        //    backgrounded, keep the tabs;
+        //  - different task id                          -> the app was really closed
+        //    (swiped from the app switcher, Quit menu, force stop) and must start
+        //    fresh. If the session restore has not run yet in this process, a flag
+        //    is set so the snapshot is deleted right before the restore (the same
+        //    point where the stock "Close tabs after X" setting drops stale tabs).
+        // Not for the external-app browser activity (custom tabs), which opens in
+        // its own task and must never clear the user's normal tabs.
+        if (this is ExternalAppBrowserActivity) return
         val settings = components.settings
         if (!settings.novaClearTabsOnExit && !settings.shouldDeleteBrowsingDataOnQuit) return
         if (!settings.novaClearTabsOnExitArmed) return
         val lastTaskId = settings.novaLastTaskId
+        if (lastTaskId == 0 || taskId == lastTaskId) {
+            FenixApplication.novaPendingCleanStart = false
+            settings.novaClearTabsOnExitArmed = false
+            NovaDebugLog.log(this, "consume: same task ($taskId) - kept tabs")
+            return
+        }
+        FenixApplication.novaPendingCleanStart = true
         if (!FenixApplication.initialSessionRestoreCompleted) {
-            // The initial session restore runs on the main thread shortly after
-            // this onCreate, so the restored tabs would clobber anything we clear
-            // now. Defer the decision until the restore has finished.
+            // The restore runs on the main thread shortly after this onCreate, so
+            // wait for it before running the full cleanup (the snapshot deletion is
+            // handled by restoreBrowserState).
             CoroutineScope(Dispatchers.Main + SupervisorJob()).launch {
                 var waited = 0L
                 while (!FenixApplication.initialSessionRestoreCompleted && waited < 15000) {
@@ -829,42 +931,45 @@ patch(
                     waited += 100
                 }
                 if (FenixApplication.initialSessionRestoreCompleted) {
-                    consumeNovaClearTabsOnExitInternal(lastTaskId)
+                    consumeNovaClearTabsOnExitInternal()
                 }
             }
             return
         }
-        consumeNovaClearTabsOnExitInternal(lastTaskId)
+        consumeNovaClearTabsOnExitInternal()
     }
 
-    private fun consumeNovaClearTabsOnExitInternal(lastTaskId: Int) {
+    private fun consumeNovaClearTabsOnExitInternal() {
         val settings = components.settings
         settings.novaClearTabsOnExitArmed = false
-        if (taskId == lastTaskId) {
-            // Same task as when the app stopped: it was only backgrounded (possibly
-            // killed in the background), so its tabs are kept.
-            NovaDebugLog.log(this, "consume: same task ($taskId) - kept tabs")
-            return
-        }
-        // Different task: the app was really closed (swiped away / Quit). Start fresh.
-        NovaDebugLog.log(this, "consume: new task $taskId (was $lastTaskId) - clearing")
+        FenixApplication.novaPendingCleanStart = false
+        NovaDebugLog.log(this, "consume: new task - clearing tabs")
         NovaCloseCleanup.run(this, components)
-        runCatching {
-            android.widget.Toast.makeText(
-                this,
-                "Nova cleared your tabs and browsing data on close.",
-                android.widget.Toast.LENGTH_LONG,
-            ).show()
-        }
     }
 
     final override fun onStart() {""",
+)
+patch(
+    BASE + "HomeActivity.kt",
+    "        super.onStart()",
+    "        super.onStart()\n        novaScheduledCheck?.cancel()",
 )
 
 patch(
     BASE + "FenixApplication.kt",
     "        components.useCases.tabsUseCases.restore(sessionStorage, components.settings.getTabTimeout())",
-    """        components.useCases.tabsUseCases.restore(sessionStorage, components.settings.getTabTimeout())
+    """        // Nova: if HomeActivity armed a "clear tabs on close" and saw a fresh task
+        // at this launch, delete the saved session snapshot BEFORE it is restored so
+        // the tabs cannot come back. This is the same point where the stock "Close
+        // tabs after X" setting drops stale tabs. (If the restore already ran before
+        // HomeActivity.onCreate on some Android versions, the flag stays set and the
+        // HomeActivity cleanup handles it instead.)
+        if (novaPendingCleanStart) {
+            novaPendingCleanStart = false
+            org.mozilla.fenix.components.NovaDebugLog.log(this, "restore: dropping saved tabs (pending clean start)")
+            sessionStorage.clear()
+        }
+        components.useCases.tabsUseCases.restore(sessionStorage, components.settings.getTabTimeout())
 
         // Nova: HomeActivity decides whether this relaunch should start fresh by
         // comparing the current task id against the one saved when the app last
@@ -883,6 +988,14 @@ patch(
          */
         var initialSessionRestoreCompleted = false
             private set
+
+        /**
+         * Set by HomeActivity when the "Clear tabs on close" armed flag is consumed at
+         * launch and the session restore has not run yet: the saved session snapshot is
+         * then deleted right before the restore (the same point where the stock
+         * "Close tabs after X" setting drops stale tabs).
+         */
+        var novaPendingCleanStart = false
     }
 """,
 )
