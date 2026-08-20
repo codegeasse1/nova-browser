@@ -18,8 +18,10 @@ set up, no host files to manage by hand.
     - import any hosts list from a URL.
   - Blocking is instant — even 15,000+ domain lists don't slow down pages.
 - **Allow background playback (per site)** — a toggle in the three-dot menu on
-  any site keeps audio playing (YouTube, music, AI chat replies, …) when you
-  lock the screen or leave the app. It is remembered per site.
+  any site keeps the site running with audio when you lock the screen or leave
+  the app. It works on **every site, including YouTube** — Nova keeps the page
+  reported as visible, so even sites that pause themselves when hidden keep
+  playing. It is remembered per site.
 - **In-app update notifications** — when a new version is released you get a
   notification with **Download** (grabs the APK automatically), **GitHub**
   (open the releases page) and **Later** (remind again in 24 hours).
@@ -28,12 +30,12 @@ set up, no host files to manage by hand.
 - **Install local add-ons** — Settings → Advanced → *Install local add-on* accepts
   Firefox-format extensions (`.zip` / `.xpi`).
 - **Your build, your name** — signed with your own key, package `com.nova.browser`,
-  and the About screen reads **v1.1**.
+  and the About screen reads **v1.2**.
 
 ## Install
 
 1. Download the latest APK from the [Releases](https://github.com/codegeasse1/nova-browser/releases)
-   page (currently `Nova.Browser.1.1.apk`).
+   page (currently `Nova.Browser.1.2.apk`).
 2. When Android asks, allow installing apps from your file manager.
 3. Open the APK and install. Future updates install over the top — no need to
    uninstall first.

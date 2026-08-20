@@ -5,6 +5,18 @@ All notable changes to **Nova Browser** are documented in this file.
 Everything before 1.0 was developed as numbered internal test builds
 (`2.46.0-fix1` → `2.46.0-fix9`) and is folded into this first release.
 
+## [1.2] — 2026-08-20
+
+### Fixed
+
+- **Background playback now really works on every site** — including YouTube.
+  Sites pause when a browser reports the page as hidden, so Nova now keeps the
+  enabled site's page reported as visible while the app is in the background
+  (screen locked or app switcher) and its audio/timers keep running. This is
+  the Brave-style behaviour: with "Allow background playback" toggled on for a
+  site, playback continues in the background no matter what the site itself
+  supports.
+
 ## [1.1] — 2026-08-20
 
 ### Added
