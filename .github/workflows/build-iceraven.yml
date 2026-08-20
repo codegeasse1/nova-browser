@@ -42,7 +42,7 @@ jobs:
       - name: Create version name
         run: |
           cd iceraven
-          VERSION_NAME="2.46.0-fix5"
+          VERSION_NAME="2.46.0-fix6"
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "Building $VERSION_NAME"
 
@@ -62,6 +62,7 @@ jobs:
         run: |
           cp nova-branding.sh iceraven/nova-branding.sh
           cp -r nova-icons iceraven/nova-icons
+          cp -r nova-assets iceraven/nova-assets
           cd iceraven
           bash nova-branding.sh
 
@@ -80,15 +81,24 @@ jobs:
           BUILD_TOOL_VERSION=$(ls $HOME/android-sdk/android-sdk-linux/build-tools/ | tail -n 1)
           echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
 
-      - name: Sign APK with generated debug key
+      - name: Sign APK with release key (from repo secrets)
+        env:
+          SIGNING_KEY_B64: ${{ secrets.SIGNING_KEY }}
+          ALIAS: ${{ secrets.ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
         run: |
-          find iceraven/gradle/build/app/outputs/apk -maxdepth 3 -type f -name "*.apk" | head -20
           APK_PATH=$(find iceraven -name "app-arm64-v8a-forkRelease-unsigned.apk" | head -1)
           echo "Found: $APK_PATH"
           ls -alh "$APK_PATH"
-          keytool -genkeypair -v -keystore $HOME/android-debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner sign --ks $HOME/android-debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out app-debug.apk "$APK_PATH"
-          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner verify app-debug.apk
+          echo "$SIGNING_KEY_B64" | base64 -d > $HOME/nova-release.keystore
+          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner sign \
+            --ks $HOME/nova-release.keystore \
+            --ks-key-alias "$ALIAS" \
+            --ks-pass env:KEY_STORE_PASSWORD \
+            --key-pass env:KEY_PASSWORD \
+            --out app-debug.apk "$APK_PATH"
+          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner verify --print-certs app-debug.apk
           ls -alh app-debug.apk
           $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/aapt dump badging app-debug.apk | head -3
 

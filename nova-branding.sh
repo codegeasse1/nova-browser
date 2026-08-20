@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Nova Browser branding overlay — cosmetic only. The engine, GeckoView and every
 # feature are byte-identical to upstream IceRaven (iceraven-2.46.0). This script
-# re-labels the visible product and adds three Nova options (pause history,
-# study mode, clear tabs on close). Runs in the iceraven repo root.
+# re-labels the visible product, removes the "produced by @fork-maintainers"
+# credit line from the About page, and bundles two ad-blocking WebExtensions
+# (uBlock Origin + the Nova Ad Block host blocker) as built-in add-ons.
+# Runs in the iceraven repo root.
 set -euo pipefail
 
 NOVA_PRIMARY="#0B7E78"
@@ -15,8 +17,10 @@ find app/src -path "*/res/*/*.xml" -type f -exec sed -i 's/Iceraven/Nova/g' {} +
 # Launcher label: "Nova Browser"
 sed -i 's#<string name="app_name" translatable="false">Nova</string>#<string name="app_name" translatable="false">Nova Browser</string>#' app/src/forkRelease/res/values/static_strings.xml
 
-# About-page credit line (all locales)
-sed -i 's#produced by @forkmaintainers#produced by the Nova Browser project#' app/src/*/res/values*/*strings.xml
+# About-page credit line: drop the "produced by ..." text entirely (any language),
+# leaving just the app name. Upstream CI already rewrote "Mozilla" to "@forkmaintainers"
+# in every locale, so we strip whatever sits between the string tags.
+sed -i -E '/name="about_content"/s#>[^<]*</string>#>%1\$s</string>#' app/src/*/res/values*/*strings.xml
 
 # "What's new" must point at our repo, not the upstream one
 sed -i 's#https://github.com/fork-maintainers/iceraven-browser/releases#https://github.com/codegeasse1/nova-browser/releases#' \
@@ -27,7 +31,7 @@ sed -i 's/applicationId "io.github.forkmaintainers"/applicationId "com.nova.brow
 sed -i 's/io.github.forkmaintainers.iceraven.sharedID/com.nova.browser.sharedID/g' app/build.gradle
 sed -i 's/deepLinkSchemeValue = "iceraven-debug"/deepLinkSchemeValue = "nova-debug"/' app/build.gradle
 sed -i 's/deepLinkSchemeValue = "iceraven"/deepLinkSchemeValue = "nova"/' app/build.gradle
-sed -i 's/applicationIdSuffix "\.iceraven"/applicationIdSuffix ""/' app/build.gradle
+sed -i 's/applicationIdSuffix "\\.iceraven"/applicationIdSuffix ""/' app/build.gradle
 
 echo ">> Nova branding: teal accent palette"
 cat > app/src/forkRelease/res/values/colors.xml <<'XML'
@@ -186,7 +190,268 @@ cat > app/src/forkRelease/res/drawable/animated_splash_screen.xml <<'XML'
 </animated-vector>
 XML
 
-echo ">> Nova branding: pause history / study mode / clear tabs on close"
+echo ">> Nova adblock: bundle uBlock Origin (built-in add-on)"
+rm -rf app/src/main/assets/extensions/ublock_origin
+mkdir -p app/src/main/assets/extensions/ublock_origin
+unzip -q -o nova-assets/ublock_origin.xpi -d app/src/main/assets/extensions/ublock_origin
+# sanity check: manifest must have unpacked
+test -f app/src/main/assets/extensions/ublock_origin/manifest.json
+
+echo ">> Nova adblock: bundle Nova Ad Block host blocker (built-in add-on)"
+rm -rf app/src/main/assets/extensions/nova-shield
+mkdir -p app/src/main/assets/extensions/nova-shield/icons
+cp nova-icons/adblock/16.png app/src/main/assets/extensions/nova-shield/icons/16.png
+cp nova-icons/adblock/48.png app/src/main/assets/extensions/nova-shield/icons/48.png
+cp nova-icons/adblock/96.png app/src/main/assets/extensions/nova-shield/icons/96.png
+cp nova-icons/adblock/128.png app/src/main/assets/extensions/nova-shield/icons/128.png
+
+cat > app/src/main/assets/extensions/nova-shield/manifest.json <<'JSON'
+{
+  "manifest_version": 2,
+  "name": "Nova Ad Block",
+  "version": "1.0.0",
+  "description": "Blocks requests to any domain you add to the block list. Domains on the allow list are never blocked.",
+  "icons": {
+    "48": "icons/48.png",
+    "96": "icons/96.png",
+    "128": "icons/128.png"
+  },
+  "permissions": [
+    "webRequest",
+    "webRequestBlocking",
+    "storage",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_action": {
+    "default_title": "Nova Ad Block",
+    "default_popup": "options.html",
+    "default_icon": {
+      "16": "icons/16.png",
+      "48": "icons/48.png"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "applications": {
+    "gecko": {
+      "id": "nova-shield@nova.browser",
+      "strict_min_version": "115.0"
+    }
+  }
+}
+JSON
+
+cat > app/src/main/assets/extensions/nova-shield/background.js <<'JS'
+"use strict";
+
+// Nova Ad Block - host-based blocking.
+// Requests to any host matching the block list are cancelled. The allow list
+// (whitelist) always wins. Lists live in browser.storage.local and are edited on
+// the options page (also reachable from Settings -> Nova Ad Block).
+
+const BLOCK_KEY = "novaBlockedHosts";
+const ALLOW_KEY = "novaAllowedHosts";
+
+let blocked = [];
+let allowed = [];
+
+function normalizeEntry(raw) {
+  let entry = String(raw || "").trim().toLowerCase();
+  if (!entry) return "";
+  entry = entry.replace(/^\*\./, ""); // leading "*.example.com"
+  entry = entry.replace(/^\./, ""); // leading ".example.com"
+  if (entry.startsWith("http://")) entry = entry.slice(7);
+  if (entry.startsWith("https://")) entry = entry.slice(8);
+  const slash = entry.indexOf("/");
+  if (slash > -1) entry = entry.slice(0, slash);
+  const at = entry.indexOf("@");
+  if (at > -1) entry = entry.slice(at + 1);
+  if (entry.startsWith("www.")) entry = entry.slice(4);
+  return entry;
+}
+
+function matches(host, list) {
+  if (!host) return false;
+  for (const raw of list) {
+    const entry = normalizeEntry(raw);
+    if (!entry) continue;
+    if (host === entry) return true;
+    if (host.endsWith("." + entry)) return true;
+  }
+  return false;
+}
+
+function hostOf(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host.startsWith("www.") ? host.slice(4) : host;
+  } catch (e) {
+    return "";
+  }
+}
+
+browser.webRequest.onBeforeRequest.addListener(
+  function (details) {
+    // Never break page navigation or frames - only stop resource requests.
+    if (details.type === "main_frame" || details.type === "sub_frame") return {};
+    const host = hostOf(details.url);
+    if (!host) return {};
+    if (matches(host, allowed)) return {};
+    if (matches(host, blocked)) return { cancel: true };
+    return {};
+  },
+  { urls: ["<all_urls>"] },
+  ["blocking"]
+);
+
+async function loadLists() {
+  try {
+    const store = await browser.storage.local.get([BLOCK_KEY, ALLOW_KEY]);
+    blocked = store[BLOCK_KEY] || [];
+    allowed = store[ALLOW_KEY] || [];
+  } catch (e) {
+    // storage not available yet - retry shortly after startup
+    setTimeout(loadLists, 2000);
+  }
+}
+
+browser.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local") return;
+  if (changes[BLOCK_KEY]) blocked = changes[BLOCK_KEY].newValue || [];
+  if (changes[ALLOW_KEY]) allowed = changes[ALLOW_KEY].newValue || [];
+});
+
+loadLists();
+JS
+
+cat > app/src/main/assets/extensions/nova-shield/options.html <<'HTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova Ad Block</title>
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+<header>
+  <h1>Nova Ad Block</h1>
+  <p class="sub">Requests to domains on the block list are stopped everywhere (all their subdomains too). The allow list always wins, so anything there is never blocked.</p>
+</header>
+<section>
+  <label for="blocked">Block these domains (one per line)</label>
+  <textarea id="blocked" spellcheck="false" placeholder="ads.example.com&#10;tracker.example.net"></textarea>
+</section>
+<section>
+  <label for="allowed">Always allow these domains &mdash; whitelist (one per line)</label>
+  <textarea id="allowed" spellcheck="false" placeholder="example.com&#10;payments.example.net"></textarea>
+</section>
+<footer>
+  <button id="save">Save</button>
+  <span id="status"></span>
+</footer>
+<script src="options.js"></script>
+</body>
+</html>
+HTML
+
+cat > app/src/main/assets/extensions/nova-shield/options.js <<'JS'
+"use strict";
+
+const BLOCK_KEY = "novaBlockedHosts";
+const ALLOW_KEY = "novaAllowedHosts";
+const blockedEl = document.getElementById("blocked");
+const allowedEl = document.getElementById("allowed");
+const statusEl = document.getElementById("status");
+const saveBtn = document.getElementById("save");
+
+function parse(text) {
+  const seen = new Set();
+  const out = [];
+  for (const line of String(text || "").split(/\r?\n/)) {
+    for (let part of line.split(",")) {
+      part = part.trim().toLowerCase();
+      if (!part) continue;
+      part = part.replace(/^\*\./, "").replace(/^\./, "");
+      if (part.startsWith("http://")) part = part.slice(7);
+      if (part.startsWith("https://")) part = part.slice(8);
+      const slash = part.indexOf("/");
+      if (slash > -1) part = part.slice(0, slash);
+      if (!part || seen.has(part)) continue;
+      seen.add(part);
+      out.push(part);
+    }
+  }
+  return out;
+}
+
+async function init() {
+  const store = await browser.storage.local.get([BLOCK_KEY, ALLOW_KEY]);
+  blockedEl.value = (store[BLOCK_KEY] || []).join("\n");
+  allowedEl.value = (store[ALLOW_KEY] || []).join("\n");
+}
+
+saveBtn.addEventListener("click", async () => {
+  const blocked = parse(blockedEl.value);
+  const allowed = parse(allowedEl.value);
+  await browser.storage.local.set({ [BLOCK_KEY]: blocked, [ALLOW_KEY]: allowed });
+  statusEl.textContent = "Saved \u2014 " + blocked.length + " blocked, " + allowed.length + " allowed";
+  setTimeout(() => { statusEl.textContent = ""; }, 3000);
+});
+
+init().catch(() => {});
+JS
+
+cat > app/src/main/assets/extensions/nova-shield/options.css <<'CSS'
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #0d2327;
+  color: #e6f2f1;
+  max-width: 640px;
+  margin: 0 auto;
+}
+header { margin-bottom: 18px; }
+h1 { margin: 0 0 6px; font-size: 22px; color: #7fd4cc; }
+.sub { margin: 0; font-size: 14px; color: #a9c6c3; line-height: 1.45; }
+section { margin-bottom: 16px; }
+label { display: block; font-size: 14px; margin-bottom: 6px; color: #cde9e6; }
+textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 10px;
+  border: 1px solid #2e5a55;
+  border-radius: 8px;
+  background: #102e33;
+  color: #e6f2f1;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 14px;
+  resize: vertical;
+}
+textarea:focus { outline: none; border-color: #0B7E78; }
+footer { display: flex; align-items: center; gap: 14px; }
+button {
+  background: #0B7E78;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 26px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:active { background: #0a6b66; }
+#status { font-size: 13px; color: #7fd4cc; }
+CSS
+
+echo ">> Nova branding: close tabs on exit + bundled adblock wiring"
 python3 <<'PY'
 import io
 
@@ -390,6 +655,7 @@ patch(
     """    <string name="pref_key_close_tabs_on_exit" translatable="false">pref_key_close_tabs_on_exit</string>
     <string name="pref_key_close_tabs_on_exit_armed" translatable="false">pref_key_close_tabs_on_exit_armed</string>
     <string name="pref_key_close_tabs_on_exit_last_task" translatable="false">pref_key_close_tabs_on_exit_last_task</string>
+    <string name="pref_key_nova_adblock" translatable="false">pref_key_nova_adblock</string>
 </resources>""",
 )
 
@@ -399,6 +665,8 @@ patch(
     "</resources>",
     """    <string name="close_tabs_on_exit">When the app is closed</string>
     <string name="close_tabs_on_exit_summary">Close every tab the moment Nova is closed or removed from the app switcher.</string>
+    <string name="preferences_nova_adblock">Nova Ad Block</string>
+    <string name="preferences_nova_adblock_summary">Block ads, trackers and any domain you add. Whitelist domains to always allow them.</string>
 </resources>""",
 )
 
@@ -643,8 +911,110 @@ patch(
          * "Close tabs after X" option drops stale tabs).
          */
         var novaPendingCleanStart = false
+
+        // Nova: ids of the bundled ad-blocking add-ons (installed as built-in
+        // WebExtensions, see installNovaBundledExtensions).
+        private const val NOVA_SHIELD_ADDON_ID = "nova-shield@nova.browser"
+        private const val NOVA_UBLOCK_ADDON_ID = "uBlock0@raymondhill.net"
     }
 """,
+)
+
+# --- FenixApplication.kt: install bundled ad-blocking add-ons -----------------
+patch(
+    BASE + "FenixApplication.kt",
+    """                onUpdatePermissionRequest = components.addonUpdater::onUpdatePermissionRequest,
+            )""",
+    """                onUpdatePermissionRequest = components.addonUpdater::onUpdatePermissionRequest,
+            )
+
+            installNovaBundledExtensions()""",
+)
+patch(
+    BASE + "FenixApplication.kt",
+    """            logger.error("Failed to initialize web extension support", e)
+        }
+    }
+
+    @VisibleForTesting""",
+    """            logger.error("Failed to initialize web extension support", e)
+        }
+    }
+
+    /**
+     * Nova: installs the two bundled ad-blocking WebExtensions (Nova Ad Block and
+     * uBlock Origin) as built-in add-ons. ensureBuiltInWebExtension is idempotent,
+     * so it is safe to call on every launch; a failed install (e.g. while the engine
+     * is still warming up) simply logs to NovaDebug and is retried next launch.
+     */
+    private fun installNovaBundledExtensions() {
+        val engine = components.core.engine
+        engine.installBuiltInWebExtension(
+            id = NOVA_SHIELD_ADDON_ID,
+            url = "resource://android/assets/extensions/nova-shield/",
+            onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Shield installed: ${it.id}") },
+            onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Shield install error: ${it.message}") },
+        )
+        engine.installBuiltInWebExtension(
+            id = NOVA_UBLOCK_ADDON_ID,
+            url = "resource://android/assets/extensions/ublock_origin/",
+            onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "uBlock Origin installed: ${it.id}") },
+            onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "uBlock Origin install error: ${it.message}") },
+        )
+    }
+
+    @VisibleForTesting""",
+)
+
+# --- Settings: Nova Ad Block row ----------------------------------------------
+patch(
+    "app/src/main/res/xml/preferences.xml",
+    """        <androidx.preference.Preference
+            android:key="@string/pref_key_addons"
+            app:iconSpaceReserved="false"
+            android:title="@string/preferences_extensions" />""",
+    """        <androidx.preference.Preference
+            android:key="@string/pref_key_addons"
+            app:iconSpaceReserved="false"
+            android:title="@string/preferences_extensions" />
+
+        <androidx.preference.Preference
+            android:key="@string/pref_key_nova_adblock"
+            app:iconSpaceReserved="false"
+            android:title="@string/preferences_nova_adblock"
+            android:summary="@string/preferences_nova_adblock_summary" />""",
+)
+patch(
+    BASE + "settings/SettingsFragment.kt",
+    """            resources.getString(R.string.pref_key_addons) -> {
+                Addons.openAddonsInSettings.record(NoExtras())
+                SettingsFragmentDirections.actionSettingsFragmentToAddonsFragment()
+            }""",
+    """            resources.getString(R.string.pref_key_addons) -> {
+                Addons.openAddonsInSettings.record(NoExtras())
+                SettingsFragmentDirections.actionSettingsFragmentToAddonsFragment()
+            }
+
+            resources.getString(R.string.pref_key_nova_adblock) -> {
+                // Nova: open the Nova Ad Block options page (block list / allow list).
+                // Falls back to the Add-ons screen if the extension is not ready yet.
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val url = try {
+                        components.addonManager
+                            .getAddonByID("nova-shield@nova.browser")?.installedState?.optionsPageUrl
+                    } catch (_: Exception) {
+                        null
+                    }
+                    if (url.isNullOrEmpty()) {
+                        findNavController().navigate(
+                            SettingsFragmentDirections.actionSettingsFragmentToAddonsFragment(),
+                        )
+                    } else {
+                        openInNewTab(url)
+                    }
+                }
+                null
+            }""",
 )
 
 print("All Nova source patches applied.")
