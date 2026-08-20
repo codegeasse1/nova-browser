@@ -31,7 +31,7 @@ sed -i 's/applicationId "io.github.forkmaintainers"/applicationId "com.nova.brow
 sed -i 's/io.github.forkmaintainers.iceraven.sharedID/com.nova.browser.sharedID/g' app/build.gradle
 sed -i 's/deepLinkSchemeValue = "iceraven-debug"/deepLinkSchemeValue = "nova-debug"/' app/build.gradle
 sed -i 's/deepLinkSchemeValue = "iceraven"/deepLinkSchemeValue = "nova"/' app/build.gradle
-sed -i 's/applicationIdSuffix "\\.iceraven"/applicationIdSuffix ""/' app/build.gradle
+sed -i 's/applicationIdSuffix "\.iceraven"/applicationIdSuffix ""/' app/build.gradle
 
 echo ">> Nova branding: teal accent palette"
 cat > app/src/forkRelease/res/values/colors.xml <<'XML'
