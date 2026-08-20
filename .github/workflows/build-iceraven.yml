@@ -42,7 +42,7 @@ jobs:
       - name: Create version name
         run: |
           cd iceraven
-          VERSION_NAME="2.46.0-fix8"
+          VERSION_NAME="2.46.0-fix9"
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "Building $VERSION_NAME"
 

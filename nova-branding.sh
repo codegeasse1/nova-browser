@@ -209,8 +209,8 @@ cat > app/src/main/assets/extensions/nova-shield/manifest.json <<'JSON'
 {
   "manifest_version": 2,
   "name": "Nova Ad Block",
-  "version": "1.0.0",
-  "description": "Blocks requests to any domain you add to the block list. Domains on the allow list are never blocked.",
+  "version": "1.1.0",
+  "description": "Blocks requests to any domain you add to the block list - individually or via whole hosts files / blocklists (StevenBlack, AdAway, EasyList, ...). Domains on the allow list are never blocked.",
   "icons": {
     "48": "icons/48.png",
     "96": "icons/96.png",
@@ -220,6 +220,7 @@ cat > app/src/main/assets/extensions/nova-shield/manifest.json <<'JSON'
     "webRequest",
     "webRequestBlocking",
     "storage",
+    "unlimitedStorage",
     "<all_urls>"
   ],
   "background": {
@@ -256,9 +257,11 @@ cat > app/src/main/assets/extensions/nova-shield/background.js <<'JS'
 
 const BLOCK_KEY = "novaBlockedHosts";
 const ALLOW_KEY = "novaAllowedHosts";
+const HOSTS_KEY = "novaHostsList";
 
-let blocked = [];
-let allowed = [];
+let blockedSet = new Set();
+let allowedSet = new Set();
+let hostsSet = new Set();
 
 function normalizeEntry(raw) {
   let entry = String(raw || "").trim().toLowerCase();
@@ -275,13 +278,18 @@ function normalizeEntry(raw) {
   return entry;
 }
 
-function matches(host, list) {
+// Fast matching: walks the host's dot-labels up (e.g. "a.b.example.com" ->
+// "b.example.com" -> "example.com") and checks each against the set. One
+// request costs only O(host labels), so even huge lists (StevenBlack / AdAway
+// have tens of thousands of entries) don't slow browsing down.
+function matches(host, set) {
   if (!host) return false;
-  for (const raw of list) {
-    const entry = normalizeEntry(raw);
-    if (!entry) continue;
-    if (host === entry) return true;
-    if (host.endsWith("." + entry)) return true;
+  if (set.has(host)) return true;
+  let dot = host.indexOf(".");
+  while (dot > -1) {
+    host = host.slice(dot + 1);
+    if (set.has(host)) return true;
+    dot = host.indexOf(".");
   }
   return false;
 }
@@ -301,19 +309,37 @@ browser.webRequest.onBeforeRequest.addListener(
     if (details.type === "main_frame" || details.type === "sub_frame") return {};
     const host = hostOf(details.url);
     if (!host) return {};
-    if (matches(host, allowed)) return {};
-    if (matches(host, blocked)) return { cancel: true };
+    if (matches(host, allowedSet)) return {};
+    if (matches(host, blockedSet)) return { cancel: true };
+    if (matches(host, hostsSet)) return { cancel: true };
     return {};
   },
   { urls: ["<all_urls>"] },
   ["blocking"]
 );
 
+function buildSets(blocked, allowed, hosts) {
+  blockedSet = new Set();
+  for (const raw of blocked) {
+    const e = normalizeEntry(raw);
+    if (e) blockedSet.add(e);
+  }
+  allowedSet = new Set();
+  for (const raw of allowed) {
+    const e = normalizeEntry(raw);
+    if (e) allowedSet.add(e);
+  }
+  hostsSet = new Set();
+  for (const raw of hosts) {
+    const e = normalizeEntry(raw);
+    if (e) hostsSet.add(e);
+  }
+}
+
 async function loadLists() {
   try {
-    const store = await browser.storage.local.get([BLOCK_KEY, ALLOW_KEY]);
-    blocked = store[BLOCK_KEY] || [];
-    allowed = store[ALLOW_KEY] || [];
+    const store = await browser.storage.local.get([BLOCK_KEY, ALLOW_KEY, HOSTS_KEY]);
+    buildSets(store[BLOCK_KEY] || [], store[ALLOW_KEY] || [], store[HOSTS_KEY] || []);
   } catch (e) {
     // storage not available yet - retry shortly after startup
     setTimeout(loadLists, 2000);
@@ -322,8 +348,14 @@ async function loadLists() {
 
 browser.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") return;
-  if (changes[BLOCK_KEY]) blocked = changes[BLOCK_KEY].newValue || [];
-  if (changes[ALLOW_KEY]) allowed = changes[ALLOW_KEY].newValue || [];
+  if (changes[BLOCK_KEY] || changes[ALLOW_KEY] || changes[HOSTS_KEY]) {
+    browser.storage.local
+      .get([BLOCK_KEY, ALLOW_KEY, HOSTS_KEY])
+      .then((store) => {
+        buildSets(store[BLOCK_KEY] || [], store[ALLOW_KEY] || [], store[HOSTS_KEY] || []);
+      })
+      .catch(() => {});
+  }
 });
 
 loadLists();
@@ -341,7 +373,7 @@ cat > app/src/main/assets/extensions/nova-shield/options.html <<'HTML'
 <body>
 <header>
   <h1>Nova Ad Block</h1>
-  <p class="sub">Requests to domains on the block list are stopped everywhere (all their subdomains too). The allow list always wins, so anything there is never blocked.</p>
+  <p class="sub">Requests to domains on the block list are stopped everywhere (all their subdomains too). The allow list always wins. You can also paste a whole <b>hosts file</b> (StevenBlack hosts, AdAway, ...) &mdash; or grab a big blocklist with one tap.</p>
 </header>
 <section>
   <label for="blocked">Block these domains (one per line)</label>
@@ -350,6 +382,19 @@ cat > app/src/main/assets/extensions/nova-shield/options.html <<'HTML'
 <section>
   <label for="allowed">Always allow these domains &mdash; whitelist (one per line)</label>
   <textarea id="allowed" spellcheck="false" placeholder="example.com&#10;payments.example.net"></textarea>
+</section>
+<section>
+  <label for="hosts">Hosts-file blocklist &mdash; paste any hosts file here</label>
+  <textarea id="hosts" spellcheck="false" placeholder="0.0.0.0 ads.example.com&#10;127.0.0.1 tracker.example.net&#10;# lines starting with # are ignored"></textarea>
+  <div class="presets">
+    <button id="preset-stevenblack" type="button">StevenBlack hosts</button>
+    <button id="preset-adaway" type="button">AdAway hosts</button>
+    <button id="preset-easylist" type="button">EasyList</button>
+  </div>
+  <div class="urldiv">
+    <input id="hostsUrl" type="url" placeholder="or paste a hosts-file URL and tap Import" spellcheck="false">
+    <button id="fetchUrl" type="button">Import</button>
+  </div>
 </section>
 <footer>
   <button id="save">Save</button>
@@ -365,12 +410,39 @@ cat > app/src/main/assets/extensions/nova-shield/options.js <<'JS'
 
 const BLOCK_KEY = "novaBlockedHosts";
 const ALLOW_KEY = "novaAllowedHosts";
+const HOSTS_KEY = "novaHostsList";
+
 const blockedEl = document.getElementById("blocked");
 const allowedEl = document.getElementById("allowed");
+const hostsEl = document.getElementById("hosts");
+const urlInput = document.getElementById("hostsUrl");
 const statusEl = document.getElementById("status");
 const saveBtn = document.getElementById("save");
 
-function parse(text) {
+const PRESETS = {
+  stevenblack: {
+    url: "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
+    label: "StevenBlack hosts",
+  },
+  adaway: {
+    url: "https://adaway.org/hosts.txt",
+    label: "AdAway hosts",
+  },
+  easylist: {
+    url: "https://raw.githubusercontent.com/easylist/easylist/master/easylist.txt",
+    label: "EasyList",
+  },
+};
+
+function setStatus(msg, persistMs) {
+  statusEl.textContent = msg;
+  clearTimeout(setStatus._t);
+  setStatus._t = setTimeout(() => {
+    statusEl.textContent = "";
+  }, persistMs || 4000);
+}
+
+function parseDomains(text) {
   const seen = new Set();
   const out = [];
   for (const line of String(text || "").split(/\r?\n/)) {
@@ -390,19 +462,106 @@ function parse(text) {
   return out;
 }
 
-async function init() {
-  const store = await browser.storage.local.get([BLOCK_KEY, ALLOW_KEY]);
-  blockedEl.value = (store[BLOCK_KEY] || []).join("\n");
-  allowedEl.value = (store[ALLOW_KEY] || []).join("\n");
+const IP_RE = /^\d{1,3}(\.\d{1,3}){3}$/;
+const HOSTNAME_RE = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/;
+const SKIP_HOSTS = new Set([
+  "localhost", "localhost.localdomain", "broadcasthost",
+  "ip6-localhost", "ip6-loopback", "ip6-localnet", "ip6-mcastprefix",
+  "ip6-allnodes", "ip6-allrouters", "ip6-allhosts",
+]);
+
+function parseHostsFile(text) {
+  const seen = new Set();
+  const out = [];
+  for (let line of String(text || "").split(/\r?\n/)) {
+    if (line.includes("##") || line.includes("#@#")) continue; // cosmetic filter rules
+    line = line.replace(/[#!].*$/, "").trim(); // strip comments (# and !)
+    if (!line) continue;
+    const tokens = line.split(/\s+/);
+    const firstIsIP = IP_RE.test(tokens[0]) || tokens[0].indexOf(":") > -1;
+    if (!firstIsIP && tokens.length > 1) continue; // not hosts/adblock format
+    for (let t of tokens) {
+      t = t.trim().toLowerCase();
+      if (!t) continue;
+      if (IP_RE.test(t) || t.indexOf(":") > -1) continue; // IP token (IPv4 / IPv6)
+      if (t.indexOf("@@") === 0) continue; // adblock exception rules
+      if (t.startsWith("||")) t = t.slice(2); // adblock "||domain^" rules
+      const caret = t.indexOf("^");
+      if (caret > -1) t = t.slice(0, caret);
+      if (t.startsWith("*.")) t = t.slice(2);
+      const slash = t.indexOf("/");
+      if (slash > -1) t = t.slice(0, slash);
+      if (!t || seen.has(t)) continue;
+      if (SKIP_HOSTS.has(t)) continue;
+      if (t.endsWith(".local") || t.endsWith(".lan") || t.endsWith(".localdomain")) continue;
+      if (!HOSTNAME_RE.test(t)) continue;
+      seen.add(t);
+      out.push(t);
+    }
+  }
+  return out;
 }
 
-saveBtn.addEventListener("click", async () => {
-  const blocked = parse(blockedEl.value);
-  const allowed = parse(allowedEl.value);
-  await browser.storage.local.set({ [BLOCK_KEY]: blocked, [ALLOW_KEY]: allowed });
-  statusEl.textContent = "Saved \u2014 " + blocked.length + " blocked, " + allowed.length + " allowed";
-  setTimeout(() => { statusEl.textContent = ""; }, 3000);
+async function save(extraMsg) {
+  const blocked = parseDomains(blockedEl.value);
+  const allowed = parseDomains(allowedEl.value);
+  const hosts = parseHostsFile(hostsEl.value);
+  await browser.storage.local.set({ [BLOCK_KEY]: blocked, [ALLOW_KEY]: allowed, [HOSTS_KEY]: hosts });
+  const msg = "Saved \u2014 " + blocked.length + " blocked, " + allowed.length + " allowed, " + hosts.length + " hosts blocked";
+  setStatus(extraMsg ? extraMsg + " " + msg : msg);
+  return { blocked, allowed, hosts };
+}
+
+async function fetchAndApply(url, label, btn) {
+  const orig = btn ? btn.textContent : null;
+  if (btn) { btn.disabled = true; btn.textContent = "Fetching\u2026"; }
+  setStatus("Fetching " + label + "\u2026", 60000);
+  try {
+    const res = await fetch(url, { credentials: "omit" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    const added = parseHostsFile(text);
+    if (!added.length) {
+      setStatus("No hosts found in " + label);
+      return;
+    }
+    const merged = new Set(parseHostsFile(hostsEl.value));
+    for (const h of added) merged.add(h);
+    hostsEl.value = [...merged].join("\n");
+    await save(label + ": " + added.length + " hosts imported");
+  } catch (e) {
+    setStatus("Could not fetch " + label + " \u2014 " + e.message, 8000);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = orig; }
+  }
+}
+
+saveBtn.addEventListener("click", () => {
+  save().catch((e) => setStatus("Save failed \u2014 " + e.message, 8000));
 });
+
+document.getElementById("fetchUrl").addEventListener("click", (ev) => {
+  const u = urlInput.value.trim();
+  if (!u) {
+    setStatus("Paste a hosts-file URL first", 3000);
+    return;
+  }
+  fetchAndApply(u, "URL import", ev.currentTarget).catch(() => {});
+});
+
+for (const name of Object.keys(PRESETS)) {
+  const btn = document.getElementById("preset-" + name);
+  btn.addEventListener("click", (ev) => {
+    fetchAndApply(PRESETS[name].url, PRESETS[name].label, ev.currentTarget).catch(() => {});
+  });
+}
+
+async function init() {
+  const store = await browser.storage.local.get([BLOCK_KEY, ALLOW_KEY, HOSTS_KEY]);
+  blockedEl.value = (store[BLOCK_KEY] || []).join("\n");
+  allowedEl.value = (store[ALLOW_KEY] || []).join("\n");
+  hostsEl.value = (store[HOSTS_KEY] || []).join("\n");
+}
 
 init().catch(() => {});
 JS
@@ -448,7 +607,39 @@ button {
   cursor: pointer;
 }
 button:active { background: #0a6b66; }
+button:disabled { opacity: 0.6; cursor: default; }
 #status { font-size: 13px; color: #7fd4cc; }
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.presets button {
+  background: #15595a;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.presets button:active { background: #104a4b; }
+.urldiv {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+#hostsUrl {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #2e5a55;
+  border-radius: 8px;
+  background: #102e33;
+  color: #e6f2f1;
+  font-size: 13px;
+}
+#hostsUrl:focus { outline: none; border-color: #0B7E78; }
+#hostsUrl::placeholder { color: #5f8b87; }
+.urldiv button { padding: 8px 18px; font-size: 13px; font-weight: 500; }
 CSS
 
 echo ">> Nova branding: close tabs on exit + bundled adblock wiring"
