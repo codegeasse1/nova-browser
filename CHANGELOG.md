@@ -5,6 +5,21 @@ All notable changes to **Nova Browser** are documented in this file.
 Everything before 1.0 was developed as numbered internal test builds
 (`2.46.0-fix1` → `2.46.0-fix9`) and is folded into this first release.
 
+## [1.1] — 2026-08-20
+
+### Added
+
+- **Allow background playback (per site)** — a toggle in the browser's
+  three-dot menu on any site. Turn it on and that site keeps playing audio
+  (YouTube, music, AI chat replies, …) when you lock the screen or switch to
+  another app. The toggle is remembered per site and playback stops when you
+  come back to the browser.
+- **In-app update notifications** — when a new release is published, the app
+  shows a notification the next time you open it with three options:
+  - **Download** — downloads the new APK automatically so you can install it,
+  - **GitHub** — opens the releases page so you can grab it manually,
+  - **Later** — reminds you again in 24 hours.
+
 ## [1.0] — 2026-08-20
 
 First release. Nova Browser is a fully branded, privacy-focused Android
