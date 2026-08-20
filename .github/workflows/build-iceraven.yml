@@ -42,7 +42,7 @@ jobs:
       - name: Create version name
         run: |
           cd iceraven
-          VERSION_NAME="1.0"
+          VERSION_NAME="1.1"
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "Building $VERSION_NAME"
 
@@ -109,6 +109,7 @@ jobs:
         run: |
           cp nova-browser.apk "Nova Browser ${VERSION_NAME}.apk"
           gh release edit v3.0 --title "Nova Browser ${VERSION_NAME}" --repo codegeasse1/nova-browser 2>/dev/null || true
+          gh release view v3.0 --json assets --jq '.assets[].name' | while read -r a; do gh release delete-asset v3.0 "$a" --yes; done
           gh release upload v3.0 "Nova Browser ${VERSION_NAME}.apk" --clobber
           gh release view v3.0 --json assets --jq '.assets[] | .name + " " + (.size|tostring)'
 

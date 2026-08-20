@@ -858,6 +858,18 @@ patch(
     <string name="close_tabs_on_exit_summary">Close every tab the moment Nova is closed or removed from the app switcher.</string>
     <string name="preferences_nova_adblock">Nova Ad Block</string>
     <string name="preferences_nova_adblock_summary">Block ads, trackers and any domain you add. Whitelist domains to always allow them.</string>
+    <string name="browser_menu_allow_background_playback">Allow background playback</string>
+    <string name="browser_menu_allow_background_playback_on">On: this site keeps running even with the screen locked.</string>
+    <string name="browser_menu_allow_background_playback_off">Keeps this site working while you use other apps or lock the screen.</string>
+    <string name="nova_background_notification_channel">Background sites</string>
+    <string name="nova_background_notification_text">Keeping a site you enabled running in the background.</string>
+    <string name="nova_update_notification_channel">App updates</string>
+    <string name="nova_update_notification_title">Nova Browser update available</string>
+    <string name="nova_update_notification_text">Nova Browser %s is ready. Download it or get it from GitHub.</string>
+    <string name="nova_update_action_download">Download</string>
+    <string name="nova_update_action_github">GitHub</string>
+    <string name="nova_update_action_later">Later</string>
+    <string name="nova_update_downloading">Downloading Nova Browser %s...</string>
 </resources>""",
 )
 
@@ -935,6 +947,7 @@ patch(
     "import org.mozilla.fenix.settings.SupportUtils",
     "import org.mozilla.fenix.components.NovaCloseCleanup\n" +
     "import org.mozilla.fenix.components.NovaDebugLog\n" +
+    "import org.mozilla.fenix.components.NovaKeepAlive\n" +
     "import org.mozilla.fenix.settings.SupportUtils",
 )
 patch(
@@ -945,7 +958,7 @@ patch(
 patch(
     BASE + "HomeActivity.kt",
     "        super.onStop()",
-    "        super.onStop()\n        armNovaClearOnExitCheck()\n        scheduleNovaClearOnCloseCheck()",
+    "        super.onStop()\n        armNovaClearOnExitCheck()\n        scheduleNovaClearOnCloseCheck()\n        NovaKeepAlive.onAppBackground(this, components)",
 )
 patch(
     BASE + "HomeActivity.kt",
@@ -1057,7 +1070,7 @@ patch(
 patch(
     BASE + "HomeActivity.kt",
     "        super.onStart()",
-    "        super.onStart()\n        novaScheduledCheck?.cancel()",
+    "        super.onStart()\n        novaScheduledCheck?.cancel()\n        NovaKeepAlive.onAppForeground(this)",
 )
 
 # --- FenixApplication.kt: restore-time drop -----------------------------------
@@ -1227,6 +1240,605 @@ patch(
     BASE + "settings/about/AboutFragment.kt",
     '"%s (Build #%s)%s\\n%s: %s\\n%s: %s\\n%s: %s",',
     '"v%s (Build #%s)%s\\n%s: %s\\n%s: %s\\n%s: %s",',
+)
+
+# --- Nova v1.1: per-site "allow background playback" --------------------------
+write(BASE + "components/NovaBackgroundSites.kt", r'''/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.components
+
+import android.content.Context
+import java.net.URI
+
+/**
+ * Nova: per-site "allow background use" settings.
+ *
+ * The user can enable a site (from the browser menu) so it keeps working while
+ * the app is backgrounded and the screen is locked. Enabled hosts are remembered
+ * in a private SharedPreferences file keyed by the bare hostname ("youtube.com").
+ */
+object NovaBackgroundSites {
+    private const val PREFS = "nova_background_sites"
+    private const val KEY = "enabled"
+
+    fun enabledHosts(context: Context): Set<String> {
+        val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        return p.getStringSet(KEY, emptySet()) ?: emptySet()
+    }
+
+    fun isEnabled(context: Context, host: String): Boolean = host in enabledHosts(context)
+
+    fun toggle(context: Context, host: String) {
+        val current = HashSet(enabledHosts(context))
+        if (!current.add(host)) current.remove(host)
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putStringSet(KEY, current)
+            .apply()
+    }
+
+    fun hostOf(url: String): String {
+        if (url.isBlank()) return ""
+        return try {
+            val host = URI(url).host ?: return ""
+            host.removePrefix("www.").lowercase()
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
+    fun isEnabledSiteOpen(context: Context, components: Components): Boolean {
+        val hosts = enabledHosts(context)
+        if (hosts.isEmpty()) return false
+        return components.core.store.state.tabs.any { tab ->
+            tab.content.url.isNotBlank() && hostOf(tab.content.url) in hosts
+        }
+    }
+}
+''')
+
+write(BASE + "components/NovaKeepAlive.kt", r'''/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.components
+
+import android.content.Context
+
+/**
+ * Nova: keeps the browser awake while it is backgrounded (and the screen locked)
+ * if any open tab is on a site the user enabled from the browser menu
+ * ("Allow background playback"). A foreground service holds a partial wake lock,
+ * so timers, streams and AI responses keep running until the user returns,
+ * closes the tab or swipes the app away.
+ */
+object NovaKeepAlive {
+    fun onAppBackground(context: Context, components: Components) {
+        if (NovaBackgroundSites.isEnabledSiteOpen(context, components)) {
+            NovaBackgroundService.start(context)
+        } else {
+            NovaBackgroundService.stop(context)
+        }
+    }
+
+    fun onAppForeground(context: Context) {
+        NovaBackgroundService.stop(context)
+    }
+}
+''')
+
+write(BASE + "components/NovaBackgroundService.kt", r'''/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.components
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.os.Build
+import android.os.IBinder
+import android.os.PowerManager
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import org.mozilla.fenix.R
+
+/**
+ * Nova: foreground service that keeps the CPU awake while the app is in the
+ * background with an enabled site open. Holds a partial wake lock so the page
+ * keeps working with the screen locked. Stops when the app returns to the
+ * foreground, when no enabled site is open any more, or when the user removes
+ * the app from the recent apps list.
+ */
+class NovaBackgroundService : Service() {
+
+    private var wakeLock: PowerManager.WakeLock? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        createChannel()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val notification = buildNotification()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
+        acquireWakeLock()
+        return START_NOT_STICKY
+    }
+
+    override fun onDestroy() {
+        releaseWakeLock()
+        super.onDestroy()
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    private fun acquireWakeLock() {
+        if (wakeLock?.isHeld == true) return
+        try {
+            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+            val wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "NovaBrowser::keepAlive")
+            wl.setReferenceCounted(false)
+            wl.acquire()
+            wakeLock = wl
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            if (wakeLock?.isHeld == true) wakeLock!!.release()
+        } catch (_: Exception) {
+        }
+        wakeLock = null
+    }
+
+    private fun createChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val nm = getSystemService(NotificationManager::class.java)
+            nm.createNotificationChannel(
+                NotificationChannel(
+                    CHANNEL_ID,
+                    getString(R.string.nova_background_notification_channel),
+                    NotificationManager.IMPORTANCE_LOW,
+                ),
+            )
+        }
+    }
+
+    private fun buildNotification(): Notification {
+        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+        val contentIntent = launchIntent?.let {
+            PendingIntent.getActivity(
+                this,
+                0,
+                it,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+        }
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_status_logo)
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(getString(R.string.nova_background_notification_text))
+            .setContentIntent(contentIntent)
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .build()
+    }
+
+    companion object {
+        private const val CHANNEL_ID = "nova_background"
+        private const val NOTIFICATION_ID = 1000
+
+        fun start(context: Context) {
+            ContextCompat.startForegroundService(
+                context,
+                Intent(context, NovaBackgroundService::class.java),
+            )
+        }
+
+        fun stop(context: Context) {
+            context.stopService(Intent(context, NovaBackgroundService::class.java))
+        }
+    }
+}
+''')
+
+write(BASE + "components/NovaUpdateChecker.kt", r'''/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.components
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import org.mozilla.fenix.BuildConfig
+import org.mozilla.fenix.R
+import java.net.HttpURLConnection
+import java.net.URL
+
+/**
+ * Nova: checks the Nova Browser GitHub release once per app launch. If a newer
+ * version is out, a notification offers "Download" (saves the APK via
+ * DownloadManager), "GitHub" (opens the releases page) and "Later" (reminds
+ * again after a day).
+ */
+object NovaUpdateChecker {
+    private const val REPO_RELEASES_LATEST =
+        "https://api.github.com/repos/codegeasse1/nova-browser/releases/latest"
+    private const val RELEASES_PAGE =
+        "https://github.com/codegeasse1/nova-browser/releases"
+    private const val CHANNEL_ID = "nova_updates"
+    private const val NOTIFICATION_ID = 1001
+    private const val PREFS = "nova_update"
+    private const val SUPPRESS_MS = 24L * 60 * 60 * 1000
+
+    fun check(context: Context) {
+        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+            try {
+                val conn = URL(REPO_RELEASES_LATEST).openConnection() as HttpURLConnection
+                conn.connectTimeout = 10_000
+                conn.readTimeout = 10_000
+                conn.setRequestProperty("User-Agent", "NovaBrowser")
+                conn.setRequestProperty("Accept", "application/vnd.github+json")
+                if (conn.responseCode != HttpURLConnection.HTTP_OK) return@launch
+                val body = conn.inputStream.bufferedReader().use { it.readText() }
+                val json = JSONObject(body)
+
+                val version = json.optString("name", "")
+                    .split(" ")
+                    .lastOrNull { it.isNotEmpty() && it[0].isDigit() }
+                    ?.trim()
+                    ?: return@launch
+                if (!isNewer(version, BuildConfig.VERSION_NAME)) return@launch
+
+                val assets = json.optJSONArray("assets") ?: return@launch
+                var apkUrl: String? = null
+                for (i in 0 until assets.length()) {
+                    val a = assets.getJSONObject(i)
+                    if (a.optString("name").endsWith(".apk")) {
+                        apkUrl = a.optString("browser_download_url")
+                        break
+                    }
+                }
+                if (apkUrl.isNullOrEmpty()) return@launch
+
+                val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                if (System.currentTimeMillis() < prefs.getLong("suppressed_until", 0L)) {
+                    return@launch
+                }
+
+                post(context, version, apkUrl)
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun versionTuple(v: String): List<Int> =
+        v.trim().split(".").mapNotNull { it.toIntOrNull() }
+
+    private fun isNewer(latest: String, current: String): Boolean {
+        val a = versionTuple(latest)
+        val b = versionTuple(current)
+        for (i in 0 until maxOf(a.size, b.size)) {
+            val x = a.getOrElse(i) { 0 }
+            val y = b.getOrElse(i) { 0 }
+            if (x != y) return x > y
+        }
+        return false
+    }
+
+    private fun post(context: Context, version: String, apkUrl: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val nm = context.getSystemService(NotificationManager::class.java)
+            nm.createNotificationChannel(
+                NotificationChannel(
+                    CHANNEL_ID,
+                    context.getString(R.string.nova_update_notification_channel),
+                    NotificationManager.IMPORTANCE_HIGH,
+                ),
+            )
+        }
+
+        val downloadIntent = Intent(context, NovaUpdateActionService::class.java)
+            .putExtra(NovaUpdateActionService.EXTRA_ACTION, NovaUpdateActionService.ACTION_DOWNLOAD)
+            .putExtra(NovaUpdateActionService.EXTRA_URL, apkUrl)
+            .putExtra(NovaUpdateActionService.EXTRA_VERSION, version)
+        val openIntent = Intent(context, NovaUpdateActionService::class.java)
+            .putExtra(NovaUpdateActionService.EXTRA_ACTION, NovaUpdateActionService.ACTION_OPEN)
+            .putExtra(NovaUpdateActionService.EXTRA_URL, RELEASES_PAGE)
+        val laterIntent = Intent(context, NovaUpdateActionService::class.java)
+            .putExtra(NovaUpdateActionService.EXTRA_ACTION, NovaUpdateActionService.ACTION_LATER)
+
+        val piDownload = PendingIntent.getService(
+            context, 10, downloadIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val piOpen = PendingIntent.getService(
+            context, 11, openIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val piLater = PendingIntent.getService(
+            context, 12, laterIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_status_logo)
+            .setContentTitle(context.getString(R.string.nova_update_notification_title))
+            .setContentText(context.getString(R.string.nova_update_notification_text, version))
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .addAction(0, context.getString(R.string.nova_update_action_download), piDownload)
+            .addAction(0, context.getString(R.string.nova_update_action_github), piOpen)
+            .addAction(0, context.getString(R.string.nova_update_action_later), piLater)
+            .build()
+
+        try {
+            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
+        } catch (_: Exception) {
+        }
+    }
+}
+''')
+
+write(BASE + "components/NovaUpdateActionService.kt", r'''/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.components
+
+import android.app.DownloadManager
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Environment
+import android.os.IBinder
+
+/**
+ * Nova: handles the actions of the "update available" notification.
+ * - "download": saves the new APK to the Downloads folder via DownloadManager.
+ * - "open": opens the GitHub releases page inside Nova Browser.
+ * - "later": suppresses the notification for a day.
+ */
+class NovaUpdateActionService : Service() {
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.getStringExtra(EXTRA_ACTION)) {
+            ACTION_DOWNLOAD -> {
+                val url = intent.getStringExtra(EXTRA_URL) ?: return START_NOT_STICKY
+                startDownload(url, intent.getStringExtra(EXTRA_VERSION) ?: "")
+            }
+            ACTION_OPEN -> {
+                val url = intent.getStringExtra(EXTRA_URL) ?: return START_NOT_STICKY
+                openInBrowser(url)
+            }
+            ACTION_LATER -> {
+                getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                    .edit()
+                    .putLong("suppressed_until", System.currentTimeMillis() + SUPPRESS_MS)
+                    .apply()
+            }
+        }
+        stopSelf()
+        return START_NOT_STICKY
+    }
+
+    private fun startDownload(url: String, version: String) {
+        try {
+            val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val request = DownloadManager.Request(Uri.parse(url))
+                .setTitle(getString(org.mozilla.fenix.R.string.app_name))
+                .setDescription(
+                    getString(org.mozilla.fenix.R.string.nova_update_downloading, version),
+                )
+                .setNotificationVisibility(
+                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED,
+                )
+                .setDestinationInExternalPublicDir(
+                    Environment.DIRECTORY_DOWNLOADS,
+                    "Nova.Browser.$version.apk",
+                )
+                .setMimeType("application/vnd.android.package-archive")
+                .setAllowedOverMetered(true)
+                .setAllowedOverRoaming(true)
+            dm.enqueue(request)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun openInBrowser(url: String) {
+        try {
+            startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    setPackage(packageName) // open inside Nova Browser itself
+                },
+            )
+        } catch (_: Exception) {
+            try {
+                startActivity(
+                    Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    companion object {
+        const val EXTRA_ACTION = "nova_action"
+        const val EXTRA_URL = "nova_url"
+        const val EXTRA_VERSION = "nova_version"
+        const val ACTION_DOWNLOAD = "download"
+        const val ACTION_OPEN = "open"
+        const val ACTION_LATER = "later"
+        private const val PREFS = "nova_update"
+        private const val SUPPRESS_MS = 24L * 60 * 60 * 1000
+    }
+}
+''')
+
+# --- AndroidManifest.xml: wake lock + foreground service permissions ----------
+patch(
+    'app/src/main/AndroidManifest.xml',
+    '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />',
+    '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n' +
+    '    <uses-permission android:name="android.permission.WAKE_LOCK" />\n' +
+    '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n' +
+    '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />',
+)
+
+# --- AndroidManifest.xml: declare the Nova services ---------------------------
+patch(
+    "app/src/main/AndroidManifest.xml",
+    "    </application>",
+    """        <service
+            android:name="org.mozilla.fenix.components.NovaBackgroundService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps a user-enabled website running while Nova Browser is backgrounded and the screen is locked." />
+        </service>
+        <service
+            android:name="org.mozilla.fenix.components.NovaUpdateActionService"
+            android:exported="false" />
+    </application>""",
+)
+
+# --- MainMenu.kt: params for the new per-site toggle --------------------------
+patch(
+    BASE + "components/menu/compose/MainMenu.kt",
+    """    isAllWebExtensionsDisabled: Boolean,
+    canGoBack: Boolean,""",
+    """    isAllWebExtensionsDisabled: Boolean,
+    novaAllowBackgroundVisible: Boolean = false,
+    novaAllowBackgroundEnabled: Boolean = false,
+    onNovaAllowBackgroundToggle: () -> Unit = {},
+    canGoBack: Boolean,""",
+)
+
+# --- MainMenu.kt: the "Allow background playback" menu row --------------------
+patch(
+    BASE + "components/menu/compose/MainMenu.kt",
+    """        LibraryMenuGroup(
+            isDownloadHighlighted = isDownloadHighlighted,""",
+    """        if (accessPoint == MenuAccessPoint.Browser && novaAllowBackgroundVisible) {
+            MenuGroup {
+                MenuItem(
+                    label = stringResource(id = R.string.browser_menu_allow_background_playback),
+                    description = stringResource(
+                        id = if (novaAllowBackgroundEnabled) {
+                            R.string.browser_menu_allow_background_playback_on
+                        } else {
+                            R.string.browser_menu_allow_background_playback_off
+                        },
+                    ),
+                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_autoplay_24),
+                    onClick = onNovaAllowBackgroundToggle,
+                    afterContent = {
+                        androidx.compose.material3.Switch(
+                            checked = novaAllowBackgroundEnabled,
+                            onCheckedChange = { onNovaAllowBackgroundToggle() },
+                        )
+                    },
+                )
+            }
+        }
+
+        LibraryMenuGroup(
+            isDownloadHighlighted = isDownloadHighlighted,""",
+)
+
+# --- MenuDialogFragment.kt: per-site enabled state + toggle handler -----------
+patch(
+    BASE + "components/menu/MenuDialogFragment.kt",
+    """                                val isSiteLoading by remember {
+                                    browserStore.stateFlow
+                                        .map { state -> state.selectedTab?.content?.loading == true }
+                                }.collectAsState(initial = false)""",
+    """                                val isSiteLoading by remember {
+                                    browserStore.stateFlow
+                                        .map { state -> state.selectedTab?.content?.loading == true }
+                                }.collectAsState(initial = false)
+
+                                val novaCurrentHost = selectedTab?.content?.url
+                                    ?.let { org.mozilla.fenix.components.NovaBackgroundSites.hostOf(it) }
+                                    .orEmpty()
+                                var novaAllowBackgroundEnabled by remember(novaCurrentHost) {
+                                    mutableStateOf(
+                                        novaCurrentHost.isNotEmpty() &&
+                                            org.mozilla.fenix.components.NovaBackgroundSites.isEnabled(
+                                                requireContext(),
+                                                novaCurrentHost,
+                                            ),
+                                    )
+                                }
+                                val onNovaAllowBackgroundToggle = {
+                                    if (novaCurrentHost.isNotEmpty()) {
+                                        org.mozilla.fenix.components.NovaBackgroundSites.toggle(
+                                            requireContext(),
+                                            novaCurrentHost,
+                                        )
+                                        novaAllowBackgroundEnabled = !novaAllowBackgroundEnabled
+                                    }
+                                }""",
+)
+
+# --- MenuDialogFragment.kt: pass the toggle to MainMenu -----------------------
+patch(
+    BASE + "components/menu/MenuDialogFragment.kt",
+    "                                    webExtensionMenuCount = webExtensionsCount,",
+    """                                    webExtensionMenuCount = webExtensionsCount,
+                                    novaAllowBackgroundVisible = novaCurrentHost.isNotEmpty(),
+                                    novaAllowBackgroundEnabled = novaAllowBackgroundEnabled,
+                                    onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,""",
+)
+
+# --- FenixApplication.kt: check for updates on every launch -------------------
+patch(
+    BASE + "FenixApplication.kt",
+    """    override fun onCreate() {
+        super.onCreate()
+        initializeFenixProcess()
+    }""",
+    """    override fun onCreate() {
+        super.onCreate()
+        initializeFenixProcess()
+        if (isMainProcess()) {
+            org.mozilla.fenix.components.NovaUpdateChecker.check(this)
+        }
+    }""",
 )
 
 print("All Nova source patches applied.")
