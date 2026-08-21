@@ -22,11 +22,6 @@ set up, no host files to manage by hand.
   the app. It works on **every site, including YouTube** — Nova keeps the page
   reported as visible, so even sites that pause themselves when hidden keep
   playing. It is remembered per site.
-- **Allow PiP mode (per site)** — a toggle in the three-dot menu. Turn it on for
-  a site and when you leave the app while that site is playing media, Nova
-  automatically enters a small picture-in-picture window — so DRM video
-  (YouTube and other Widevine content) keeps playing in the background and on
-  the lock screen. It is remembered per site.
 - **In-app update notifications** — when a new version is released you get a
   notification with **Download** (grabs the APK automatically), **GitHub**
   (open the releases page) and **Later** (remind again in 24 hours).
@@ -35,12 +30,12 @@ set up, no host files to manage by hand.
 - **Install local add-ons** — Settings → Advanced → *Install local add-on* accepts
   Firefox-format extensions (`.zip` / `.xpi`).
 - **Your build, your name** — signed with your own key, package `com.nova.browser`,
-  and the About screen reads **v1.3.2**.
+  and the About screen reads **v1.3.3**.
 
 ## Install
 
 1. Download the latest APK from the [Releases](https://github.com/codegeasse1/nova-browser/releases)
-   page (currently `Nova.Browser.1.3.2.apk`).
+   page (currently `Nova.Browser.1.3.3.apk`).
 2. When Android asks, allow installing apps from your file manager.
 3. Open the APK and install. Future updates install over the top — no need to
    uninstall first.
