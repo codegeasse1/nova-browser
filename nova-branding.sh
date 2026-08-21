@@ -1719,10 +1719,22 @@ class NovaBackgroundService : Service() {
         private const val FIRST_REASSERT_DELAY_MS = 800L
 
         fun start(context: Context) {
-            ContextCompat.startForegroundService(
-                context,
-                Intent(context, NovaBackgroundService::class.java),
-            )
+            try {
+                ContextCompat.startForegroundService(
+                    context,
+                    Intent(context, NovaBackgroundService::class.java),
+                )
+            } catch (_: Exception) {
+                // Nova: Android 12+ forbids starting a foreground service from the
+                // background unless the app is exempt (e.g. it is actively playing
+                // audio through a media session). A backgrounded site that is not
+                // playing anything has no exemption, so the system refuses the start
+                // and throws (which used to crash the app). The keep-alive service
+                // is only useful while something is actually playing, so skipping
+                // the start is the right behaviour here - it must never take the
+                // app down.
+                NovaDebugLog.log(context, "bg service start refused - skipping keep-alive")
+            }
         }
 
         fun stop(context: Context) {
