@@ -22,6 +22,11 @@ set up, no host files to manage by hand.
   the app. It works on **every site, including YouTube** — Nova keeps the page
   reported as visible, so even sites that pause themselves when hidden keep
   playing. It is remembered per site.
+- **Password import & export (CSV)** — in Settings → Passwords:
+  - **Import** picks any CSV file exported by another browser (Firefox, Chrome,
+    Edge, Brave, …) and adds its usernames and passwords,
+  - **Export** writes all saved passwords to a CSV file you can save anywhere or
+    send to another device, ready to import into any other browser.
 - **In-app update notifications** — when a new version is released you get a
   notification with **Download** (grabs the APK automatically), **GitHub**
   (open the releases page) and **Later** (remind again in 24 hours).
@@ -30,12 +35,12 @@ set up, no host files to manage by hand.
 - **Install local add-ons** — Settings → Advanced → *Install local add-on* accepts
   Firefox-format extensions (`.zip` / `.xpi`).
 - **Your build, your name** — signed with your own key, package `com.nova.browser`,
-  and the About screen reads **v1.3.3**.
+  and the About screen reads **v1.4.0**.
 
 ## Install
 
 1. Download the latest APK from the [Releases](https://github.com/codegeasse1/nova-browser/releases)
-   page (currently `Nova.Browser.1.3.3.apk`).
+   page (currently `Nova.Browser.1.4.0.apk`).
 2. When Android asks, allow installing apps from your file manager.
 3. Open the APK and install. Future updates install over the top — no need to
    uninstall first.
