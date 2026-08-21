@@ -1451,7 +1451,9 @@ object NovaPip {
         if (activity.isInPictureInPictureMode || activity.isFinishing) return
         if (!shouldEnterPip(activity, components)) return
         try {
-            activity.enterPictureInPictureMode()
+            // Non-deprecated overload (the no-arg enterPictureInPictureMode() is
+            // deprecated, and Fenix builds with warnings-as-errors).
+            activity.enterPictureInPictureMode(android.app.PictureInPictureParams.Builder().build())
         } catch (_: Exception) {
         }
     }
