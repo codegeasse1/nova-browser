@@ -5,6 +5,22 @@ All notable changes to **Nova Browser** are documented in this file.
 Everything before 1.0 was developed as numbered internal test builds
 (`2.46.0-fix1` → `2.46.0-fix9`) and is folded into this first release.
 
+## [1.4.0] — 2026-08-21
+
+### Added
+
+- **Password import & export (CSV)** — in Settings → Passwords:
+  - **Import passwords from CSV** — pick a CSV file exported by any other
+    browser (Firefox, Chrome, Edge, Brave, …) and its usernames and passwords
+    are added to Nova. Both the Firefox format
+    (`url,username,password,httpRealm,formActionOrigin,…`) and the Chrome format
+    (`name,url,username,password`) are accepted.
+  - **Export passwords to CSV** — writes every saved password to a CSV file in
+    the Firefox export format and opens the share sheet, so you can save it
+    anywhere or send it to another device, then import it into any other
+    browser. A note: the file is **plain text** — treat it like a master
+    password file and delete it after importing.
+
 ## [1.3.3] — 2026-08-21
 
 ### Removed
