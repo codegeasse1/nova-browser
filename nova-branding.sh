@@ -870,7 +870,114 @@ patch(
     <string name="nova_update_action_github">GitHub</string>
     <string name="nova_update_action_later">Later</string>
     <string name="nova_update_downloading">Downloading Nova Browser %s...</string>
+    <string name="pref_key_nova_import_passwords">nova_import_passwords</string>
+    <string name="pref_key_nova_export_passwords">nova_export_passwords</string>
+    <string name="nova_passwords_import_title">Import passwords from CSV</string>
+    <string name="nova_passwords_import_summary">Import usernames and passwords from a CSV file exported by another browser.</string>
+    <string name="nova_passwords_export_title">Export passwords to CSV</string>
+    <string name="nova_passwords_export_summary">Save your saved passwords to a CSV file you can import into another browser.</string>
+    <string name="nova_passwords_import_success">Imported %1$d passwords.</string>
+    <string name="nova_passwords_import_failure">Could not import passwords. Check that the CSV file is valid.</string>
+    <string name="nova_passwords_export_success">Exported %1$d passwords.</string>
+    <string name="nova_passwords_export_empty">No saved passwords to export.</string>
+    <string name="nova_passwords_export_error">Could not export passwords.</string>
 </resources>""",
+)
+
+# --- logins_preferences.xml: import / export password entries ----------------
+patch(
+    "app/src/main/res/xml/logins_preferences.xml",
+    '    <androidx.preference.Preference\n        android:key="@string/pref_key_login_exceptions"\n        android:title="@string/preferences_passwords_exceptions"\n        app:icon="@drawable/mozac_ic_globe_24" />',
+    """    <androidx.preference.Preference
+        android:key="@string/pref_key_login_exceptions"
+        android:title="@string/preferences_passwords_exceptions"
+        app:icon="@drawable/mozac_ic_globe_24" />
+    <androidx.preference.Preference
+        android:key="@string/pref_key_nova_import_passwords"
+        android:title="@string/nova_passwords_import_title"
+        android:summary="@string/nova_passwords_import_summary" />
+    <androidx.preference.Preference
+        android:key="@string/pref_key_nova_export_passwords"
+        android:title="@string/nova_passwords_export_title"
+        android:summary="@string/nova_passwords_export_summary" />""",
+)
+
+# --- file_provider_paths.xml: expose the password export directory -----------
+patch(
+    "app/src/main/res/xml/file_provider_paths.xml",
+    "</paths>",
+    """    <cache-path
+        name="nova_exports"
+        path="nova_exports/" />
+</paths>""",
+)
+
+# --- Settings.kt: always enable the passwords import feature -----------------
+patch(
+    BASE + "utils/Settings.kt",
+    """    var importPasswordsFeatureFlagEnabled by booleanPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_enable_import_passwords),
+        default = Config.channel.isDebug,
+    )""",
+    """    var importPasswordsFeatureFlagEnabled by booleanPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_enable_import_passwords),
+        default = true,
+    )""",
+)
+
+# --- SavedLoginsAuthFragment.kt: import/export password entries ----------------
+patch(
+    BASE + "settings/logins/fragment/SavedLoginsAuthFragment.kt",
+    "import android.os.Bundle",
+    "import android.os.Bundle\nimport android.widget.Toast",
+)
+patch(
+    BASE + "settings/logins/fragment/SavedLoginsAuthFragment.kt",
+    "import org.mozilla.fenix.ext.showToolbar",
+    """import org.mozilla.fenix.ext.showToolbar
+import mozilla.components.feature.password.importer.PasswordsImporterResult
+import org.mozilla.fenix.components.NovaPasswordExport
+import org.mozilla.fenix.settings.logins.ImportPasswordsDialogFragment""",
+)
+patch(
+    BASE + "settings/logins/fragment/SavedLoginsAuthFragment.kt",
+    """        requirePreference<Preference>(R.string.pref_key_saved_logins).setOnPreferenceClickListener {
+            navigateToSavedLoginsFragment()
+            true
+        }""",
+    """        requirePreference<Preference>(R.string.pref_key_saved_logins).setOnPreferenceClickListener {
+            navigateToSavedLoginsFragment()
+            true
+        }
+
+        parentFragmentManager.setFragmentResultListener(
+            ImportPasswordsDialogFragment.REQUEST_KEY,
+            viewLifecycleOwner,
+        ) { _, bundle ->
+            when (val result = ImportPasswordsDialogFragment.decodeResult(bundle)) {
+                is PasswordsImporterResult.Success -> Toast.makeText(
+                    requireContext(),
+                    getString(R.string.nova_passwords_import_success, result.importCount),
+                    Toast.LENGTH_LONG,
+                ).show()
+                is PasswordsImporterResult.Failure -> Toast.makeText(
+                    requireContext(),
+                    R.string.nova_passwords_import_failure,
+                    Toast.LENGTH_LONG,
+                ).show()
+                else -> {}
+            }
+        }
+
+        requirePreference<Preference>(R.string.pref_key_nova_import_passwords).setOnPreferenceClickListener {
+            ImportPasswordsDialogFragment().show(parentFragmentManager, ImportPasswordsDialogFragment.TAG)
+            true
+        }
+
+        requirePreference<Preference>(R.string.pref_key_nova_export_passwords).setOnPreferenceClickListener {
+            NovaPasswordExport.export(requireContext(), requireComponents.core.passwordsStorage, requireActivity())
+            true
+        }""",
 )
 
 # --- Tabs settings: add the "close tabs when the app is closed" radio option ---
@@ -1859,6 +1966,110 @@ object NovaNotifications {
             REQUEST_CODE,
         )
     }
+}
+''')
+
+# --- NovaPasswordExport.kt: write saved passwords to a CSV file ---------------
+write(BASE + "components/NovaPasswordExport.kt", r'''/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.components
+
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
+import androidx.core.content.FileProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import mozilla.components.concept.storage.Login
+import mozilla.components.concept.storage.LoginsStorage
+import org.mozilla.fenix.R
+import java.io.File
+
+/**
+ * Nova: exports all saved passwords to a CSV file (the same format Firefox
+ * exports, which Chrome, Edge, Brave and other browsers can import back), then
+ * opens the share sheet so the file can be saved anywhere or sent to another
+ * device or browser.
+ */
+object NovaPasswordExport {
+    fun export(context: Context, storage: LoginsStorage, activity: Activity) {
+        CoroutineScope(Dispatchers.Main + SupervisorJob()).launch {
+            val outcome = withContext(Dispatchers.IO) {
+                runCatching {
+                    val logins = storage.list()
+                    if (logins.isEmpty()) {
+                        throw EmptyLogins()
+                    }
+                    val dir = File(context.cacheDir, "nova_exports").apply { mkdirs() }
+                    val file = File(dir, "nova-passwords.csv")
+                    file.writeText(buildCsv(logins))
+                    ExportOutcome(file, logins.size)
+                }
+            }
+            outcome.fold(
+                onSuccess = { o ->
+                    try {
+                        val uri = FileProvider.getUriForFile(
+                            context,
+                            context.packageName + ".fileprovider",
+                            o.file,
+                        )
+                        val send = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/csv"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        activity.startActivity(
+                            Intent.createChooser(send, context.getString(R.string.nova_passwords_export_title)),
+                        )
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.nova_passwords_export_success, o.count),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    } catch (_: Exception) {
+                        Toast.makeText(context, R.string.nova_passwords_export_error, Toast.LENGTH_LONG).show()
+                    }
+                },
+                onFailure = { e ->
+                    if (e is EmptyLogins) {
+                        Toast.makeText(context, R.string.nova_passwords_export_empty, Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(context, R.string.nova_passwords_export_error, Toast.LENGTH_LONG).show()
+                    }
+                },
+            )
+        }
+    }
+
+    private class EmptyLogins : Exception()
+
+    private data class ExportOutcome(val file: File, val count: Int)
+
+    private fun buildCsv(logins: List<Login>): String {
+        val sb = StringBuilder()
+        sb.append("url,username,password,httpRealm,formActionOrigin,guid,timeCreated,timeLastUsed,timePasswordChanged\n")
+        for (login in logins) {
+            sb.append(csv(login.origin)).append(',')
+            sb.append(csv(login.username)).append(',')
+            sb.append(csv(login.password)).append(',')
+            sb.append(csv(login.httpRealm.orEmpty())).append(',')
+            sb.append(csv(login.formActionOrigin.orEmpty())).append(',')
+            sb.append(csv(login.guid)).append(',')
+            sb.append(login.timeCreated).append(',')
+            sb.append(login.timeLastUsed).append(',')
+            sb.append(login.timePasswordChanged).append('\n')
+        }
+        return sb.toString()
+    }
+
+    private fun csv(value: String): String = "\"" + value.replace("\"", "\"\"") + "\""
 }
 ''')
 
