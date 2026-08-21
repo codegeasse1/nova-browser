@@ -24,7 +24,10 @@ set up, no host files to manage by hand.
   playing. It is remembered per site.
 - **Password import & export (CSV)** — in Settings → Passwords:
   - **Import** picks any CSV file exported by another browser (Firefox, Chrome,
-    Edge, Brave, …) and adds its usernames and passwords,
+    Edge, Brave, Quetta, …) and adds its usernames and passwords — the CSV
+    header is matched flexibly, so `name,url,username,password` (Chrome),
+    `name,url,username,password,note` (Quetta) and Firefox's own export format
+    all import correctly,
   - **Export** writes all saved passwords to a CSV file you can save anywhere or
     send to another device, ready to import into any other browser.
 - **In-app update notifications** — when a new version is released you get a
@@ -35,12 +38,12 @@ set up, no host files to manage by hand.
 - **Install local add-ons** — Settings → Advanced → *Install local add-on* accepts
   Firefox-format extensions (`.zip` / `.xpi`).
 - **Your build, your name** — signed with your own key, package `com.nova.browser`,
-  and the About screen reads **v1.4.0**.
+  and the About screen reads **v1.4.1**.
 
 ## Install
 
 1. Download the latest APK from the [Releases](https://github.com/codegeasse1/nova-browser/releases)
-   page (currently `Nova.Browser.1.4.0.apk`).
+   page (currently `Nova.Browser.1.4.1.apk`).
 2. When Android asks, allow installing apps from your file manager.
 3. Open the APK and install. Future updates install over the top — no need to
    uninstall first.
