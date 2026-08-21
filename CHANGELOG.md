@@ -5,6 +5,26 @@ All notable changes to **Nova Browser** are documented in this file.
 Everything before 1.0 was developed as numbered internal test builds
 (`2.46.0-fix1` → `2.46.0-fix9`) and is folded into this first release.
 
+## [1.3] — 2026-08-21
+
+### Added
+
+- **Allow PiP mode for this site** — a new toggle in the three-dot menu, under
+  "Allow background playback". DRM-protected video (YouTube and other Widevine
+  content) used to stop when Nova was backgrounded, because GeckoView's
+  compositor needs a window surface. A PiP window keeps a real surface alive, so
+  DRM video keeps playing in the background and on the lock screen.
+
+### Fixed
+
+- **Mini / floating window crash** — "Close tabs when the app is closed" and
+  "Delete browsing data on quit" no longer fire while Nova is being used in a
+  mini, floating or split-screen window (those windows made the task look like
+  it vanished, so Nova wiped all tabs and data and crashed on startup).
+- **Keyboard desync after screen lock** — background playback no longer forces
+  input focus while the screen is locked, which left the keyboard out of sync
+  on return (backspace needed several presses to delete one character).
+
 ## [1.2] — 2026-08-20
 
 ### Fixed
