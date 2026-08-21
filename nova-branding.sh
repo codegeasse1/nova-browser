@@ -861,9 +861,6 @@ patch(
     <string name="browser_menu_allow_background_playback">Allow background playback</string>
     <string name="browser_menu_allow_background_playback_on">On: this site keeps running even with the screen locked.</string>
     <string name="browser_menu_allow_background_playback_off">Keeps this site working while you use other apps or lock the screen.</string>
-    <string name="browser_menu_allow_pip">Allow PiP mode for this site</string>
-    <string name="browser_menu_allow_pip_on">On: this site plays in a small window when you leave it, so DRM video keeps playing.</string>
-    <string name="browser_menu_allow_pip_off">Keep DRM video (like YouTube) playing in the background with a small floating window.</string>
     <string name="nova_background_notification_channel">Background sites</string>
     <string name="nova_background_notification_text">Keeping a site you enabled running in the background.</string>
     <string name="nova_update_notification_channel">App updates</string>
@@ -875,19 +872,6 @@ patch(
     <string name="nova_update_downloading">Downloading Nova Browser %s...</string>
 </resources>""",
 )
-
-# --- PiP menu icon: small "picture in picture" glyph -------------------------
-write("app/src/main/res/drawable/nova_ic_picture_in_picture_24.xml", r'''<?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-    <path
-        android:fillColor="#FF000000"
-        android:pathData="M21,3H3c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h18c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM21,19.01H3V4.99h18v14.02zM8,16h2.5l1.5,1.5 1.5,-1.5H16v-2.5l1.5,-1.5L16,9.5V7h-2.5L12,5.5 10.5,7H8v2.5L6.5,11 8,12.5V16zM12,9c1.66,0 3,1.34 3,3s-1.34,3 -3,3V9z" />
-</vector>
-''')
 
 # --- Tabs settings: add the "close tabs when the app is closed" radio option ---
 patch(
@@ -964,13 +948,12 @@ patch(
     "import org.mozilla.fenix.components.NovaCloseCleanup\n" +
     "import org.mozilla.fenix.components.NovaDebugLog\n" +
     "import org.mozilla.fenix.components.NovaKeepAlive\n" +
-    "import org.mozilla.fenix.components.NovaPip\n" +
     "import org.mozilla.fenix.settings.SupportUtils",
 )
 patch(
     BASE + "HomeActivity.kt",
     "        checkAndExitPiP()",
-    "        checkAndExitPiP()\n        consumeNovaClearTabsOnExit()",
+    "        checkAndExitPiP()\n        consumeNovaClearTabsOnExit()\n        NovaNotifications.ensureNotificationPermission(this)",
 )
 patch(
     BASE + "HomeActivity.kt",
@@ -978,48 +961,7 @@ patch(
     "        super.onStop()\n" +
     "        armNovaClearOnExitCheck()\n" +
     "        scheduleNovaClearOnCloseCheck()\n" +
-    "        NovaKeepAlive.onAppBackground(this, components)\n" +
-    "        NovaPip.enterPipIfPlaying(this, components)",
-)
-patch(
-    BASE + "HomeActivity.kt",
-    "        super.onUserLeaveHint()\n    }",
-    "        NovaPip.enterPipIfPlaying(this, components)\n" +
-    "        super.onUserLeaveHint()\n    }",
-)
-patch(
-    BASE + "HomeActivity.kt",
-    "    override fun onProvideAssistContent(outContent: AssistContent?) {",
-    "    override fun onPictureInPictureModeChanged(\n" +
-    "        isInPictureInPictureMode: Boolean,\n" +
-    "        newConfig: Configuration,\n" +
-    "    ) {\n" +
-    "        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)\n" +
-    "        NovaPip.onPipModeChanged(this, isInPictureInPictureMode)\n" +
-    "    }\n" +
-    "\n" +
-    "    override fun onProvideAssistContent(outContent: AssistContent?) {",
-)
-
-# --- BrowserFragment.kt: hide browser chrome while in PiP ---------------------
-patch(
-    BASE + "browser/BrowserFragment.kt",
-    "    override fun initializeUI(view: View, tab: SessionState) {\n" +
-    "        super.initializeUI(view, tab)",
-    "    fun setNovaPipChromeVisible(visible: Boolean) {\n" +
-    "        try {\n" +
-    "            val vis = if (visible) android.view.View.VISIBLE else android.view.View.GONE\n" +
-    "            browserToolbar.layout.visibility = vis\n" +
-    "            browserNavigationBar?.layout?.visibility = vis\n" +
-    "            binding.browserLayout.setBackgroundColor(\n" +
-    "                if (visible) android.graphics.Color.WHITE else android.graphics.Color.BLACK\n" +
-    "            )\n" +
-    "        } catch (_: Exception) {\n" +
-    "        }\n" +
-    "    }\n" +
-    "\n" +
-    "    override fun initializeUI(view: View, tab: SessionState) {\n" +
-    "        super.initializeUI(view, tab)",
+    "        NovaKeepAlive.onAppBackground(this, components)",
 )
 patch(
     BASE + "HomeActivity.kt",
@@ -1332,16 +1274,10 @@ import java.net.URI
  * The user can enable a site (from the browser menu) so it keeps working while
  * the app is backgrounded and the screen is locked. Enabled hosts are remembered
  * in a private SharedPreferences file keyed by the bare hostname ("youtube.com").
- * A second, independent set of hosts has "Allow PiP mode" enabled: those enter
- * picture-in-picture when they are playing and the app is backgrounded, so DRM
- * content (YouTube etc.) keeps a real compositor surface alive.
  */
 object NovaBackgroundSites {
     private const val PREFS = "nova_background_sites"
     private const val KEY = "enabled"
-
-    private const val PIP_PREFS = "nova_pip_sites"
-    private const val PIP_KEY = "enabled"
 
     fun enabledHosts(context: Context): Set<String> {
         val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -1356,22 +1292,6 @@ object NovaBackgroundSites {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()
             .putStringSet(KEY, current)
-            .apply()
-    }
-
-    fun pipEnabledHosts(context: Context): Set<String> {
-        val p = context.getSharedPreferences(PIP_PREFS, Context.MODE_PRIVATE)
-        return p.getStringSet(PIP_KEY, emptySet()) ?: emptySet()
-    }
-
-    fun isPipEnabled(context: Context, host: String): Boolean = host in pipEnabledHosts(context)
-
-    fun togglePip(context: Context, host: String) {
-        val current = HashSet(pipEnabledHosts(context))
-        if (!current.add(host)) current.remove(host)
-        context.getSharedPreferences(PIP_PREFS, Context.MODE_PRIVATE)
-            .edit()
-            .putStringSet(PIP_KEY, current)
             .apply()
     }
 
@@ -1393,23 +1313,11 @@ object NovaBackgroundSites {
         }
     }
 
-    fun isPipEnabledSiteOpen(context: Context, components: Components): Boolean {
-        val hosts = pipEnabledHosts(context)
-        if (hosts.isEmpty()) return false
-        return components.core.store.state.tabs.any { tab ->
-            tab.content.url.isNotBlank() && hostOf(tab.content.url) in hosts
-        }
-    }
-
     /**
-     * Hosts that should be kept running in the background: either "Allow
-     * background playback" or "Allow PiP mode" enabled. Both need the page
-     * reported as visible while backgrounded (the PiP window keeps the DRM
-     * surface alive, but the page must still believe it is visible or YouTube's
-     * player pauses anyway).
+     * Hosts that should be kept running in the background: the sites with
+     * "Allow background playback" enabled.
      */
-    fun keepAliveHosts(context: Context): Set<String> =
-        (enabledHosts(context) + pipEnabledHosts(context))
+    fun keepAliveHosts(context: Context): Set<String> = enabledHosts(context)
 
     fun isKeepAliveSiteOpen(context: Context, components: Components): Boolean {
         val hosts = keepAliveHosts(context)
@@ -1447,86 +1355,6 @@ object NovaKeepAlive {
 
     fun onAppForeground(context: Context) {
         NovaBackgroundService.stop(context)
-    }
-}
-''')
-
-# --- Nova v1.3: auto picture-in-picture for DRM background playback -----------
-# GeckoView can only keep DRM video (YouTube and other Widevine content) decoding
-# while its compositor has a window surface. When the app goes to the background
-# the window surface is destroyed, so DRM playback stops even though the page is
-# kept reported as visible by NovaBackgroundService (which is why only non-DRM
-# sites used to survive). Entering PiP keeps a real window surface alive, so
-# DRM content keeps playing in the background and on the lock screen.
-write(BASE + "components/NovaPip.kt", r'''/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
-package org.mozilla.fenix.components
-
-import android.app.Activity
-import android.content.Context
-import android.os.Build
-import androidx.fragment.app.FragmentActivity
-import mozilla.components.feature.media.ext.findActiveMediaTab
-import mozilla.components.feature.media.ext.playing
-
-/**
- * Nova: per-site picture-in-picture ("Allow PiP mode for this site").
- *
- * GeckoView stops DRM (Widevine) playback when the app is backgrounded, because
- * the compositor's window surface is destroyed. A PiP window keeps a real
- * surface alive, so DRM content keeps playing in the background (and on the
- * lock screen, where Android keeps PiP windows visible). Plain (non-DRM) sites
- * don't need this - NovaBackgroundService keeps them going by reporting the
- * page as visible.
- */
-object NovaPip {
-    /**
-     * True if media is currently playing on a tab whose host the user enabled
-     * with "Allow PiP mode for this site".
-     */
-    fun shouldEnterPip(context: Context, components: Components): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
-        val playingTab = components.core.store.state.findActiveMediaTab() ?: return false
-        if (playingTab.mediaSessionState?.playing() != true) return false
-        val host = NovaBackgroundSites.hostOf(playingTab.content.url)
-        return host.isNotEmpty() && NovaBackgroundSites.isPipEnabled(context, host)
-    }
-
-    /**
-     * Call when the app is heading to the background (Home / recents button, or
-     * screen off) while a site with "Allow PiP mode" enabled is playing: enters
-     * PiP so the DRM surface stays alive. No-ops when already in PiP, finishing,
-     * or nothing is playing.
-     */
-    fun enterPipIfPlaying(activity: Activity, components: Components) {
-        if (activity.isInPictureInPictureMode || activity.isFinishing) return
-        if (!shouldEnterPip(activity, components)) return
-        try {
-            // Non-deprecated overload (the no-arg enterPictureInPictureMode() is
-            // deprecated, and Fenix builds with warnings-as-errors).
-            activity.enterPictureInPictureMode(android.app.PictureInPictureParams.Builder().build())
-        } catch (_: Exception) {
-        }
-    }
-
-    /**
-     * Called from HomeActivity.onPictureInPictureModeChanged. Hides the browser
-     * chrome (toolbar / navigation bar) while the PiP window is shown, so only
-     * the web content fills it, and restores the chrome when PiP exits.
-     */
-    fun onPipModeChanged(activity: FragmentActivity, pip: Boolean) {
-        try {
-            val browserFragment = activity.supportFragmentManager
-                .primaryNavigationFragment
-                ?.childFragmentManager
-                ?.fragments
-                ?.filterIsInstance<org.mozilla.fenix.browser.BrowserFragment>()
-                ?.firstOrNull()
-            browserFragment?.setNovaPipChromeVisible(!pip)
-        } catch (_: Exception) {
-        }
     }
 }
 ''')
@@ -1993,6 +1821,46 @@ class NovaUpdateActionService : Service() {
 }
 ''')
 
+# --- NovaNotifications.kt: request POST_NOTIFICATIONS once on Android 13+ -----
+write(BASE + "components/NovaNotifications.kt", r'''/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.components
+
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.os.Build
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
+
+/**
+ * Nova: makes sure the app can post notifications. On Android 13+ an app must
+ * hold the POST_NOTIFICATIONS runtime permission, and it is only granted after
+ * the user accepts the system dialog. Nova asks for it once, on the first
+ * launch, so the update / background-site notifications can actually show up.
+ */
+object NovaNotifications {
+    private const val REQUEST_CODE = 9001
+    private const val PREFS = "nova_notifications"
+    private const val KEY_ASKED = "asked"
+
+    fun ensureNotificationPermission(activity: Activity) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (NotificationManagerCompat.from(activity).areNotificationsEnabled()) return
+        val prefs = activity.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (prefs.getBoolean(KEY_ASKED, false)) return
+        prefs.edit().putBoolean(KEY_ASKED, true).apply()
+        ActivityCompat.requestPermissions(
+            activity,
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+            REQUEST_CODE,
+        )
+    }
+}
+''')
+
 # --- AndroidManifest.xml: wake lock + foreground service permissions ----------
 patch(
     'app/src/main/AndroidManifest.xml',
@@ -2030,9 +1898,6 @@ patch(
     novaAllowBackgroundVisible: Boolean = false,
     novaAllowBackgroundEnabled: Boolean = false,
     onNovaAllowBackgroundToggle: () -> Unit = {},
-    novaAllowPipVisible: Boolean = false,
-    novaAllowPipEnabled: Boolean = false,
-    onNovaAllowPipToggle: () -> Unit = {},
     canGoBack: Boolean,""",
 )
 
@@ -2061,26 +1926,6 @@ patch(
                         )
                     },
                 )
-                if (novaAllowPipVisible) {
-                    MenuItem(
-                        label = stringResource(id = R.string.browser_menu_allow_pip),
-                        description = stringResource(
-                            id = if (novaAllowPipEnabled) {
-                                R.string.browser_menu_allow_pip_on
-                            } else {
-                                R.string.browser_menu_allow_pip_off
-                            },
-                        ),
-                        beforeIconPainter = painterResource(id = R.drawable.nova_ic_picture_in_picture_24),
-                        onClick = onNovaAllowPipToggle,
-                        afterContent = {
-                            androidx.compose.material3.Switch(
-                                checked = novaAllowPipEnabled,
-                                onCheckedChange = { onNovaAllowPipToggle() },
-                            )
-                        },
-                    )
-                }
             }
         }
 
@@ -2121,24 +1966,7 @@ patch(
                                         novaAllowBackgroundEnabled = !novaAllowBackgroundEnabled
                                     }
                                 }
-                                var novaAllowPipEnabled by remember(novaCurrentHost) {
-                                    mutableStateOf(
-                                        novaCurrentHost.isNotEmpty() &&
-                                            org.mozilla.fenix.components.NovaBackgroundSites.isPipEnabled(
-                                                requireContext(),
-                                                novaCurrentHost,
-                                            ),
-                                    )
-                                }
-                                val onNovaAllowPipToggle = {
-                                    if (novaCurrentHost.isNotEmpty()) {
-                                        org.mozilla.fenix.components.NovaBackgroundSites.togglePip(
-                                            requireContext(),
-                                            novaCurrentHost,
-                                        )
-                                        novaAllowPipEnabled = !novaAllowPipEnabled
-                                    }
-                                }""",
+""",
 )
 
 # --- MenuDialogFragment.kt: pass the toggle to MainMenu -----------------------
@@ -2148,10 +1976,7 @@ patch(
     """                                    webExtensionMenuCount = webExtensionsCount,
                                     novaAllowBackgroundVisible = novaCurrentHost.isNotEmpty(),
                                     novaAllowBackgroundEnabled = novaAllowBackgroundEnabled,
-                                    onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,
-                                    novaAllowPipVisible = novaCurrentHost.isNotEmpty(),
-                                    novaAllowPipEnabled = novaAllowPipEnabled,
-                                    onNovaAllowPipToggle = onNovaAllowPipToggle,""",
+                                    onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,""",
 )
 
 # --- FenixApplication.kt: check for updates on every launch -------------------
