@@ -5,6 +5,40 @@ All notable changes to **Nova Browser** are documented in this file.
 Everything before 1.0 was developed as numbered internal test builds
 (`2.46.0-fix1` → `2.46.0-fix9`) and is folded into this first release.
 
+## [1.3.2] — 2026-08-21
+
+### Fixed
+
+- **Crash when going to the background on a site with "Allow PiP mode" enabled**
+  while nothing is playing. Android 12+ refuses to start a background keep-alive
+  service unless the app is exempt (e.g. it is actively playing audio), and that
+  refusal used to crash the app. The keep-alive start is now skipped quietly when
+  the system forbids it, so backgrounding any site is always safe.
+
+## [1.3.1] — 2026-08-21
+
+### Fixed
+
+- **Keyboard backspace bug after the screen is locked** — the background
+  keep-alive no longer forces input focus onto the hidden page, which used to
+  desync the keyboard (backspace needed several presses to delete one character).
+- **Mini/floating (freeform) windows** — opening Nova in a mini window no longer
+  wipes your tabs, and the "display already acquired" crash when a window
+  relaunches is handled instead of crashing.
+- Keep-alive now also runs for sites with "Allow PiP mode" enabled, so the page
+  stays reported as visible inside the PiP window.
+
+## [1.3] — 2026-08-21
+
+### Added
+
+- **Allow PiP mode (per site)** — a toggle in the three-dot menu. Turn it on for
+  a site and when you leave the app while that site is playing media, Nova
+  automatically enters a small picture-in-picture window. This keeps DRM video
+  (YouTube and other Widevine content) playing in the background and on the lock
+  screen, which plain background playback can't do. The toggle is remembered per
+  site.
+
 ## [1.2] — 2026-08-20
 
 ### Fixed
