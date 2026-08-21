@@ -948,6 +948,7 @@ patch(
     "import org.mozilla.fenix.components.NovaCloseCleanup\n" +
     "import org.mozilla.fenix.components.NovaDebugLog\n" +
     "import org.mozilla.fenix.components.NovaKeepAlive\n" +
+    "import org.mozilla.fenix.components.NovaNotifications\n" +
     "import org.mozilla.fenix.settings.SupportUtils",
 )
 patch(
