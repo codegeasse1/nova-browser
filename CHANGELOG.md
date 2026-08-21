@@ -5,6 +5,24 @@ All notable changes to **Nova Browser** are documented in this file.
 Everything before 1.0 was developed as numbered internal test builds
 (`2.46.0-fix1` → `2.46.0-fix9`) and is folded into this first release.
 
+## [1.3.3] — 2026-08-21
+
+### Removed
+
+- **"Allow PiP mode for this site" has been removed.** Entering picture-in-picture
+  from a site kept crashing the app when the browser went to the background (on
+  DRM and non-DRM sites alike), and the crash could not be made reliable, so the
+  option is gone. "Allow background playback" still covers all non-DRM sites;
+  DRM video (YouTube) keeps playing in the background on the lock screen where
+  Android keeps the window surface alive.
+
+### Fixed
+
+- **Update notifications now actually appear.** Android 13+ silently drops
+  notifications from apps that were never granted the notification permission.
+  Nova now asks for it on first launch, so the "update available" notification
+  shows up the next time a new version is released.
+
 ## [1.3.2] — 2026-08-21
 
 ### Fixed
