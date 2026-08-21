@@ -989,6 +989,40 @@ patch(
 )
 patch(
     BASE + "HomeActivity.kt",
+    "    override fun onProvideAssistContent(outContent: AssistContent?) {",
+    "    override fun onPictureInPictureModeChanged(\n" +
+    "        isInPictureInPictureMode: Boolean,\n" +
+    "        newConfig: Configuration,\n" +
+    "    ) {\n" +
+    "        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)\n" +
+    "        NovaPip.onPipModeChanged(this, isInPictureInPictureMode)\n" +
+    "    }\n" +
+    "\n" +
+    "    override fun onProvideAssistContent(outContent: AssistContent?) {",
+)
+
+# --- BrowserFragment.kt: hide browser chrome while in PiP ---------------------
+patch(
+    BASE + "browser/BrowserFragment.kt",
+    "    override fun initializeUI(view: View, tab: SessionState) {\n" +
+    "        super.initializeUI(view, tab)",
+    "    fun setNovaPipChromeVisible(visible: Boolean) {\n" +
+    "        try {\n" +
+    "            val vis = if (visible) android.view.View.VISIBLE else android.view.View.GONE\n" +
+    "            browserToolbar.layout.visibility = vis\n" +
+    "            browserNavigationBar?.layout?.visibility = vis\n" +
+    "            binding.browserLayout.setBackgroundColor(\n" +
+    "                if (visible) android.graphics.Color.WHITE else android.graphics.Color.BLACK\n" +
+    "            )\n" +
+    "        } catch (_: Exception) {\n" +
+    "        }\n" +
+    "    }\n" +
+    "\n" +
+    "    override fun initializeUI(view: View, tab: SessionState) {\n" +
+    "        super.initializeUI(view, tab)",
+)
+patch(
+    BASE + "HomeActivity.kt",
     "    final override fun onStart() {",
     """    private var novaScheduledCheck: Job? = null
 
@@ -1366,6 +1400,24 @@ object NovaBackgroundSites {
             tab.content.url.isNotBlank() && hostOf(tab.content.url) in hosts
         }
     }
+
+    /**
+     * Hosts that should be kept running in the background: either "Allow
+     * background playback" or "Allow PiP mode" enabled. Both need the page
+     * reported as visible while backgrounded (the PiP window keeps the DRM
+     * surface alive, but the page must still believe it is visible or YouTube's
+     * player pauses anyway).
+     */
+    fun keepAliveHosts(context: Context): Set<String> =
+        (enabledHosts(context) + pipEnabledHosts(context))
+
+    fun isKeepAliveSiteOpen(context: Context, components: Components): Boolean {
+        val hosts = keepAliveHosts(context)
+        if (hosts.isEmpty()) return false
+        return components.core.store.state.tabs.any { tab ->
+            tab.content.url.isNotBlank() && hostOf(tab.content.url) in hosts
+        }
+    }
 }
 ''')
 
@@ -1386,7 +1438,7 @@ import android.content.Context
  */
 object NovaKeepAlive {
     fun onAppBackground(context: Context, components: Components) {
-        if (NovaBackgroundSites.isEnabledSiteOpen(context, components)) {
+        if (NovaBackgroundSites.isKeepAliveSiteOpen(context, components)) {
             NovaBackgroundService.start(context)
         } else {
             NovaBackgroundService.stop(context)
@@ -1415,6 +1467,7 @@ package org.mozilla.fenix.components
 import android.app.Activity
 import android.content.Context
 import android.os.Build
+import androidx.fragment.app.FragmentActivity
 import mozilla.components.feature.media.ext.findActiveMediaTab
 import mozilla.components.feature.media.ext.playing
 
@@ -1454,6 +1507,24 @@ object NovaPip {
             // Non-deprecated overload (the no-arg enterPictureInPictureMode() is
             // deprecated, and Fenix builds with warnings-as-errors).
             activity.enterPictureInPictureMode(android.app.PictureInPictureParams.Builder().build())
+        } catch (_: Exception) {
+        }
+    }
+
+    /**
+     * Called from HomeActivity.onPictureInPictureModeChanged. Hides the browser
+     * chrome (toolbar / navigation bar) while the PiP window is shown, so only
+     * the web content fills it, and restores the chrome when PiP exits.
+     */
+    fun onPipModeChanged(activity: FragmentActivity, pip: Boolean) {
+        try {
+            val browserFragment = activity.supportFragmentManager
+                .primaryNavigationFragment
+                ?.childFragmentManager
+                ?.fragments
+                ?.filterIsInstance<org.mozilla.fenix.browser.BrowserFragment>()
+                ?.firstOrNull()
+            browserFragment?.setNovaPipChromeVisible(!pip)
         } catch (_: Exception) {
         }
     }
@@ -1576,7 +1647,7 @@ class NovaBackgroundService : Service() {
      * running.
      */
     private fun keepEnabledSitesVisible() {
-        val hosts = NovaBackgroundSites.enabledHosts(applicationContext)
+        val hosts = NovaBackgroundSites.keepAliveHosts(applicationContext)
         if (hosts.isEmpty()) return
         val store = applicationContext.components.core.store
         for (tab in store.state.tabs) {
@@ -2117,6 +2188,40 @@ patch(
      * See [EngineSession.updateSessionPriority].
      */
     override fun updateSessionPriority(priority: SessionPriority) {""",
+)
+
+# --- android-components (submodule): recover from freeform/mini-window crash ---
+# Opening the browser in a mini/floating (freeform) window makes GeckoView
+# re-attach while the session's display is still held by the previous window,
+# which throws IllegalStateException ("display already acquired") and crashes.
+# Release the session and re-attach so the display is re-acquired instead.
+patch(
+    "android-components/components/browser/engine-gecko/src/main/java/mozilla/components/browser/engine/gecko/GeckoEngineView.kt",
+    """            } catch (e: IllegalStateException) {
+                // This is to debug "display already acquired" crashes
+                val otherActivityClassName =
+                    this.session?.accessibility?.view?.context?.javaClass?.simpleName
+                val otherActivityClassHashcode =
+                    this.session?.accessibility?.view?.context?.hashCode()
+                val activityClassName = context.javaClass.simpleName
+                val activityClassHashCode = context.hashCode()
+                val msg = "ATTACH VIEW: Current activity: $activityClassName hashcode " +
+                    "$activityClassHashCode Other activity: $otherActivityClassName " +
+                    "hashcode $otherActivityClassHashcode"
+                throw IllegalStateException(msg, e)
+            }""",
+    """            } catch (_: IllegalStateException) {
+                // Nova: "display already acquired" happens when the session's
+                // display is still held by a previous window (mini/floating
+                // window relaunch). Release the session and re-attach so the
+                // display gets re-acquired instead of crashing the app.
+                releaseSession()
+                try {
+                    super.onAttachedToWindow()
+                } catch (e2: Exception) {
+                    android.util.Log.w("NovaGeckoView", "display re-attach failed", e2)
+                }
+            }""",
 )
 
 print("All Nova source patches applied.")
