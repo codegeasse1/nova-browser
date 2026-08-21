@@ -5,6 +5,20 @@ All notable changes to **Nova Browser** are documented in this file.
 Everything before 1.0 was developed as numbered internal test builds
 (`2.46.0-fix1` → `2.46.0-fix9`) and is folded into this first release.
 
+## [1.4.1] — 2026-08-21
+
+### Fixed
+
+- **Password CSV import now actually imports.** CSVs without a Firefox-style
+  `formActionOrigin` column (Chrome/Quetta style, e.g.
+  `name,url,username,password,note`) were accepted but every row silently
+  failed to save and the app reported "Imported 0 passwords". Imports now use
+  the site's own origin as the form action when the file doesn't provide one,
+  so the rows are stored for real.
+- Import now also recognises more CSV header variants (Quetta's `name,url,username,password,note`,
+  `website`, `user`, …) and, for headerless files, guesses the columns from the
+  data, so Chrome, Edge, Brave, Quetta and Firefox exports all import correctly.
+
 ## [1.4.0] — 2026-08-21
 
 ### Added
