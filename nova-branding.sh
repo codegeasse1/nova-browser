@@ -2699,7 +2699,7 @@ patch(
                                     }
                                 }
 
-                                val novaCurrentUrl = selectedTab?.content?.url?.toString().orEmpty()
+                                val novaCurrentUrl = selectedTab?.content?.url.orEmpty()
                                 var novaDeveloperModeEnabled by remember {
                                     mutableStateOf(
                                         requireComponents.settings.isRemoteDebuggingEnabled,
