@@ -2615,6 +2615,130 @@ patch(
             }""",
 )
 
+# --- strings.xml: View page source + Developer mode -------------------------------
+patch(
+    "app/src/main/res/values/strings.xml",
+    "    <string name=\"browser_menu_allow_background_playback_off\">Keeps this site working while you use other apps or lock the screen.</string>",
+    """    <string name="browser_menu_allow_background_playback_off">Keeps this site working while you use other apps or lock the screen.</string>
+    <string name="browser_menu_view_page_source">View page source</string>
+    <string name="browser_menu_view_page_source_hint">Show the raw HTML source of this page in a new tab.</string>
+    <string name="browser_menu_developer_mode">Developer mode</string>
+    <string name="browser_menu_developer_mode_on">On: Nova exposes its built-in web console / developer debugging tools.</string>
+    <string name="browser_menu_developer_mode_off">Turn on Nova's developer mode to inspect pages. Applies to new pages.</string>""",
+)
+
+# --- MainMenu.kt: params for View page source + Developer mode ----------------
+patch(
+    BASE + "components/menu/compose/MainMenu.kt",
+    '''    onNovaAllowBackgroundToggle: () -> Unit = {},
+    canGoBack: Boolean,''',
+    '''    onNovaAllowBackgroundToggle: () -> Unit = {},
+    onNovaViewSource: () -> Unit = {},
+    novaDeveloperModeEnabled: Boolean = false,
+    onNovaDeveloperModeToggle: () -> Unit = {},
+    canGoBack: Boolean,''',
+)
+
+# --- MainMenu.kt: the "View page source" + "Developer mode" menu rows ------
+patch(
+    BASE + "components/menu/compose/MainMenu.kt",
+    """        LibraryMenuGroup(
+            isDownloadHighlighted = isDownloadHighlighted,""",
+    """        if (accessPoint == MenuAccessPoint.Browser) {
+            MenuGroup {
+                MenuItem(
+                    label = stringResource(id = R.string.browser_menu_view_page_source),
+                    description = stringResource(id = R.string.browser_menu_view_page_source_hint),
+                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
+                    onClick = onNovaViewSource,
+                )
+                MenuItem(
+                    label = stringResource(id = R.string.browser_menu_developer_mode),
+                    description = stringResource(
+                        id = if (novaDeveloperModeEnabled) {
+                            R.string.browser_menu_developer_mode_on
+                        } else {
+                            R.string.browser_menu_developer_mode_off
+                        },
+                    ),
+                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
+                    onClick = { onNovaDeveloperModeToggle() },
+                    afterContent = {
+                        androidx.compose.material3.Switch(
+                            checked = novaDeveloperModeEnabled,
+                            onCheckedChange = { onNovaDeveloperModeToggle() },
+                        )
+                    },
+                )
+            }
+        }
+
+        LibraryMenuGroup(
+            isDownloadHighlighted = isDownloadHighlighted,""",
+)
+
+# --- MenuDialogFragment.kt: page-source + developer-mode handlers -------------
+patch(
+    BASE + "components/menu/MenuDialogFragment.kt",
+    """                                val onNovaAllowBackgroundToggle = {
+                                    if (novaCurrentHost.isNotEmpty()) {
+                                        org.mozilla.fenix.components.NovaBackgroundSites.toggle(
+                                            requireContext(),
+                                            novaCurrentHost,
+                                        )
+                                        novaAllowBackgroundEnabled = !novaAllowBackgroundEnabled
+                                    }
+                                }""",
+    """                                val onNovaAllowBackgroundToggle = {
+                                    if (novaCurrentHost.isNotEmpty()) {
+                                        org.mozilla.fenix.components.NovaBackgroundSites.toggle(
+                                            requireContext(),
+                                            novaCurrentHost,
+                                        )
+                                        novaAllowBackgroundEnabled = !novaAllowBackgroundEnabled
+                                    }
+                                }
+
+                                val novaCurrentUrl = selectedTab?.content?.url?.toString().orEmpty()
+                                var novaDeveloperModeEnabled by remember {
+                                    mutableStateOf(
+                                        requireComponents.settings.isRemoteDebuggingEnabled,
+                                    )
+                                }
+                                val onNovaViewSource = {
+                                    if (novaCurrentUrl.isNotEmpty()) {
+                                        requireComponents.useCases.tabsUseCases.addTab(
+                                            url = "view-source:$novaCurrentUrl",
+                                            select = true,
+                                        )
+                                    }
+                                }
+                                val onNovaDeveloperModeToggle = {
+                                    novaDeveloperModeEnabled = !novaDeveloperModeEnabled
+                                    requireContext()
+                                        .getSharedPreferences(
+                                            "fenix_preferences",
+                                            android.content.Context.MODE_PRIVATE,
+                                        )
+                                        .edit()
+                                        .putBoolean(
+                                            requireContext().getString(R.string.pref_key_remote_debugging),
+                                            novaDeveloperModeEnabled,
+                                        )
+                                        .apply()
+                                }""",
+)
+
+# --- MenuDialogFragment.kt: pass them into MainMenu ---------------------------
+patch(
+    BASE + "components/menu/MenuDialogFragment.kt",
+    """                                    onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,""",
+    """                                    onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,
+                                    onNovaViewSource = onNovaViewSource,
+                                    novaDeveloperModeEnabled = novaDeveloperModeEnabled,
+                                    onNovaDeveloperModeToggle = onNovaDeveloperModeToggle,""",
+)
+
 print("All Nova source patches applied.")
 
 PY
