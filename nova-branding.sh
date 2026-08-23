@@ -739,6 +739,36 @@ browser.runtime.onMessage.addListener((msg) => {
   }
   return null;
 });
+
+let novaEnabled = true;
+browser.storage.local.get({ enabled: true }).then(function (r) {
+  if (r && typeof r.enabled === "boolean") novaEnabled = r.enabled;
+}).catch(function () {});
+
+function broadcastEnabled() {
+  browser.tabs.query({}).then(function (tabs) {
+    for (let i = 0; i < tabs.length; i++) {
+      browser.tabs.sendMessage(tabs[i].id, { type: "setEnabled", enabled: novaEnabled }).catch(function () {});
+    }
+  }).catch(function () {});
+}
+
+let ctlPort = null;
+function tryConnectNative() {
+  try {
+    if (ctlPort) return;
+    ctlPort = browser.runtime.connectNative("novaControl");
+    ctlPort.onMessage.addListener((msg) => {
+      if (!msg || msg.type !== "setEnabled") return;
+      novaEnabled = !!msg.enabled;
+      browser.storage.local.set({ enabled: novaEnabled });
+      broadcastEnabled();
+    });
+    ctlPort.onDisconnect.addListener(() => { ctlPort = null; });
+  } catch (e) {}
+}
+setInterval(tryConnectNative, 2000);
+tryConnectNative();
 JS
 
 cat > app/src/main/assets/extensions/nova-tools/content.js <<'JS'
@@ -942,6 +972,7 @@ if (!window.__novaToolsLoaded) {
       }
 
       function placeButtons() {
+        if (!ui) return;
         for (var i = 0; i < downloadButtons.length; i++) { try { downloadButtons[i].parentNode && downloadButtons[i].parentNode.removeChild(downloadButtons[i]); } catch (e) {} }
         downloadButtons = [];
         if (inspectMode || !document.body) return;
@@ -984,8 +1015,44 @@ if (!window.__novaToolsLoaded) {
     }
   }
 
-  if (document.documentElement) { buildUI(); }
-  else { document.addEventListener("DOMContentLoaded", buildUI); }
+  function teardownUI() {
+    try {
+      var css = document.getElementById("nova-tools-css"); if (css && css.parentNode) { css.parentNode.removeChild(css); }
+      var fabEl = document.getElementById("nova-tools-fab"); if (fabEl && fabEl.parentNode) { fabEl.parentNode.removeChild(fabEl); }
+      var wrapEl = document.getElementById("nova-tools-wrap"); if (wrapEl && wrapEl.parentNode) { wrapEl.parentNode.removeChild(wrapEl); }
+      for (var i = 0; i < downloadButtons.length; i++) { try { if (downloadButtons[i] && downloadButtons[i].parentNode) { downloadButtons[i].parentNode.removeChild(downloadButtons[i]); } } catch (e) {} }
+      downloadButtons = [];
+      ui = null;
+    } catch (e) {}
+  }
+
+  function ensureUI() {
+    if (ui) return;
+    if (!document.documentElement) { document.addEventListener("DOMContentLoaded", ensureUI); return; }
+    try {
+      browser.storage.local.get({ enabled: true }).then(function (res) {
+        if (res && res.enabled === false) return;
+        buildUI();
+      }).catch(function () { buildUI(); });
+    } catch (e) { buildUI(); }
+  }
+
+  function onControlMessage(msg) {
+    if (!msg || msg.type !== "setEnabled") return;
+    if (msg.enabled === false) { teardownUI(); } else { ensureUI(); }
+  }
+
+  browser.runtime.onMessage.addListener(onControlMessage);
+  browser.storage.onChanged.addListener(function (changes, area) {
+    try {
+      if (changes && changes.enabled) {
+        if (changes.enabled.newValue === false) { teardownUI(); }
+        else { ensureUI(); }
+      }
+    } catch (e) {}
+  });
+
+  ensureUI();
 }
 
 JS
@@ -1996,13 +2063,32 @@ patch(
      * Nova: toggles Nova Tools on/off at runtime. Persists the choice so the
      * install step above can skip it on later launches.
      */
+    private var novaToolsPort: mozilla.components.concept.engine.webextension.Port? = null
+
     private fun installNovaTools(enabled: Boolean) {
         if (!enabled) return
         val engine = components.core.engine
         engine.installBuiltInWebExtension(
             id = NOVA_TOOLS_ADDON_ID,
             url = "resource://android/assets/extensions/nova-tools/",
-            onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools installed: ${it.id}") },
+            onSuccess = {
+                org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools installed: ${it.id}")
+                try {
+                    it.registerBackgroundMessageHandler(
+                        "novaControl",
+                        object : mozilla.components.concept.engine.webextension.MessageHandler {
+                            override fun onPortConnected(port: mozilla.components.concept.engine.webextension.Port) {
+                                novaToolsPort = port
+                                try { novaToolsPort?.postMessage(org.json.JSONObject().put("type", "setEnabled").put("enabled", true)) } catch (e: java.lang.Throwable) {}
+                            }
+
+                            override fun onPortDisconnected(port: mozilla.components.concept.engine.webextension.Port) {
+                                if (novaToolsPort === port) novaToolsPort = null
+                            }
+                        },
+                    )
+                } catch (e: java.lang.Throwable) { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools port error: ${e.message}") }
+            },
             onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools install error: ${it.message}") },
         )
     }
@@ -2013,6 +2099,8 @@ patch(
             .edit().putBoolean("nova_tools_enabled", enabled).apply()
         if (enabled) {
             installNovaTools(true)
+        } else {
+            try { novaToolsPort?.postMessage(org.json.JSONObject().put("type", "setEnabled").put("enabled", false)) } catch (e: java.lang.Throwable) {}
         }
     }
 
