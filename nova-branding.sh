@@ -2952,10 +2952,7 @@ patch(
     "    <string name=\"browser_menu_allow_background_playback_off\">Keeps this site working while you use other apps or lock the screen.</string>",
     """    <string name="browser_menu_allow_background_playback_off">Keeps this site working while you use other apps or lock the screen.</string>
     <string name="browser_menu_view_page_source">View page source</string>
-    <string name="browser_menu_view_page_source_hint">Show the raw HTML source of this page in a new tab.</string>
-    <string name="browser_menu_developer_mode">Developer mode</string>
-    <string name="browser_menu_developer_mode_on">On: Nova shows the developer debugging console. Takes effect after restart.</string>
-    <string name="browser_menu_developer_mode_off">Turn on Nova developer mode to inspect web pages. Takes effect after restart.</string>""",
+    <string name="browser_menu_view_page_source_hint">Show the raw HTML source of this page in a new tab.</string>""",
 )
 
 # --- MainMenu.kt: params for View page source + Developer mode ----------------
@@ -2965,8 +2962,6 @@ patch(
     canGoBack: Boolean,''',
     '''    onNovaAllowBackgroundToggle: () -> Unit = {},
     onNovaViewSource: () -> Unit = {},
-    novaDeveloperModeEnabled: Boolean = false,
-    onNovaDeveloperModeToggle: () -> Unit = {},
     canGoBack: Boolean,''',
 )
 
@@ -2982,24 +2977,6 @@ patch(
                     description = stringResource(id = R.string.browser_menu_view_page_source_hint),
                     beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
                     onClick = onNovaViewSource,
-                )
-                MenuItem(
-                    label = stringResource(id = R.string.browser_menu_developer_mode),
-                    description = stringResource(
-                        id = if (novaDeveloperModeEnabled) {
-                            R.string.browser_menu_developer_mode_on
-                        } else {
-                            R.string.browser_menu_developer_mode_off
-                        },
-                    ),
-                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
-                    onClick = { onNovaDeveloperModeToggle() },
-                    afterContent = {
-                        androidx.compose.material3.Switch(
-                            checked = novaDeveloperModeEnabled,
-                            onCheckedChange = { onNovaDeveloperModeToggle() },
-                        )
-                    },
                 )
             }
         }
@@ -3031,11 +3008,6 @@ patch(
                                 }
 
                                 val novaCurrentUrl = selectedTab?.content?.url.orEmpty()
-                                var novaDeveloperModeEnabled by remember {
-                                    mutableStateOf(
-                                        requireComponents.settings.isRemoteDebuggingEnabled,
-                                    )
-                                }
                                 val onNovaViewSource = {
                                     if (novaCurrentUrl.isNotEmpty()) {
                                         requireComponents.useCases.tabsUseCases.addTab(
@@ -3043,20 +3015,6 @@ patch(
                                             selectTab = true,
                                         )
                                     }
-                                }
-                                val onNovaDeveloperModeToggle = {
-                                    novaDeveloperModeEnabled = !novaDeveloperModeEnabled
-                                    requireContext()
-                                        .getSharedPreferences(
-                                            "fenix_preferences",
-                                            android.content.Context.MODE_PRIVATE,
-                                        )
-                                        .edit()
-                                        .putBoolean(
-                                            requireContext().getString(R.string.pref_key_remote_debugging),
-                                            novaDeveloperModeEnabled,
-                                        )
-                                        .apply()
                                 }""",
 )
 
@@ -3065,9 +3023,7 @@ patch(
     BASE + "components/menu/MenuDialogFragment.kt",
     """                                    onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,""",
     """                                    onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,
-                                    onNovaViewSource = onNovaViewSource,
-                                    novaDeveloperModeEnabled = novaDeveloperModeEnabled,
-                                    onNovaDeveloperModeToggle = onNovaDeveloperModeToggle,""",
+                                    onNovaViewSource = onNovaViewSource,""",
 )
 
 print("All Nova source patches applied.")
