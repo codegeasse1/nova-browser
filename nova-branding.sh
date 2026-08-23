@@ -2079,7 +2079,7 @@ patch(
                         object : mozilla.components.concept.engine.webextension.MessageHandler {
                             override fun onPortConnected(port: mozilla.components.concept.engine.webextension.Port) {
                                 novaToolsPort = port
-                                try { novaToolsPort?.postMessage(org.json.JSONObject().put("type", "setEnabled").put("enabled", true)) } catch (e: java.lang.Throwable) {}
+                                try { novaToolsPort?.postMessage(org.json.JSONObject().put("type", "setEnabled").put("enabled", true)) } catch (e: Exception) {}
                             }
 
                             override fun onPortDisconnected(port: mozilla.components.concept.engine.webextension.Port) {
@@ -2087,7 +2087,7 @@ patch(
                             }
                         },
                     )
-                } catch (e: java.lang.Throwable) { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools port error: ${e.message}") }
+                } catch (e: Exception) { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools port error: ${e.message}") }
             },
             onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools install error: ${it.message}") },
         )
@@ -2100,7 +2100,7 @@ patch(
         if (enabled) {
             installNovaTools(true)
         } else {
-            try { novaToolsPort?.postMessage(org.json.JSONObject().put("type", "setEnabled").put("enabled", false)) } catch (e: java.lang.Throwable) {}
+            try { novaToolsPort?.postMessage(org.json.JSONObject().put("type", "setEnabled").put("enabled", false)) } catch (e: Exception) {}
         }
     }
 
