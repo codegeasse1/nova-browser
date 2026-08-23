@@ -783,16 +783,16 @@ if (!window.__novaToolsLoaded) {
   const CSS = [
     "#nova-tools-fab{position:fixed !important;right:14px;bottom:96px;z-index:2147483646 !important;pointer-events:auto !important;touch-action:manipulation !important;width:46px;height:46px;border-radius:50%;background:#0B7E78;color:#fff;font-weight:600;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.35);cursor:pointer;user-select:none}",
     "#nova-tools-fab:active{background:#0a6b66}",
-    "#nova-tools-wrap{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(10,14,18,.97);color:#e6edf3;font:14px/1.5 -apple-system,Roboto,sans-serif;display:none}",
-    "#nova-tools-wrap.open{display:block}",
-    "#nova-tools-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#12212b;border-bottom:1px solid #24333c}",
-    "#nova-tools-tabs{display:flex;gap:6px}",
+    "#nova-tools-wrap{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(10,14,18,.97);color:#e6edf3;font:14px/1.5 -apple-system,Roboto,sans-serif;display:none;flex-direction:column}",
+    "#nova-tools-wrap.open{display:flex}",
+    "#nova-tools-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px;background:#12212b;border-bottom:1px solid #24333c;flex:0 0 auto}",
+    "#nova-tools-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}",
     "#nova-tools-tabs button{background:transparent;color:#9fb4bf;border:1px solid #2b3a44;border-radius:6px;padding:6px 10px;font-weight:600}",
     "#nova-tools-tabs button.active{background:#0B7E78;color:#fff;border-color:#0B7E78}",
     "#nova-tools-inspect-btn.armed{background:#0B7E78;color:#fff}",
-    "#nova-tools-close{margin-left:auto;background:transparent;color:#9fb4bf;border:none;font-size:26px;padding:0 10px}",
+    "#nova-tools-close{margin-left:auto;background:transparent;color:#9fb4bf;border:none;font-size:26px;padding:0 8px;flex:0 0 auto}",
     "#nova-tools-clear{background:#1b2a32;color:#cfdde5;border:none;border-radius:6px;padding:6px 10px;font-weight:600}",
-    "#nova-tools-body{position:absolute;top:46px;left:0;right:0;bottom:0;overflow:auto;padding:12px}",
+    "#nova-tools-body{flex:1 1 auto;min-height:0;overflow:auto;padding:10px 12px}",
     "#nova-tools-body .row{border-bottom:1px solid #1b2730;padding:5px 0;display:flex;gap:8px;align-items:baseline;word-break:break-all}",
     "#nova-tools-body .lv{font-weight:700;min-width:60px;text-transform:uppercase;font-size:11px}",
     "#nova-tools-body .lv.log,#nova-tools-body .lv.info{color:#8ab4f8}#nova-tools-body .lv.warn{color:#fdd663}#nova-tools-body .lv.error{color:#f28b82}",
@@ -932,12 +932,19 @@ if (!window.__novaToolsLoaded) {
           btn.addEventListener("click", function (ev2, u) {
             ev2.stopPropagation(); ev2.preventDefault();
             btn.textContent = "...";
-            extMsg({ type: "download", url: u, filename: (u.split("/").pop().split("?")[0]) || "media.mp4" }).then(function (res) {
-              try { navigator.clipboard.writeText(res && res.url ? res.url : u); } catch (e) {}
-              btn.textContent = res && res.ok ? "Saved" : "Copied";
+            var done = false;
+            var finish = function (msg) {
+              if (done) return; done = true;
+              btn.textContent = msg;
+              try { navigator.clipboard.writeText(u); } catch (e) {}
               setTimeout(function () {
                 var me = document.getElementById("nova-vdl"); if (me) { try { me.parentNode && me.parentNode.removeChild(me); } catch (e) {} }
-              }, 1200);
+              }, 2500);
+            };
+            var to = setTimeout(function () { finish("URL copied"); }, 2500);
+            extMsg({ type: "download", url: u, filename: (u.split("/").pop().split("?")[0]) || "media.mp4" }).then(function (res) {
+              clearTimeout(to);
+              if (res && res.ok) { finish("Saving\u2026 done"); } else { finish(res && res.url ? "URL copied" : "URL copied"); }
             });
           }.bind(null, null, src));
           document.documentElement.appendChild(btn);
@@ -1951,12 +1958,44 @@ patch(
             onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "uBlock Origin installed: ${it.id}") },
             onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "uBlock Origin install error: ${it.message}") },
         )
+        val novaToolsOn = applicationContext.getSharedPreferences("nova", android.content.Context.MODE_PRIVATE)
+            .getBoolean("nova_tools_enabled", true)
+        if (novaToolsOn) {
+            engine.installBuiltInWebExtension(
+                id = NOVA_TOOLS_ADDON_ID,
+                url = "resource://android/assets/extensions/nova-tools/",
+                onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools installed: ${it.id}") },
+                onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools install error: ${it.message}") },
+            )
+        }
+    }
+
+    /**
+     * Nova: toggles Nova Tools on/off at runtime. Persists the choice so the
+     * install step above can skip it on later launches.
+     */
+    private fun installNovaTools(enabled: Boolean) {
+        if (!enabled) return
+        val engine = components.core.engine
         engine.installBuiltInWebExtension(
             id = NOVA_TOOLS_ADDON_ID,
             url = "resource://android/assets/extensions/nova-tools/",
             onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools installed: ${it.id}") },
             onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools install error: ${it.message}") },
         )
+    }
+
+    /** Http, live on/off toggle for Nova Tools from the browser menu. */
+    fun setNovaToolsEnabled(enabled: Boolean) {
+        applicationContext.getSharedPreferences("nova", android.content.Context.MODE_PRIVATE)
+            .edit().putBoolean("nova_tools_enabled", enabled).apply()
+        if (enabled) {
+            installNovaTools(true)
+        } else {
+            components.core.engine.uninstallExtension(NOVA_TOOLS_ADDON_ID, onSuccess = {
+                org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools disabled")
+            })
+        }
     }
 
     @VisibleForTesting""",
@@ -2809,6 +2848,29 @@ patch(
             }
         }
 
+        if (accessPoint == MenuAccessPoint.Browser) {
+            MenuGroup {
+                MenuItem(
+                    label = stringResource(id = R.string.browser_menu_nova_tools),
+                    description = stringResource(
+                        id = if (novaToolsEnabled) {
+                            R.string.browser_menu_nova_tools_on
+                        } else {
+                            R.string.browser_menu_nova_tools_off
+                        },
+                    ),
+                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
+                    onClick = onNovaToolsToggle,
+                    afterContent = {
+                        androidx.compose.material3.Switch(
+                            checked = novaToolsEnabled,
+                            onCheckedChange = { onNovaToolsToggle() },
+                        ),
+                    },
+                )
+            }
+        }
+
         LibraryMenuGroup(
             isDownloadHighlighted = isDownloadHighlighted,""",
 )
@@ -2947,7 +3009,10 @@ patch(
     "    <string name=\"browser_menu_allow_background_playback_off\">Keeps this site working while you use other apps or lock the screen.</string>",
     """    <string name="browser_menu_allow_background_playback_off">Keeps this site working while you use other apps or lock the screen.</string>
     <string name="browser_menu_view_page_source">View page source</string>
-    <string name="browser_menu_view_page_source_hint">Show the raw HTML source of this page in a new tab.</string>""",
+    <string name="browser_menu_view_page_source_hint">Show the raw HTML source of this page in a new tab.</string>
+    <string name="browser_menu_nova_tools">Nova Tools</string>
+    <string name="browser_menu_nova_tools_on">Nova Tools is ON</string>
+    <string name="browser_menu_nova_tools_off">Nova Tools is OFF</string>""",
 )
 
 # --- MainMenu.kt: params for View page source + Developer mode ----------------
@@ -2957,6 +3022,8 @@ patch(
     canGoBack: Boolean,''',
     '''    onNovaAllowBackgroundToggle: () -> Unit = {},
     onNovaViewSource: () -> Unit = {},
+    novaToolsEnabled: Boolean = true,
+    onNovaToolsToggle: () -> Unit = {},
     canGoBack: Boolean,''',
 )
 
@@ -3010,6 +3077,17 @@ patch(
                                             selectTab = true,
                                         )
                                     }
+                                }
+                                var novaToolsEnabled by remember {
+                                    mutableStateOf(
+                                        requireContext().getSharedPreferences("nova", android.content.Context.MODE_PRIVATE)
+                                            .getBoolean("nova_tools_enabled", true),
+                                    )
+                                }
+                                val onNovaToolsToggle = {
+                                    val next = !novaToolsEnabled
+                                    novaToolsEnabled = next
+                                    (requireActivity().application as? org.mozilla.fenix.FenixApplication)?.setNovaToolsEnabled(next)
                                 }""",
 )
 
@@ -3018,7 +3096,9 @@ patch(
     BASE + "components/menu/MenuDialogFragment.kt",
     """                                    onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,""",
     """                                    onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,
-                                    onNovaViewSource = onNovaViewSource,""",
+                                    onNovaViewSource = onNovaViewSource,
+                                    novaToolsEnabled = novaToolsEnabled,
+                                    onNovaToolsToggle = onNovaToolsToggle,""",
 )
 
 print("All Nova source patches applied.")
