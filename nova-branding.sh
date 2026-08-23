@@ -1910,6 +1910,7 @@ patch(
         // WebExtensions, see installNovaBundledExtensions).
         private const val NOVA_SHIELD_ADDON_ID = "nova-shield@nova.browser"
         private const val NOVA_UBLOCK_ADDON_ID = "uBlock0@raymondhill.net"
+        private const val NOVA_TOOLS_ADDON_ID = "nova-tools@nova.browser"
     }
 """,
 )
@@ -1954,6 +1955,12 @@ patch(
             url = "resource://android/assets/extensions/ublock_origin/",
             onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "uBlock Origin installed: ${it.id}") },
             onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "uBlock Origin install error: ${it.message}") },
+        )
+        engine.installBuiltInWebExtension(
+            id = NOVA_TOOLS_ADDON_ID,
+            url = "resource://android/assets/extensions/nova-tools/",
+            onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools installed: ${it.id}") },
+            onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools install error: ${it.message}") },
         )
     }
 
