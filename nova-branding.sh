@@ -1996,22 +1996,13 @@ patch(
      * Nova: toggles Nova Tools on/off at runtime. Persists the choice so the
      * install step above can skip it on later launches.
      */
-    private var novaToolsInstalled: org.mozilla.geckoview.WebExtension? = null
-
     private fun installNovaTools(enabled: Boolean) {
-        if (!enabled) {
-            val ext = novaToolsInstalled
-            novaToolsInstalled = null
-            if (ext != null) {
-                try { org.mozilla.geckoview.GeckoRuntime.getRuntime(applicationContext).webExtensionController.uninstall(ext) } catch (e: java.lang.Throwable) { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools uninstall error: ${e.message}") }
-            }
-            return
-        }
+        if (!enabled) return
         val engine = components.core.engine
         engine.installBuiltInWebExtension(
             id = NOVA_TOOLS_ADDON_ID,
             url = "resource://android/assets/extensions/nova-tools/",
-            onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools installed: ${it.id}"); novaToolsInstalled = it },
+            onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools installed: ${it.id}") },
             onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools install error: ${it.message}") },
         )
     }
