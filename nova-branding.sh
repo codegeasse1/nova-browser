@@ -2623,8 +2623,8 @@ patch(
     <string name="browser_menu_view_page_source">View page source</string>
     <string name="browser_menu_view_page_source_hint">Show the raw HTML source of this page in a new tab.</string>
     <string name="browser_menu_developer_mode">Developer mode</string>
-    <string name="browser_menu_developer_mode_on">On: Nova exposes its built-in web console / developer debugging tools.</string>
-    <string name="browser_menu_developer_mode_off">Turn on Nova's developer mode to inspect pages. Applies to new pages.</string>""",
+    <string name="browser_menu_developer_mode_on">On: Nova shows the developer debugging console. Takes effect after restart.</string>
+    <string name="browser_menu_developer_mode_off">Turn on Nova developer mode to inspect web pages. Takes effect after restart.</string>""",
 )
 
 # --- MainMenu.kt: params for View page source + Developer mode ----------------
