@@ -2709,7 +2709,7 @@ patch(
                                     if (novaCurrentUrl.isNotEmpty()) {
                                         requireComponents.useCases.tabsUseCases.addTab(
                                             url = "view-source:$novaCurrentUrl",
-                                            select = true,
+                                            selectTab = true,
                                         )
                                     }
                                 }
