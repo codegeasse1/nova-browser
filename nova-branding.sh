@@ -773,7 +773,7 @@ if (!window.__novaToolsLoaded) {
     try { consoleLog.unshift({ level: "error", text: (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || ""), t: Date.now() }); if (consoleLog.length > CONSOLE_MAX) consoleLog.length = CONSOLE_MAX; } catch (_) {}
   });
   window.addEventListener("unhandledrejection", function (e) {
-    try { var r = e.reason; consoleLog.unshift({ level: "error", text: "Unhandled rejection: " + (r && r.message ? r.message : String(r)), t: Date.now() }); if (consoleLog.length > CONSOLE_MAX) consoleLog.length = CONSOLE_MAX; } catch (_) {}
+    try { var r = e.reason; consoleLog.unshift({ level: "error", text: "error: " + (r && r.message ? r.message : String(r)), t: Date.now() }); if (consoleLog.length > CONSOLE_MAX) consoleLog.length = CONSOLE_MAX; } catch (_) {}
   });
 
   function extMsg(msg) {
@@ -781,42 +781,31 @@ if (!window.__novaToolsLoaded) {
   }
 
   const CSS = [
-    "#nova-tools-fab{position:fixed;right:14px;bottom:96px;z-index:2147483646;width:46px;height:46px;border-radius:50%;background:rgba(11,126,120,.95);color:#fff;font-weight:600;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.35);cursor:pointer;user-select:none}",
-    "#nova-tools-fab:hover{background:#0a6b66}",
-    "#nova-tools-wrap{position:fixed;inset:0;z-index:2147483647;background:rgba(10,14,18,.96);color:#dfe8ee;font:13px/1.45 sans-serif;display:none;flex-direction:column}",
-    "#nova-tools-wrap.open{display:flex}",
-    "#nova-tools-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#0e1a20;border-bottom:1px solid #22303a;flex:0 0 auto}",
+    "#nova-tools-fab{position:fixed !important;right:14px;bottom:96px;z-index:2147483646 !important;pointer-events:auto !important;touch-action:manipulation !important;width:46px;height:46px;border-radius:50%;background:#0B7E78;color:#fff;font-weight:600;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.35);cursor:pointer;user-select:none}",
+    "#nova-tools-fab:active{background:#0a6b66}",
+    "#nova-tools-wrap{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(10,14,18,.97);color:#e6edf3;font:14px/1.5 -apple-system,Roboto,sans-serif;display:none}",
+    "#nova-tools-wrap.open{display:block}",
+    "#nova-tools-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#12212b;border-bottom:1px solid #24333c}",
     "#nova-tools-tabs{display:flex;gap:6px}",
-    "#nova-tools-tabs button{background:transparent;color:#9fb4bf;border:1px solid #22303a;border-radius:20px;padding:6px 14px;font-weight:600;font-size:13px;cursor:pointer}",
+    "#nova-tools-tabs button{background:transparent;color:#9fb4bf;border:1px solid #2b3a44;border-radius:6px;padding:6px 10px;font-weight:600}",
     "#nova-tools-tabs button.active{background:#0B7E78;color:#fff;border-color:#0B7E78}",
     "#nova-tools-inspect-btn.armed{background:#0B7E78;color:#fff}",
-    "#nova-tools-close{margin-left:auto;background:transparent;color:#9fb4bf;border:none;font-size:22px;cursor:pointer;padding:0 8px}",
-    "#nova-tools-clear{background:#1b2a32;color:#cfdde5;border:none;border-radius:6px;padding:6px 10px;font-weight:600;font-size:12px;cursor:pointer;margin-left:auto}",
-    "#nova-tools-body{flex:1;overflow:auto;padding:10px 12px}",
+    "#nova-tools-close{margin-left:auto;background:transparent;color:#9fb4bf;border:none;font-size:26px;padding:0 10px}",
+    "#nova-tools-clear{background:#1b2a32;color:#cfdde5;border:none;border-radius:6px;padding:6px 10px;font-weight:600}",
+    "#nova-tools-body{position:absolute;top:46px;left:0;right:0;bottom:0;overflow:auto;padding:12px}",
     "#nova-tools-body .row{border-bottom:1px solid #1b2730;padding:5px 0;display:flex;gap:8px;align-items:baseline;word-break:break-all}",
     "#nova-tools-body .lv{font-weight:700;min-width:60px;text-transform:uppercase;font-size:11px}",
-    "#nova-tools-body .lv.log,#nova-tools-body .lv.info{color:#8ab4f8}#nova-tools-body .lv.warn{color:#fdd663}#nova-tools-body .lv.error{color:#f28b82}#nova-tools-body .lv.debug{color:#9a9a9a}",
+    "#nova-tools-body .lv.log,#nova-tools-body .lv.info{color:#8ab4f8}#nova-tools-body .lv.warn{color:#fdd663}#nova-tools-body .lv.error{color:#f28b82}",
     "#nova-tools-body .nm{font:11px monospace;color:#7d8f9c}",
     "#nova-tools-insp{font:12px monospace;background:#0b1216;padding:12px;border-radius:8px;white-space:pre-wrap;color:#b6d7a8}",
-    "#nova-vdl{position:fixed;z-index:2147483646;background:#0B7E78;color:#fff;border:none;border-radius:20px;font-weight:600;font-size:12px;font-family:sans-serif;padding:6px 12px;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer}",
-    ".nova-vdl-hover{outline:2px dashed #0B7E78 !important;outline-offset:2px}"
+    "#nova-vdl{position:fixed;z-index:2147483646;background:#0B7E78;color:#fff;border:none;border-radius:20px;font-weight:600;font-size:13px;font-family:sans-serif;padding:8px 14px;box-shadow:0 2px 8px rgba(0,0,0,.35)}"
   ].join("\n");
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
-    if (text !== undefined) n.textContent = text;
+    if (text !== undefined) { n.textContent = text; }
     return n;
-  }
-
-  function filenameFromUrl(url) {
-    try {
-      var u = new URL(url);
-      var base = u.pathname.split("/").pop() || "media";
-      base = decodeURIComponent(base);
-      if (base.indexOf(".") < 0) base += ".mp4";
-      return base;
-    } catch (e) { return "media.mp4"; }
   }
 
   function draw(name) {
@@ -846,6 +835,14 @@ if (!window.__novaToolsLoaded) {
     }
   }
 
+  function drawInspect() {
+    var body = ui.body;
+    body.innerHTML = "";
+    body.appendChild(el("div", "", "Inspect mode " + (inspectMode ? "ON" : "OFF") + ": tap any element on the page to reveal its tag, classes, id, size and HTML."));
+    if (ui.inspectTarget) { body.appendChild(el("pre", "nova-tools-insp", ui.inspectTarget)); }
+    else { body.appendChild(el("div", "", "Turn on inspect mode, then tap any element behind this panel.")); }
+  }
+
   function showTab(name) {
     ui.tabConsole.classList.toggle("active", name === "console");
     ui.tabNetwork.classList.toggle("active", name === "network");
@@ -857,114 +854,112 @@ if (!window.__novaToolsLoaded) {
     else { draw(name); }
   }
 
-  function drawInspect() {
-    var body = ui.body;
-    body.innerHTML = "";
-    body.appendChild(el("div", "", "Inspect mode " + (inspectMode ? "ON" : "OFF") + ": tap any element on the page to reveal its tag, classes, id, size and HTML."));
-    if (ui.inspectTarget) { body.appendChild(el("pre", "nova-tools-insp", ui.inspectTarget)); }
-    else { body.appendChild(el("div", "", "Turn on inspect mode, then tap an element behind this panel.")); }
-  }
-
   var ui = null;
 
   function buildUI() {
     if (ui) return;
+    try {
+      var style = el("style"); style.id = "nova-tools-css"; style.textContent = CSS;
+      document.documentElement.appendChild(style);
+      var fab = el("div", "", "\u2318"); fab.id = "nova-tools-fab"; fab.title = "Nova Tools";
+      var wrap = el("div"); wrap.id = "nova-tools-wrap";
+      var head = el("div"); head.id = "nova-tools-head";
+      var tabs = el("div"); tabs.id = "nova-tools-tabs";
+      var tabConsole = el("button", "", "Console"); tabConsole.id = "nova-tools-tab-console";
+      var tabNetwork = el("button", "", "Network"); tabNetwork.id = "nova-tools-tab-network";
+      var tabInspect = el("button", "", "Inspect"); tabInspect.id = "nova-tools-tab-inspect";
+      var inspectBtn = el("button", "", "\uD83D\uDD0D Inspect"); inspectBtn.id = "nova-tools-inspect-btn";
+      var clearBtn = el("button", "", "Clear"); clearBtn.id = "nova-tools-clear";
+      var closeBtn = el("button", "", "\u2715"); closeBtn.id = "nova-tools-close";
+      tabs.appendChild(tabConsole); tabs.appendChild(tabNetwork); tabs.appendChild(tabInspect);
+      head.appendChild(tabs); head.appendChild(inspectBtn); head.appendChild(clearBtn); head.appendChild(closeBtn);
+      var body = el("div"); body.id = "nova-tools-body";
+      wrap.appendChild(head); wrap.appendChild(body);
+      document.documentElement.appendChild(wrap);
+      document.documentElement.appendChild(fab);
 
-    var style = el("style"); style.id = "nova-tools-css"; style.textContent = CSS;
-    document.documentElement.appendChild(style);
-
-    var fab = el("div", "", "⌘"); fab.id = "nova-tools-fab";
-    fab.title = "Nova Tools";
-
-    var wrap = el("div"); wrap.id = "nova-tools-wrap";
-    var head = el("div"); head.id = "nova-tools-head";
-    var tabs = el("div"); tabs.id = "nova-tools-tabs";
-    var tabConsole = el("button", "active", "Console");
-    var tabNetwork = el("button", "", "Network");
-    var tabInspect = el("button", "", "Inspect");
-    var inspectBtn = el("button", "", "🔍 Tap to inspect"); inspectBtn.id = "nova-tools-inspect-btn";
-    var clearBtn = el("button", "", "Clear"); clearBtn.id = "nova-tools-clear";
-    var closeBtn = el("button", "", "✕"); closeBtn.id = "nova-tools-close";
-    tabs.appendChild(tabConsole); tabs.appendChild(tabNetwork); tabs.appendChild(tabInspect);
-    head.appendChild(tabs); head.appendChild(inspectBtn); head.appendChild(clearBtn); head.appendChild(closeBtn);
-    var body = el("div"); body.id = "nova-tools-body";
-    wrap.appendChild(head); wrap.appendChild(body);
-    document.documentElement.appendChild(fab);
-    document.documentElement.appendChild(wrap);
-
-    ui = { wrap: wrap, tabConsole: tabConsole, tabNetwork: tabNetwork, tabInspect: tabInspect, inspectBtn: inspectBtn, clearBtn: clearBtn, body: body, inspectTarget: null };
-
-    fab.addEventListener("click", function () {
-      if (wrap.classList.contains("open")) { wrap.classList.remove("open"); fab.style.display = ""; }
-      else { wrap.classList.add("open"); fab.style.display = "none"; showTab("console"); }
-    });
-    closeBtn.addEventListener("click", function () { wrap.classList.remove("open"); fab.style.display = ""; inspectMode = false; inspectBtn.classList.remove("armed"); inspectBtn.textContent = "🔍 Tap to inspect"; });
-    tabConsole.addEventListener("click", function () { showTab("console"); });
-    tabNetwork.addEventListener("click", function () { showTab("network"); });
-    tabInspect.addEventListener("click", function () { showTab("inspect"); });
-    clearBtn.addEventListener("click", function () { consoleLog.length = 0; draw("console"); });
-    inspectBtn.addEventListener("click", function () { inspectMode = !inspectMode; inspectBtn.classList.toggle("armed", inspectMode); inspectBtn.textContent = inspectMode ? "🔍 Tap any element…" : "🔍 Tap to inspect"; drawInspect(); });
-
-    document.addEventListener("click", function (ev) {
-      if (!inspectMode) return;
-      if (ev.target && (ev.target.id === "nova-tools-inspect-btn" || ev.target.id === "nova-tools-wrap" || ev.target.id === "nova-tools-fab")) return;
-      ev.preventDefault(); ev.stopPropagation();
-      var n = ev.target;
-      var info = "<" + n.tagName.toLowerCase();
-      var id = n.id ? " id=\\"" + n.id + "\\"" : "";
-      var cls = n.className && typeof n.className === "string" ? " class=\\"" + n.className.slice(0, 120) + "\\"" : "";
-      var rect = n.getBoundingClientRect();
-      info += id + cls + ">\\n";
-      info += "size: " + Math.round(rect.width) + "x" + Math.round(rect.height) + "px\\n";
-      try { var cs = window.getComputedStyle(n); info += "display:" + cs.display + "  pos:" + cs.position + "\\n"; } catch (e) {}
-      var html = n.outerHTML || "";
-      if (html.length > 1200) html = html.slice(0, 1200) + " ...";
-      info += "\\n" + html;
-      ui.inspectTarget = info;
-      drawInspect();
-    });
-
-    function placeButtons() {
-      for (var i = 0; i < downloadButtons.length; i++) { try { downloadButtons[i].parentNode && downloadButtons[i].parentNode.removeChild(downloadButtons[i]); } catch (e) {} }
-      downloadButtons = [];
-      if (inspectMode || !document.body) return;
-      var medias = document.querySelectorAll("video, audio");
-      for (var k = 0; k < medias.length; k++) {
-        var m = medias[k];
-        if (m.getAttribute("data-nova-dl")) continue;
-        m.setAttribute("data-nova-dl", "1");
-        var src = m.currentSrc || m.getAttribute("src") || (m.querySelector("source") ? m.querySelector("source").getAttribute("src") : "");
-        if (!src) continue;
-        var btn = el("div", "", "⬇ Download");
-        btn.id = "nova-vdl";
-        var rect2 = m.getBoundingClientRect();
-        btn.style.left = (rect2.left + 10) + "px"; btn.style.top = (rect2.top + 10) + "px";
-        btn.addEventListener("click", function (ev2) {
-          ev2.stopPropagation(); ev2.preventDefault();
-          btn.textContent = "...";
-          extMsg({ type: "download", url: src, filename: filenameFromUrl(src) }).then(function (res) {
-            if (res && res.ok) { btn.textContent = "OK"; }
-            else if (res && res.downloadApiError) { try { navigator.clipboard.writeText(res.url); } catch (e) {} btn.textContent = "URL copied"; }
-            else { try { navigator.clipboard.writeText(src); } catch (e) {} btn.textContent = "URL copied"; }
-            setTimeout(function () { btn.textContent = "⬇ Download"; }, 2000);
-          });
-        });
-        document.documentElement.appendChild(btn);
-        downloadButtons.push(btn);
+      function togglePanel() {
+        if (wrap.classList.contains("open")) { wrap.classList.remove("open"); fab.style.display = ""; }
+        else { wrap.classList.add("open"); fab.style.display = "none"; showTab("console"); }
       }
-    }
+      fab.addEventListener("click", togglePanel);
+      fab.addEventListener("pointerup", togglePanel);
+      fab.addEventListener("touchend", togglePanel);
+      closeBtn.addEventListener("click", function () { wrap.classList.remove("open"); fab.style.display = ""; inspectMode = false; inspectBtn.classList.remove("armed"); inspectBtn.textContent = "\uD83D\uDD0D Inspect"; });
+      tabConsole.addEventListener("click", function () { showTab("console"); });
+      tabNetwork.addEventListener("click", function () { showTab("network"); });
+      tabInspect.addEventListener("click", function () { showTab("inspect"); });
+      clearBtn.addEventListener("click", function () { consoleLog.length = 0; draw("console"); });
+      inspectBtn.addEventListener("click", function (ev) { ev.stopPropagation(); inspectMode = !inspectMode; inspectBtn.classList.toggle("armed", inspectMode); inspectBtn.textContent = inspectMode ? "\uD83D\uDD0D Tap any element\u2026" : "\uD83D\uDD0D Inspect"; drawInspect(); });
 
-    placeButtons();
-    window.addEventListener("resize", placeButtons);
-    if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", function () { setTimeout(placeButtons, 500); }); }
-    else { setTimeout(placeButtons, 500); }
+      document.addEventListener("click", function (ev) {
+        if (!inspectMode) return;
+        var t = ev.target;
+        if (!t || (t.id && (t.id.indexOf("nova-tools-") === 0 || t.id === "nova-vdl"))) return;
+        ev.preventDefault(); ev.stopPropagation();
+        var n = t;
+        var info = "<" + n.tagName.toLowerCase();
+        var id = n.id ? ' id="' + n.id + '"' : "";
+        var cls = n.className && typeof n.className === "string" ? ' class="' + n.className.slice(0, 120) + '"' : "";
+        var rect = n.getBoundingClientRect();
+        info += id + cls + ">\n";
+        info += "size: " + Math.round(rect.width) + "x" + Math.round(rect.height) + "px\n";
+        try { var cs = window.getComputedStyle(n); info += "display:" + cs.display + "  pos:" + cs.position + "\n"; } catch (e) {}
+        var html = n.outerHTML || "";
+        if (html.length > 1200) html = html.slice(0, 1200) + " ...";
+        info += "\n" + html;
+        ui.inspectTarget = info;
+        drawInspect();
+      });
+
+      downloadButtons = [];
+
+      function placeButtons() {
+        for (var i = 0; i < downloadButtons.length; i++) { try { downloadButtons[i].parentNode && downloadButtons[i].parentNode.removeChild(downloadButtons[i]); } catch (e) {} }
+        downloadButtons = [];
+        if (inspectMode || !document.body) return;
+        var medias = document.querySelectorAll("video, audio");
+        for (var k = 0; k < medias.length; k++) {
+          var md = medias[k];
+          if (md.getAttribute("data-nova-dl")) continue;
+          md.setAttribute("data-nova-dl", "1");
+          var src = md.currentSrc || md.getAttribute("src") || (md.querySelector("source") ? md.querySelector("source").getAttribute("src") : "");
+          if (!src) continue;
+          var btn = el("div", "", "\u2B07 Get");
+          btn.id = "nova-vdl";
+          var rc = md.getBoundingClientRect();
+          btn.style.left = (rc.left + 10) + "px"; btn.style.top = (rc.top + 10) + "px";
+          btn.addEventListener("click", function (ev2, u) {
+            ev2.stopPropagation(); ev2.preventDefault();
+            btn.textContent = "...";
+            extMsg({ type: "download", url: u, filename: (u.split("/").pop().split("?")[0]) || "media.mp4" }).then(function (res) {
+              try { navigator.clipboard.writeText(res && res.url ? res.url : u); } catch (e) {}
+              btn.textContent = res && res.ok ? "Saved" : "Copied";
+              setTimeout(function () {
+                var me = document.getElementById("nova-vdl"); if (me) { try { me.parentNode && me.parentNode.removeChild(me); } catch (e) {} }
+              }, 1200);
+            });
+          }.bind(null, null, src));
+          document.documentElement.appendChild(btn);
+          downloadButtons.push(btn);
+        }
+      }
+
+      placeButtons();
+      window.addEventListener("resize", placeButtons);
+      if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", function () { setTimeout(placeButtons, 500); }); }
+
+      ui = { wrap: wrap, fab: fab, tabConsole: tabConsole, tabNetwork: tabNetwork, tabInspect: tabInspect, inspectBtn: inspectBtn, clearBtn: clearBtn, body: body, inspectTarget: null };
+    } catch (err) {
+      try { consoleLog.unshift({ level: "error", text: "NovaTools init error: " + (err && err.message ? err.message : String(err)), t: Date.now() }); } catch (e) {}
+    }
   }
 
   if (document.documentElement) { buildUI(); }
   else { document.addEventListener("DOMContentLoaded", buildUI); }
 }
-JS
 
+JS
 test -f app/src/main/assets/extensions/nova-tools/manifest.json
 
 python3 <<'PY'
