@@ -1991,10 +1991,6 @@ patch(
             .edit().putBoolean("nova_tools_enabled", enabled).apply()
         if (enabled) {
             installNovaTools(true)
-        } else {
-            components.core.engine.uninstallExtension(NOVA_TOOLS_ADDON_ID, onSuccess = {
-                org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools disabled")
-            })
         }
     }
 
@@ -2865,7 +2861,7 @@ patch(
                         androidx.compose.material3.Switch(
                             checked = novaToolsEnabled,
                             onCheckedChange = { onNovaToolsToggle() },
-                        ),
+                        )
                     },
                 )
             }
@@ -3085,9 +3081,9 @@ patch(
                                     )
                                 }
                                 val onNovaToolsToggle = {
-                                    val next = !novaToolsEnabled
-                                    novaToolsEnabled = next
-                                    (requireActivity().application as? org.mozilla.fenix.FenixApplication)?.setNovaToolsEnabled(next)
+                                    novaToolsEnabled = !novaToolsEnabled
+                                    val app = requireActivity().application as org.mozilla.fenix.FenixApplication
+                                    app.setNovaToolsEnabled(novaToolsEnabled)
                                 }""",
 )
 
