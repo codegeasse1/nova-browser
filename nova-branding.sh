@@ -991,25 +991,35 @@ if (!window.__novaToolsLoaded) {
           var rc = md.getBoundingClientRect();
           if (rc.width === 0 && rc.height === 0) { rc = { left: 10, top: 10 }; }
           btn.style.left = (rc.left + 10) + "px"; btn.style.top = (rc.top + 10) + "px";
-          btn.addEventListener("click", makeHandler);
-          btn.addEventListener("pointerup", makeHandler);
-          btn.addEventListener("touchend", makeHandler);
           btn.setAttribute("data-u", src);
+          btn.addEventListener("click", function (ev) { makeHandler(ev, btn.getAttribute("data-u") || "", btn); });
+          btn.addEventListener("pointerup", function (ev) { makeHandler(ev, btn.getAttribute("data-u") || "", btn); });
+          btn.addEventListener("touchend", function (ev) { makeHandler(ev, btn.getAttribute("data-u") || "", btn); });
           document.documentElement.appendChild(btn);
           downloadButtons.push(btn);
         }
       }
 
-      makeHandler = function (ev) {
-        var u = this.getAttribute && this.getAttribute("data-u") || "";
-        makeHandler(ev, u, this);
-      };
-
       placeButtons();
       window.addEventListener("resize", placeButtons);
+      window.addEventListener("scroll", function () { if (ui) setTimeout(placeButtons, 200); });
+      var novaObs = new MutationObserver(function (muts) {
+        for (var i = 0; i < muts.length; i++) {
+          var added = muts[i].addedNodes;
+          for (var j = 0; j < added.length; j++) {
+            var nn = added[j];
+            if (nn && (nn.tagName === "VIDEO" || nn.tagName === "AUDIO" || (nn.querySelectorAll && nn.querySelectorAll("video,audio").length > 0))) {
+              setTimeout(placeButtons, 250); return;
+            }
+          }
+        }
+      });
+      try { novaObs.observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
       if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", function () { setTimeout(placeButtons, 500); }); }
 
       ui = { wrap: wrap, fab: fab, tabConsole: tabConsole, tabNetwork: tabNetwork, tabInspect: tabInspect, inspectBtn: inspectBtn, clearBtn: clearBtn, body: body, inspectTarget: null };
+
+      placeButtons();
     } catch (err) {
       try { consoleLog.unshift({ level: "error", text: "NovaTools init error: " + (err && err.message ? err.message : String(err)), t: Date.now() }); } catch (e) {}
     }
@@ -2053,18 +2063,38 @@ patch(
             engine.installBuiltInWebExtension(
                 id = NOVA_TOOLS_ADDON_ID,
                 url = "resource://android/assets/extensions/nova-tools/",
-                onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools installed: ${it.id}") },
+                onSuccess = { registerNovaTools(it) },
                 onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools install error: ${it.message}") },
             )
         }
+    }
+
+    private var novaToolsExt: mozilla.components.concept.engine.webextension.WebExtension? = null
+    private var novaToolsPort: mozilla.components.concept.engine.webextension.Port? = null
+
+    private fun registerNovaTools(ext: mozilla.components.concept.engine.webextension.WebExtension) {
+        novaToolsExt = ext
+        try {
+            ext.registerBackgroundMessageHandler(
+                "novaControl",
+                object : mozilla.components.concept.engine.webextension.MessageHandler {
+                    override fun onPortConnected(port: mozilla.components.concept.engine.webextension.Port) {
+                        novaToolsPort = port
+                        try { port.postMessage(org.json.JSONObject().put("type", "setEnabled").put("enabled", true)) } catch (e: Exception) {}
+                    }
+
+                    override fun onPortDisconnected(port: mozilla.components.concept.engine.webextension.Port) {
+                        if (novaToolsPort === port) novaToolsPort = null
+                    }
+                },
+            )
+        } catch (e: Exception) { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools port error: ${e.message}") }
     }
 
     /**
      * Nova: toggles Nova Tools on/off at runtime. Persists the choice so the
      * install step above can skip it on later launches.
      */
-    private var novaToolsPort: mozilla.components.concept.engine.webextension.Port? = null
-
     private fun installNovaTools(enabled: Boolean) {
         if (!enabled) return
         val engine = components.core.engine
@@ -2073,21 +2103,7 @@ patch(
             url = "resource://android/assets/extensions/nova-tools/",
             onSuccess = {
                 org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools installed: ${it.id}")
-                try {
-                    it.registerBackgroundMessageHandler(
-                        "novaControl",
-                        object : mozilla.components.concept.engine.webextension.MessageHandler {
-                            override fun onPortConnected(port: mozilla.components.concept.engine.webextension.Port) {
-                                novaToolsPort = port
-                                try { novaToolsPort?.postMessage(org.json.JSONObject().put("type", "setEnabled").put("enabled", true)) } catch (e: Exception) {}
-                            }
-
-                            override fun onPortDisconnected(port: mozilla.components.concept.engine.webextension.Port) {
-                                if (novaToolsPort === port) novaToolsPort = null
-                            }
-                        },
-                    )
-                } catch (e: Exception) { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools port error: ${e.message}") }
+                registerNovaTools(it)
             },
             onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools install error: ${it.message}") },
         )
@@ -2100,7 +2116,8 @@ patch(
         if (enabled) {
             installNovaTools(true)
         } else {
-            try { novaToolsPort?.postMessage(org.json.JSONObject().put("type", "setEnabled").put("enabled", false)) } catch (e: Exception) {}
+            val port = novaToolsPort ?: runCatching { novaToolsExt?.getConnectedPort("novaControl", null) }.getOrNull()
+            try { port?.postMessage(org.json.JSONObject().put("type", "setEnabled").put("enabled", false)) } catch (e: Exception) {}
         }
     }
 
