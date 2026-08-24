@@ -643,441 +643,6 @@ button:disabled { opacity: 0.6; cursor: default; }
 CSS
 
 echo ">> Nova branding: close tabs on exit + bundled adblock wiring"
-echo ">> Nova tools: bundle DevTools + downloader extension (no Kotlin changes)"
-mkdir -p app/src/main/assets/extensions/nova-tools/icons
-cp nova-icons/adblock/48.png app/src/main/assets/extensions/nova-tools/icons/48.png
-cp nova-icons/adblock/96.png app/src/main/assets/extensions/nova-tools/icons/96.png
-
-cat > app/src/main/assets/extensions/nova-tools/manifest.json <<'JSON'
-{
-  "manifest_version": 2,
-  "name": "Nova Tools",
-  "version": "1.0.0",
-  "description": "In-app DevTools (console, network, tap-to-inspect) and a video/audio downloader that works on any site.",
-  "icons": {
-    "48": "icons/48.png",
-    "96": "icons/96.png"
-  },
-  "permissions": [
-    "webRequest",
-    "downloads",
-    "storage",
-    "tabs",
-    "<all_urls>"
-  ],
-  "background": {
-    "scripts": ["background.js"]
-  },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "run_at": "document_start"
-    }
-  ],
-  "browser_action": {
-    "default_title": "Nova Tools"
-  },
-  "applications": {
-    "gecko": {
-      "id": "nova-tools@nova.browser",
-      "strict_min_version": "115.0"
-    }
-  }
-}
-JSON
-
-cat > app/src/main/assets/extensions/nova-tools/background.js <<'JS'
-"use strict";
-
-const NET_MAX = 400;
-const netLog = [];
-
-browser.webRequest.onBeforeRequest.addListener(
-  (d) => {
-    if (!d.url || d.url.indexOf("data:") === 0) return;
-    const entry = {
-      id: d.requestId,
-      method: d.method || "GET",
-      url: d.url,
-      type: d.type || "other",
-      status: null,
-      phase: "pending",
-    };
-    netLog.unshift(entry);
-    if (netLog.length > NET_MAX) netLog.length = NET_MAX;
-  },
-  { urls: ["<all_urls>"] }
-);
-
-function findEntry(id) {
-  if (!id) return null;
-  for (let i = 0; i < netLog.length; i++) if (netLog[i].id === id) return netLog[i];
-  return null;
-}
-
-browser.webRequest.onCompleted.addListener(
-  (d) => { const e = findEntry(d.requestId); if (e) { e.status = d.statusCode; e.phase = "done"; } },
-  { urls: ["<all_urls>"] }
-);
-browser.webRequest.onErrorOccurred.addListener(
-  (d) => { const e = findEntry(d.requestId); if (e) { e.status = "ERR"; e.phase = "error"; } },
-  { urls: ["<all_urls>"] }
-);
-
-browser.runtime.onMessage.addListener((msg) => {
-  if (!msg || !msg.type) return;
-  if (msg.type === "getNetwork") return Promise.resolve({ log: netLog.slice(0, NET_MAX) });
-  if (msg.type === "download") {
-    const url = String(msg.url || "");
-    const filename = String(msg.filename || "media");
-    if (!url) return Promise.resolve({ ok: false, error: "no url" });
-    return browser.downloads
-      .download({ url, filename, conflictAction: "uniquify", saveAs: false })
-      .then((id) => ({ ok: true, id }))
-      .catch((err) => ({ ok: false, downloadApiError: String(err).slice(0, 400), url }));
-  }
-  return null;
-});
-
-let novaEnabled = true;
-browser.storage.local.get({ enabled: true }).then(function (r) {
-  if (r && typeof r.enabled === "boolean") novaEnabled = r.enabled;
-}).catch(function () {});
-
-function broadcastEnabled() {
-  browser.tabs.query({}).then(function (tabs) {
-    for (let i = 0; i < tabs.length; i++) {
-      browser.tabs.sendMessage(tabs[i].id, { type: "setEnabled", enabled: novaEnabled }).catch(function () {});
-    }
-  }).catch(function () {});
-}
-
-let ctlPort = null;
-function tryConnectNative() {
-  try {
-    if (ctlPort) return;
-    ctlPort = browser.runtime.connectNative("novaControl");
-    ctlPort.onMessage.addListener((msg) => {
-      if (!msg || msg.type !== "setEnabled") return;
-      novaEnabled = !!msg.enabled;
-      browser.storage.local.set({ enabled: novaEnabled });
-      broadcastEnabled();
-    });
-    ctlPort.onDisconnect.addListener(() => { ctlPort = null; });
-  } catch (e) {}
-}
-setInterval(tryConnectNative, 2000);
-tryConnectNative();
-JS
-
-cat > app/src/main/assets/extensions/nova-tools/content.js <<'JS'
-"use strict";
-
-if (!window.__novaToolsLoaded) {
-  window.__novaToolsLoaded = true;
-
-  const CONSOLE_MAX = 500;
-  const consoleLog = [];
-  let inspectMode = false;
-  let downloadButtons = [];
-  let networkRows = [];
-  let novaObs = null;
-
-  function fmtArgs(args) {
-    try {
-      return Array.prototype.map.call(args, function (a) {
-        if (typeof a === "object" && a !== null) { try { return JSON.stringify(a); } catch (e) { return String(a); } }
-        return String(a);
-      }).join(" ").slice(0, 2000);
-    } catch (e) { return String(args); }
-  }
-
-  ["log", "info", "warn", "error", "debug"].forEach(function (level) {
-    const orig = console[level] || function () {};
-    console[level] = function () {
-      try { consoleLog.unshift({ level: level, text: fmtArgs(arguments), t: Date.now() }); if (consoleLog.length > CONSOLE_MAX) consoleLog.length = CONSOLE_MAX; } catch (e) {}
-      try { orig.apply(console, arguments); } catch (e) {}
-    };
-  });
-  window.addEventListener("error", function (e) {
-    try { consoleLog.unshift({ level: "error", text: (e.message || "") + " @ " + (e.filename || "") + ":" + (e.lineno || ""), t: Date.now() }); if (consoleLog.length > CONSOLE_MAX) consoleLog.length = CONSOLE_MAX; } catch (_) {}
-  });
-  window.addEventListener("unhandledrejection", function (e) {
-    try { var r = e.reason; consoleLog.unshift({ level: "error", text: "error: " + (r && r.message ? r.message : String(r)), t: Date.now() }); if (consoleLog.length > CONSOLE_MAX) consoleLog.length = CONSOLE_MAX; } catch (_) {}
-  });
-
-  function extMsg(msg) {
-    return browser.runtime.sendMessage(msg).catch(function () { return null; });
-  }
-
-  const CSS = [
-    "#nova-tools-fab{position:fixed !important;right:14px;bottom:96px;z-index:2147483646 !important;pointer-events:auto !important;touch-action:manipulation !important;width:46px;height:46px;border-radius:50%;background:#0B7E78;color:#fff;font-weight:600;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.35);cursor:pointer;user-select:none}",
-    "#nova-tools-fab:active{background:#0a6b66}",
-    "#nova-tools-wrap{position:fixed;top:0;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(10,14,18,.97);color:#e6edf3;font:14px/1.5 -apple-system,Roboto,sans-serif;display:none;flex-direction:column}",
-    "#nova-tools-wrap.open{display:flex}",
-    "#nova-tools-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px;background:#12212b;border-bottom:1px solid #24333c;flex:0 0 auto}",
-    "#nova-tools-tabs{display:flex;flex-wrap:wrap;gap:6px;min-width:0}",
-    "#nova-tools-tabs button{background:transparent;color:#9fb4bf;border:1px solid #2b3a44;border-radius:6px;padding:6px 10px;font-weight:600}",
-    "#nova-tools-tabs button.active{background:#0B7E78;color:#fff;border-color:#0B7E78}",
-    "#nova-tools-inspect-btn.armed{background:#0B7E78;color:#fff}",
-    "#nova-tools-close{margin-left:auto;background:transparent;color:#9fb4bf;border:none;font-size:26px;padding:0 8px;flex:0 0 auto}",
-    "#nova-tools-clear{background:#1b2a32;color:#cfdde5;border:none;border-radius:6px;padding:6px 10px;font-weight:600}",
-    "#nova-tools-body{flex:1 1 auto;min-height:0;overflow:auto;padding:10px 12px}",
-    "#nova-tools-body .row{border-bottom:1px solid #1b2730;padding:5px 0;display:flex;gap:8px;align-items:baseline;word-break:break-all}",
-    "#nova-tools-body .lv{font-weight:700;min-width:60px;text-transform:uppercase;font-size:11px}",
-    "#nova-tools-body .lv.log,#nova-tools-body .lv.info{color:#8ab4f8}#nova-tools-body .lv.warn{color:#fdd663}#nova-tools-body .lv.error{color:#f28b82}",
-    "#nova-tools-body .nm{font:11px monospace;color:#7d8f9c}",
-    "#nova-tools-insp{font:12px monospace;background:#0b1216;padding:12px;border-radius:8px;white-space:pre-wrap;color:#b6d7a8}",
-    "#nova-vdl{position:fixed;z-index:2147483646;background:#0B7E78;color:#fff;border:none;border-radius:20px;font-weight:600;font-size:13px;font-family:sans-serif;padding:8px 14px;box-shadow:0 2px 8px rgba(0,0,0,.35)}"
-  ].join("\n");
-
-  function el(tag, cls, text) {
-    var n = document.createElement(tag);
-    if (cls) n.className = cls;
-    if (text !== undefined) { n.textContent = text; }
-    return n;
-  }
-
-  function draw(name) {
-    var body = ui.body;
-    body.innerHTML = "";
-    if (name === "console") {
-      if (!consoleLog.length) { body.appendChild(el("div", "", "No console messages yet.")); return; }
-      for (var i = 0; i < consoleLog.length; i++) {
-        var r = consoleLog[i];
-        var row = el("div", "row");
-        row.appendChild(el("span", "lv " + r.level, r.level));
-        row.appendChild(el("span", "nm", new Date(r.t).toLocaleTimeString()));
-        row.appendChild(el("span", "", r.text));
-        body.appendChild(row);
-      }
-    } else if (name === "network") {
-      if (!networkRows.length) { body.appendChild(el("div", "", "No requests recorded. Reload the page to capture network activity.")); return; }
-      for (var j = 0; j < networkRows.length; j++) {
-        var n = networkRows[j];
-        var rw = el("div", "row");
-        var st = (n.status && n.status !== "pending") ? String(n.status) : String(n.method || "GET");
-        rw.appendChild(el("span", "lv " + (n.status && n.status >= 400 ? "error" : "info"), st));
-        rw.appendChild(el("span", "nm", (n.type || "other") + "  "));
-        rw.appendChild(el("span", "", n.url));
-        body.appendChild(rw);
-      }
-    }
-  }
-
-  function drawInspect() {
-    var body = ui.body;
-    body.innerHTML = "";
-    body.appendChild(el("div", "", "Inspect mode " + (inspectMode ? "ON" : "OFF") + ": tap any element on the page to reveal its tag, classes, id, size and HTML."));
-    if (ui.inspectTarget) { body.appendChild(el("pre", "nova-tools-insp", ui.inspectTarget)); }
-    else { body.appendChild(el("div", "", "Turn on inspect mode, then tap any element behind this panel.")); }
-  }
-
-  function showTab(name) {
-    ui.tabConsole.classList.toggle("active", name === "console");
-    ui.tabNetwork.classList.toggle("active", name === "network");
-    ui.tabInspect.classList.toggle("active", name === "inspect");
-    ui.clearBtn.style.display = name === "inspect" ? "none" : "";
-    if (name === "network") {
-      extMsg({ type: "getNetwork" }).then(function (res) { if (res && res.log) { networkRows = res.log; draw("network"); } });
-    } else if (name === "inspect") { drawInspect(); }
-    else { draw(name); }
-  }
-
-  var ui = null;
-
-  function buildUI() {
-    if (ui) return;
-    try {
-      var style = el("style"); style.id = "nova-tools-css"; style.textContent = CSS;
-      document.documentElement.appendChild(style);
-      var fab = el("div", "", "\u2318"); fab.id = "nova-tools-fab"; fab.title = "Nova Tools";
-      var wrap = el("div"); wrap.id = "nova-tools-wrap";
-      var head = el("div"); head.id = "nova-tools-head";
-      var tabs = el("div"); tabs.id = "nova-tools-tabs";
-      var tabConsole = el("button", "", "Console"); tabConsole.id = "nova-tools-tab-console";
-      var tabNetwork = el("button", "", "Network"); tabNetwork.id = "nova-tools-tab-network";
-      var tabInspect = el("button", "", "Inspect"); tabInspect.id = "nova-tools-tab-inspect";
-      var inspectBtn = el("button", "", "\uD83D\uDD0D Inspect"); inspectBtn.id = "nova-tools-inspect-btn";
-      var clearBtn = el("button", "", "Clear"); clearBtn.id = "nova-tools-clear";
-      var closeBtn = el("button", "", "\u2715"); closeBtn.id = "nova-tools-close";
-      tabs.appendChild(tabConsole); tabs.appendChild(tabNetwork); tabs.appendChild(tabInspect);
-      head.appendChild(tabs); head.appendChild(inspectBtn); head.appendChild(clearBtn); head.appendChild(closeBtn);
-      var body = el("div"); body.id = "nova-tools-body";
-      wrap.appendChild(head); wrap.appendChild(body);
-      document.documentElement.appendChild(wrap);
-      document.documentElement.appendChild(fab);
-
-      function togglePanel() {
-        if (wrap.classList.contains("open")) { wrap.classList.remove("open"); fab.style.display = ""; }
-        else { wrap.classList.add("open"); fab.style.display = "none"; showTab("console"); }
-      }
-      fab.addEventListener("click", togglePanel);
-      fab.addEventListener("pointerup", togglePanel);
-      fab.addEventListener("touchend", togglePanel);
-      closeBtn.addEventListener("click", function () { wrap.classList.remove("open"); fab.style.display = ""; inspectMode = false; inspectBtn.classList.remove("armed"); inspectBtn.textContent = "\uD83D\uDD0D Inspect"; });
-      tabConsole.addEventListener("click", function () { showTab("console"); });
-      tabNetwork.addEventListener("click", function () { showTab("network"); });
-      tabInspect.addEventListener("click", function () { showTab("inspect"); });
-      clearBtn.addEventListener("click", function () { consoleLog.length = 0; draw("console"); });
-      inspectBtn.addEventListener("click", function (ev) { ev.stopPropagation(); inspectMode = !inspectMode; inspectBtn.classList.toggle("armed", inspectMode); inspectBtn.textContent = inspectMode ? "\uD83D\uDD0D Tap any element\u2026" : "\uD83D\uDD0D Inspect"; drawInspect(); });
-
-      document.addEventListener("click", function (ev) {
-        if (!inspectMode) return;
-        var t = ev.target;
-        if (!t || (t.id && (t.id.indexOf("nova-tools-") === 0 || t.id === "nova-vdl"))) return;
-        ev.preventDefault(); ev.stopPropagation();
-        var n = t;
-        var info = "<" + n.tagName.toLowerCase();
-        var id = n.id ? ' id="' + n.id + '"' : "";
-        var cls = n.className && typeof n.className === "string" ? ' class="' + n.className.slice(0, 120) + '"' : "";
-        var rect = n.getBoundingClientRect();
-        info += id + cls + ">\n";
-        info += "size: " + Math.round(rect.width) + "x" + Math.round(rect.height) + "px\n";
-        try { var cs = window.getComputedStyle(n); info += "display:" + cs.display + "  pos:" + cs.position + "\n"; } catch (e) {}
-        var html = n.outerHTML || "";
-        if (html.length > 1200) html = html.slice(0, 1200) + " ...";
-        info += "\n" + html;
-        ui.inspectTarget = info;
-        drawInspect();
-      });
-
-      downloadButtons = [];
-
-      function portableCopy(t) {
-        try { if (navigator.clipboard && navigator.clipboard.writeText) { return navigator.clipboard.writeText(t); } } catch (e) {}
-        try {
-          var ta = document.createElement("textarea");
-          ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";
-          document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand("copy"); ta.remove();
-        } catch (e) {}
-      }
-
-      function makeHandler(ev, u, btn) {
-        if (ev && ev.cancelable) { try { ev.preventDefault(); } catch (e) {} if (ev.stopPropagation) { try { ev.stopPropagation(); } catch (e) {} } }
-        if (btn._trig) return; btn._trig = 1;
-        btn.textContent = "...";
-        var done = false;
-        var finish = function (msg) {
-          if (done) return; done = true;
-          btn.textContent = msg;
-          portableCopy(u);
-          var me = btn; setTimeout(function () { try { me.parentNode && me.parentNode.removeChild(me); } catch (e) {} }, 2500);
-        };
-        var to = setTimeout(function () { finish("URL copied"); }, 2500);
-        extMsg({ type: "download", url: u, filename: (u.split("/").pop().split("?")[0]) || "media.mp4" }).then(function (res) {
-          clearTimeout(to);
-          finish(res && res.ok ? "Saving\u2026 done" : "URL copied");
-        });
-      }
-
-      function placeButtons() {
-        if (!ui) return;
-        for (var i = 0; i < downloadButtons.length; i++) { try { downloadButtons[i].parentNode && downloadButtons[i].parentNode.removeChild(downloadButtons[i]); } catch (e) {} }
-        downloadButtons = [];
-        if (inspectMode || !document.body) return;
-        var medias = document.querySelectorAll("video, audio");
-        for (var k = 0; k < medias.length; k++) {
-          var md = medias[k];
-          var src = md.currentSrc || md.getAttribute("src") || (md.querySelector("source") ? md.querySelector("source").getAttribute("src") : "");
-          if (!src) {
-            if (md.getAttribute("data-nova-wait") !== "1") { md.setAttribute("data-nova-wait", "1"); md.addEventListener("loadedmetadata", function () { setTimeout(placeButtons, 250); }); }
-            continue;
-          }
-          if (md.getAttribute("data-nova-dl")) continue;
-          md.setAttribute("data-nova-dl", "1");
-          var btn = el("div", "", "\u2B07 Get");
-          btn.id = "nova-vdl-" + k;
-          var rc = md.getBoundingClientRect();
-          if (rc.width === 0 && rc.height === 0) { rc = { left: 10, top: 10 }; }
-          btn.style.left = (rc.left + 10) + "px"; btn.style.top = (rc.top + 10) + "px";
-          btn.setAttribute("data-u", src);
-          btn.addEventListener("click", function (ev) { makeHandler(ev, btn.getAttribute("data-u") || "", btn); });
-          btn.addEventListener("pointerup", function (ev) { makeHandler(ev, btn.getAttribute("data-u") || "", btn); });
-          btn.addEventListener("touchend", function (ev) { makeHandler(ev, btn.getAttribute("data-u") || "", btn); });
-          document.documentElement.appendChild(btn);
-          downloadButtons.push(btn);
-        }
-      }
-
-      placeButtons();
-      window.addEventListener("resize", placeButtons);
-      window.addEventListener("scroll", function () { if (ui) setTimeout(placeButtons, 200); });
-      novaObs = new MutationObserver(function (muts) {
-        for (var i = 0; i < muts.length; i++) {
-          var added = muts[i].addedNodes;
-          for (var j = 0; j < added.length; j++) {
-            var nn = added[j];
-            if (nn && (nn.tagName === "VIDEO" || nn.tagName === "AUDIO" || (nn.querySelectorAll && nn.querySelectorAll("video,audio").length > 0))) {
-              setTimeout(placeButtons, 250); return;
-            }
-          }
-        }
-      });
-      try { novaObs.observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
-      if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", function () { setTimeout(placeButtons, 500); }); }
-
-      ui = { wrap: wrap, fab: fab, tabConsole: tabConsole, tabNetwork: tabNetwork, tabInspect: tabInspect, inspectBtn: inspectBtn, clearBtn: clearBtn, body: body, inspectTarget: null };
-
-      placeButtons();
-    } catch (err) {
-      try { consoleLog.unshift({ level: "error", text: "NovaTools init error: " + (err && err.message ? err.message : String(err)), t: Date.now() }); } catch (e) {}
-    }
-  }
-
-  function teardownUI() {
-    try { if (novaObs) { novaObs.disconnect(); novaObs = null; } } catch (e) {}
-    try {
-      var css = document.getElementById("nova-tools-css"); if (css && css.parentNode) { css.parentNode.removeChild(css); }
-      var fabEl = document.getElementById("nova-tools-fab"); if (fabEl && fabEl.parentNode) { fabEl.parentNode.removeChild(fabEl); }
-      var wrapEl = document.getElementById("nova-tools-wrap"); if (wrapEl && wrapEl.parentNode) { wrapEl.parentNode.removeChild(wrapEl); }
-      for (var i = 0; i < downloadButtons.length; i++) { try { if (downloadButtons[i] && downloadButtons[i].parentNode) { downloadButtons[i].parentNode.removeChild(downloadButtons[i]); } } catch (e) {} }
-      downloadButtons = [];
-      ui = null;
-    } catch (e) {}
-  }
-
-  function ensureUI() {
-    if (ui) return;
-    if (!document.documentElement) { document.addEventListener("DOMContentLoaded", ensureUI); return; }
-    try {
-      browser.storage.local.get({ enabled: true }).then(function (res) {
-        if (res && res.enabled === false) return;
-        buildUI();
-      }).catch(function () { buildUI(); });
-    } catch (e) { buildUI(); }
-  }
-
-  function onControlMessage(msg) {
-    if (!msg || msg.type !== "setEnabled") return;
-    if (msg.enabled === false) { teardownUI(); } else { ensureUI(); }
-  }
-
-  browser.runtime.onMessage.addListener(onControlMessage);
-  browser.storage.onChanged.addListener(function (changes, area) {
-    try {
-      if (changes && changes.enabled) {
-        if (changes.enabled.newValue === false) { teardownUI(); }
-        else { ensureUI(); }
-      }
-    } catch (e) {}
-  });
-
-  function syncState() {
-    try {
-      browser.storage.local.get({ enabled: true }).then(function (res) {
-        if (res && res.enabled === false) { teardownUI(); } else { ensureUI(); }
-      }).catch(function () {});
-    } catch (e) {}
-  }
-  setInterval(syncState, 800);
-
-  ensureUI();
-}
-
-JS
-test -f app/src/main/assets/extensions/nova-tools/manifest.json
 
 python3 <<'PY'
 import io
@@ -2022,7 +1587,6 @@ patch(
         // WebExtensions, see installNovaBundledExtensions).
         private const val NOVA_SHIELD_ADDON_ID = "nova-shield@nova.browser"
         private const val NOVA_UBLOCK_ADDON_ID = "uBlock0@raymondhill.net"
-        private const val NOVA_TOOLS_ADDON_ID = "nova-tools@nova.browser"
     }
 """,
 )
@@ -2068,71 +1632,8 @@ patch(
             onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "uBlock Origin installed: ${it.id}") },
             onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "uBlock Origin install error: ${it.message}") },
         )
-        val novaToolsOn = applicationContext.getSharedPreferences("nova", android.content.Context.MODE_PRIVATE)
-            .getBoolean("nova_tools_enabled", true)
-        if (novaToolsOn) {
-            engine.installBuiltInWebExtension(
-                id = NOVA_TOOLS_ADDON_ID,
-                url = "resource://android/assets/extensions/nova-tools/",
-                onSuccess = { registerNovaTools(it) },
-                onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools install error: ${it.message}") },
-            )
-        }
     }
-
-    private var novaToolsExt: mozilla.components.concept.engine.webextension.WebExtension? = null
-    private var novaToolsPort: mozilla.components.concept.engine.webextension.Port? = null
-
-    private fun registerNovaTools(ext: mozilla.components.concept.engine.webextension.WebExtension) {
-        novaToolsExt = ext
-        try {
-            ext.registerBackgroundMessageHandler(
-                "novaControl",
-                object : mozilla.components.concept.engine.webextension.MessageHandler {
-                    override fun onPortConnected(port: mozilla.components.concept.engine.webextension.Port) {
-                        novaToolsPort = port
-                        try { port.postMessage(org.json.JSONObject().put("type", "setEnabled").put("enabled", true)) } catch (e: Exception) {}
-                    }
-
-                    override fun onPortDisconnected(port: mozilla.components.concept.engine.webextension.Port) {
-                        if (novaToolsPort === port) novaToolsPort = null
-                    }
-                },
-            )
-        } catch (e: Exception) { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools port error: ${e.message}") }
-    }
-
-    /**
-     * Nova: toggles Nova Tools on/off at runtime. Persists the choice so the
-     * install step above can skip it on later launches.
-     */
-    private fun installNovaTools(enabled: Boolean) {
-        if (!enabled) return
-        val engine = components.core.engine
-        engine.installBuiltInWebExtension(
-            id = NOVA_TOOLS_ADDON_ID,
-            url = "resource://android/assets/extensions/nova-tools/",
-            onSuccess = {
-                org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools installed: ${it.id}")
-                registerNovaTools(it)
-            },
-            onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Tools install error: ${it.message}") },
-        )
-    }
-
-    /** Http, live on/off toggle for Nova Tools from the browser menu. */
-    fun setNovaToolsEnabled(enabled: Boolean) {
-        applicationContext.getSharedPreferences("nova", android.content.Context.MODE_PRIVATE)
-            .edit().putBoolean("nova_tools_enabled", enabled).apply()
-        if (enabled) {
-            installNovaTools(true)
-        } else {
-            val port = novaToolsPort ?: runCatching { novaToolsExt?.getConnectedPort("novaControl", null) }.getOrNull()
-            try { port?.postMessage(org.json.JSONObject().put("type", "setEnabled").put("enabled", false)) } catch (e: Exception) {}
-        }
-    }
-
-    @VisibleForTesting""",
+""",
 )
 
 # --- Settings: Nova Ad Block row ----------------------------------------------
@@ -2982,31 +2483,7 @@ patch(
             }
         }
 
-        if (accessPoint == MenuAccessPoint.Browser) {
-            MenuGroup {
-                MenuItem(
-                    label = stringResource(id = R.string.browser_menu_nova_tools),
-                    description = stringResource(
-                        id = if (novaToolsEnabled) {
-                            R.string.browser_menu_nova_tools_on
-                        } else {
-                            R.string.browser_menu_nova_tools_off
-                        },
-                    ),
-                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
-                    onClick = onNovaToolsToggle,
-                    afterContent = {
-                        androidx.compose.material3.Switch(
-                            checked = novaToolsEnabled,
-                            onCheckedChange = { onNovaToolsToggle() },
-                        )
-                    },
-                )
-            }
-        }
-
-        LibraryMenuGroup(
-            isDownloadHighlighted = isDownloadHighlighted,""",
+""",
 )
 
 # --- MenuDialogFragment.kt: per-site enabled state + toggle handler -----------
@@ -3144,9 +2621,6 @@ patch(
     """    <string name="browser_menu_allow_background_playback_off">Keeps this site working while you use other apps or lock the screen.</string>
     <string name="browser_menu_view_page_source">View page source</string>
     <string name="browser_menu_view_page_source_hint">Show the raw HTML source of this page in a new tab.</string>
-    <string name="browser_menu_nova_tools">Nova Tools</string>
-    <string name="browser_menu_nova_tools_on">Nova Tools is ON</string>
-    <string name="browser_menu_nova_tools_off">Nova Tools is OFF</string>""",
 )
 
 # --- MainMenu.kt: params for View page source + Developer mode ----------------
@@ -3156,8 +2630,6 @@ patch(
     canGoBack: Boolean,''',
     '''    onNovaAllowBackgroundToggle: () -> Unit = {},
     onNovaViewSource: () -> Unit = {},
-    novaToolsEnabled: Boolean = true,
-    onNovaToolsToggle: () -> Unit = {},
     canGoBack: Boolean,''',
 )
 
@@ -3212,17 +2684,8 @@ patch(
                                         )
                                     }
                                 }
-                                var novaToolsEnabled by remember {
-                                    mutableStateOf(
-                                        requireContext().getSharedPreferences("nova", android.content.Context.MODE_PRIVATE)
-                                            .getBoolean("nova_tools_enabled", true),
-                                    )
-                                }
-                                val onNovaToolsToggle = {
-                                    novaToolsEnabled = !novaToolsEnabled
-                                    val app = requireActivity().application as org.mozilla.fenix.FenixApplication
-                                    app.setNovaToolsEnabled(novaToolsEnabled)
-                                }""",
+
+""",
 )
 
 # --- MenuDialogFragment.kt: pass them into MainMenu ---------------------------
@@ -3230,9 +2693,7 @@ patch(
     BASE + "components/menu/MenuDialogFragment.kt",
     """                                    onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,""",
     """                                    onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,
-                                    onNovaViewSource = onNovaViewSource,
-                                    novaToolsEnabled = novaToolsEnabled,
-                                    onNovaToolsToggle = onNovaToolsToggle,""",
+                                    onNovaViewSource = onNovaViewSource,""",
 )
 
 print("All Nova source patches applied.")
