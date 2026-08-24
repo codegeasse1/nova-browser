@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Nova Browser branding overlay — cosmetic only. The engine, GeckoView and every
+# Nova Browser branding overlay â cosmetic only. The engine, GeckoView and every
 # feature are byte-identical to upstream IceRaven (iceraven-2.46.0). This script
 # re-labels the visible product, removes the "produced by @fork-maintainers"
-# credit line from the About page, and bundles two ad-blocking WebExtensions
-# (uBlock Origin + the Nova Ad Block host blocker) as built-in add-ons.
+# credit line from the About page, and bundles the Nova Ad Block host blocker
+# as a built-in add-on.
 # Runs in the iceraven repo root.
 set -euo pipefail
 
@@ -189,13 +189,6 @@ cat > app/src/forkRelease/res/drawable/animated_splash_screen.xml <<'XML'
     </target>
 </animated-vector>
 XML
-
-echo ">> Nova adblock: bundle uBlock Origin (built-in add-on)"
-rm -rf app/src/main/assets/extensions/ublock_origin
-mkdir -p app/src/main/assets/extensions/ublock_origin
-unzip -q -o nova-assets/ublock_origin.xpi -d app/src/main/assets/extensions/ublock_origin
-# sanity check: manifest must have unpacked
-test -f app/src/main/assets/extensions/ublock_origin/manifest.json
 
 echo ">> Nova adblock: bundle Nova Ad Block host blocker (built-in add-on)"
 rm -rf app/src/main/assets/extensions/nova-shield
@@ -1586,7 +1579,6 @@ patch(
         // Nova: ids of the bundled ad-blocking add-ons (installed as built-in
         // WebExtensions, see installNovaBundledExtensions).
         private const val NOVA_SHIELD_ADDON_ID = "nova-shield@nova.browser"
-        private const val NOVA_UBLOCK_ADDON_ID = "uBlock0@raymondhill.net"
     }
 """,
 )
@@ -1613,8 +1605,8 @@ patch(
     }
 
     /**
-     * Nova: installs the two bundled ad-blocking WebExtensions (Nova Ad Block and
-     * uBlock Origin) as built-in add-ons. ensureBuiltInWebExtension is idempotent,
+     * Nova: installs the bundled Nova Ad Block ad-blocking WebExtension as a built-in
+     * add-on. ensureBuiltInWebExtension is idempotent,
      * so it is safe to call on every launch; a failed install (e.g. while the engine
      * is still warming up) simply logs to NovaDebug and is retried next launch.
      */
@@ -1625,12 +1617,6 @@ patch(
             url = "resource://android/assets/extensions/nova-shield/",
             onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Shield installed: ${it.id}") },
             onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Shield install error: ${it.message}") },
-        )
-        engine.installBuiltInWebExtension(
-            id = NOVA_UBLOCK_ADDON_ID,
-            url = "resource://android/assets/extensions/ublock_origin/",
-            onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "uBlock Origin installed: ${it.id}") },
-            onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "uBlock Origin install error: ${it.message}") },
         )
     }
 """,
