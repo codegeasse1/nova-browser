@@ -782,6 +782,7 @@ if (!window.__novaToolsLoaded) {
   let inspectMode = false;
   let downloadButtons = [];
   let networkRows = [];
+  let novaObs = null;
 
   function fmtArgs(args) {
     try {
@@ -1003,7 +1004,7 @@ if (!window.__novaToolsLoaded) {
       placeButtons();
       window.addEventListener("resize", placeButtons);
       window.addEventListener("scroll", function () { if (ui) setTimeout(placeButtons, 200); });
-      var novaObs = new MutationObserver(function (muts) {
+      novaObs = new MutationObserver(function (muts) {
         for (var i = 0; i < muts.length; i++) {
           var added = muts[i].addedNodes;
           for (var j = 0; j < added.length; j++) {
@@ -1026,6 +1027,7 @@ if (!window.__novaToolsLoaded) {
   }
 
   function teardownUI() {
+    try { if (novaObs) { novaObs.disconnect(); novaObs = null; } } catch (e) {}
     try {
       var css = document.getElementById("nova-tools-css"); if (css && css.parentNode) { css.parentNode.removeChild(css); }
       var fabEl = document.getElementById("nova-tools-fab"); if (fabEl && fabEl.parentNode) { fabEl.parentNode.removeChild(fabEl); }
@@ -1061,6 +1063,15 @@ if (!window.__novaToolsLoaded) {
       }
     } catch (e) {}
   });
+
+  function syncState() {
+    try {
+      browser.storage.local.get({ enabled: true }).then(function (res) {
+        if (res && res.enabled === false) { teardownUI(); } else { ensureUI(); }
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  setInterval(syncState, 800);
 
   ensureUI();
 }
