@@ -2483,6 +2483,8 @@ patch(
             }
         }
 
+        LibraryMenuGroup(
+            isDownloadHighlighted = isDownloadHighlighted,
 """,
 )
 
