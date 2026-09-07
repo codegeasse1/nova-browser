@@ -2648,18 +2648,20 @@ patch(
                 throw IllegalStateException(msg, e)
             }""",
     """            } catch (_: IllegalStateException) {
-                // Nova: "display already acquired" happens when the session's
-                // display is still held by a previous window (mini/floating
-                // window relaunch). Release the display on the session and
-                // re-attach so it is re-acquired here instead of crashing the
-                // app (keeping the session set so the page is not lost).
+                // Nova: "display already acquired" happens when this view's
+                // session still holds its display because a previous window
+                // detach was skipped (mini/floating-window transition). Release
+                // the display through this GeckoView (which acquired it), finish
+                // attaching, then re-set the session so the display is
+                // re-acquired here instead of crashing the app.
                 try {
-                    this.session?.releaseDisplay()
-                } catch (e2: Exception) {
-                    android.util.Log.w("NovaGeckoView", "display release failed", e2)
-                }
-                try {
-                    super.onAttachedToWindow()
+                    val s = releaseSession()
+                    if (s != null) {
+                        super.onAttachedToWindow()
+                        setSession(s)
+                        attachSelectionActionDelegate(s)
+                        verticalScrollListener.observe(s)
+                    }
                 } catch (e2: Exception) {
                     android.util.Log.w("NovaGeckoView", "display re-attach failed", e2)
                 }
@@ -2690,11 +2692,12 @@ patch(
             }""",
     """            } catch (_: IllegalStateException) {
                 // Nova: "display already acquired" happens when the session's
-                // display is still held by a previous window (mini/floating
-                // window relaunch). Release the session and re-set it so the
-                // display is re-acquired here instead of crashing the app.
+                // display is still held by a previous window (mini/floating-
+                // window relaunch). Force-release the session's display and
+                // re-set it so the display is re-acquired here instead of
+                // crashing the app.
                 try {
-                    geckoView.releaseSession()
+                    forceReleaseSessionDisplay(internalSession.geckoSession)
                     geckoView.setSession(internalSession.geckoSession)
                     attachSelectionActionDelegate(internalSession.geckoSession)
                     verticalScrollListener.observe(internalSession.geckoSession)
@@ -2702,6 +2705,30 @@ patch(
                     android.util.Log.w("NovaGeckoView", "display re-set failed", e2)
                 }
             }""",
+)
+
+# --- android-components (submodule): helper to force-release a session's display ---
+# GeckoView only lets the view that acquired a session's display release it, but in
+# the mini/floating-window relaunch case that view is gone while the session still
+# holds its GeckoDisplay (which is why re-acquiring throws). The session's display
+# is only readable through the package-private getDisplay(), so read the backing
+# field directly; releaseDisplay(GeckoDisplay) itself is public. Member names stay
+# stable because the app build uses -dontobfuscate, so this survives R8.
+patch(
+    "android-components/components/browser/engine-gecko/src/main/java/mozilla/components/browser/engine/gecko/GeckoEngineView.kt",
+    """    private fun attachSelectionActionDelegate(session: GeckoSession) {""",
+    """    private fun forceReleaseSessionDisplay(session: GeckoSession) {
+        try {
+            val field = GeckoSession::class.java.getDeclaredField("mDisplay")
+            field.isAccessible = true
+            val display = field.get(session) as? org.mozilla.geckoview.GeckoDisplay ?: return
+            session.releaseDisplay(display)
+        } catch (e: Exception) {
+            android.util.Log.w("NovaGeckoView", "forced display release failed", e)
+        }
+    }
+
+    private fun attachSelectionActionDelegate(session: GeckoSession) {""",
 )
 
 # --- strings.xml: View page source + Developer mode -------------------------------
