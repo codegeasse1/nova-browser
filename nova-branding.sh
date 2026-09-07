@@ -808,6 +808,48 @@ object NovaDebugLog {
 }
 ''')
 
+# --- New file: crash stack trace logger ---------------------------------------
+write(BASE + "components/NovaCrashLog.kt", r'''/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.components
+
+import android.content.Context
+import java.io.PrintWriter
+import java.io.StringWriter
+
+/**
+ * Nova: appends the stack trace of any uncaught Java exception (crash) to the
+ * same nova-debug.log the rest of Nova writes to, so a crash that we have not
+ * fixed yet still leaves a record of exactly where it happened on the device.
+ */
+object NovaCrashLog {
+    fun install(context: Context) {
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            try {
+                val file = context.getExternalFilesDir(null)
+                    ?.resolve("nova-debug.log") ?: return@setDefaultUncaughtExceptionHandler
+                val sw = StringWriter()
+                throwable.printStackTrace(PrintWriter(sw))
+                file.appendText(
+                    "=== CRASH " +
+                        java.text.SimpleDateFormat(
+                            "yyyy-MM-dd HH:mm:ss.SSS",
+                            java.util.Locale.US,
+                        ).format(java.util.Date()) +
+                        " ===" +
+                        "\nThread: " + thread.name + "\n" + sw.toString() + "\n",
+                )
+            } catch (_: Exception) {
+            }
+            previous?.uncaughtException(thread, throwable)
+        }
+    }
+}
+''')
+
 # --- Settings.kt: the new option + internal state -----------------------------
 patch(
     BASE + "utils/Settings.kt",
@@ -2543,6 +2585,9 @@ patch(
     }""",
     """    override fun onCreate() {
         super.onCreate()
+        if (isMainProcess()) {
+            org.mozilla.fenix.components.NovaCrashLog.install(this)
+        }
         initializeFenixProcess()
         if (isMainProcess()) {
             org.mozilla.fenix.components.NovaUpdateChecker.check(this)
@@ -2605,13 +2650,56 @@ patch(
     """            } catch (_: IllegalStateException) {
                 // Nova: "display already acquired" happens when the session's
                 // display is still held by a previous window (mini/floating
-                // window relaunch). Release the session and re-attach so the
-                // display gets re-acquired instead of crashing the app.
-                releaseSession()
+                // window relaunch). Release the display on the session and
+                // re-attach so it is re-acquired here instead of crashing the
+                // app (keeping the session set so the page is not lost).
+                try {
+                    this.session?.releaseDisplay()
+                } catch (e2: Exception) {
+                    android.util.Log.w("NovaGeckoView", "display release failed", e2)
+                }
                 try {
                     super.onAttachedToWindow()
                 } catch (e2: Exception) {
                     android.util.Log.w("NovaGeckoView", "display re-attach failed", e2)
+                }
+            }""",
+)
+
+# --- android-components (submodule): recover when re-setting a session's display ---
+# The same "display already acquired" IllegalStateException is also thrown from
+# GeckoEngineView.render() when the session is re-set into the view while its
+# display is still held by the previous window (a mini/floating-window relaunch
+# starts a second HomeActivity whose render runs before the old window detaches,
+# so the SET SESSION path is hit before ATTACH VIEW). Release the session and
+# re-set it so the display is re-acquired here instead of crashing the app.
+patch(
+    "android-components/components/browser/engine-gecko/src/main/java/mozilla/components/browser/engine/gecko/GeckoEngineView.kt",
+    """            } catch (e: IllegalStateException) {
+                // This is to debug "display already acquired" crashes
+                val otherActivityClassName =
+                    internalSession.geckoSession.accessibility.view?.context?.javaClass?.simpleName
+                val otherActivityClassHashcode =
+                    internalSession.geckoSession.accessibility.view?.context?.hashCode()
+                val activityClassName = context.javaClass.simpleName
+                val activityClassHashCode = context.hashCode()
+                val msg = "SET SESSION: Current activity: $activityClassName hashcode " +
+                    "$activityClassHashCode Other activity: $otherActivityClassName " +
+                    "hashcode $otherActivityClassHashcode"
+                throw IllegalStateException(msg, e)
+            }""",
+    """            } catch (_: IllegalStateException) {
+                // Nova: "display already acquired" happens when the session's
+                // display is still held by a previous window (mini/floating
+                // window relaunch). Release the session and re-set it so the
+                // display is re-acquired here instead of crashing the app.
+                try {
+                    geckoView.releaseSession()
+                    geckoView.setSession(internalSession.geckoSession)
+                    attachSelectionActionDelegate(internalSession.geckoSession)
+                    verticalScrollListener.observe(internalSession.geckoSession)
+                } catch (e2: Exception) {
+                    android.util.Log.w("NovaGeckoView", "display re-set failed", e2)
                 }
             }""",
 )
