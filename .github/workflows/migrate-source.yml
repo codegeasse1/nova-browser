@@ -1,0 +1,108 @@
+name: Import Nova Source (one-time)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Branch to push the full source to'
+        required: true
+        default: 'nova-source'
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    name: Import Iceraven source as Nova
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          ref: build
+          fetch-depth: 1
+
+      - name: Clone Iceraven source (shallow, no history)
+        timeout-minutes: 10
+        run: |
+          git clone --depth 1 --branch iceraven-2.46.0 \
+            https://github.com/fork-maintainers/iceraven-browser.git iceraven
+          cd iceraven
+          git submodule update --init --recursive --depth 1
+          cd ..
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Apply Iceraven's own CI patches (Android components)
+        run: |
+          cd iceraven
+          ./automation/iceraven/patch_android_components.sh || true
+
+      - name: Replace strings (upstream Iceraven CI step)
+        run: |
+          cd iceraven
+          sed -i 's/Firefox/Iceraven/g' app/src/*/res/values*/*strings.xml
+          sed -i '/about_content/s/Mozilla/@forkmaintainers/' app/src/*/res/values*/*strings.xml
+          sed -i '/<string name="trackers_blocked_panel_categorical_num_trackers_blocked">/s/%s/%1$s/g; /<string name="trackers_blocked_panel_categorical_num_trackers_blocked">/s/%d/%2$s/g' app/src/*/res/values*/*strings.xml
+
+      - name: Apply Nova branding overlay
+        run: |
+          cp nova-branding.sh iceraven/nova-branding.sh
+          cp -r nova-icons iceraven/nova-icons
+          cp -r nova-assets iceraven/nova-assets
+          cd iceraven
+          bash nova-branding.sh
+
+      - name: Apply Nova developer options
+        run: |
+          cp nova-devtools.sh iceraven/nova-devtools.sh
+          cd iceraven
+          bash nova-devtools.sh
+
+      - name: Strip Iceraven git history
+        run: |
+          rm -rf iceraven/.git
+          rm -rf iceraven/.github
+
+      - name: Copy source into repo
+        run: |
+          # Remove old build-only files (they live on the build branch)
+          # but keep README, CHANGELOG, screenshots
+          # Copy the full Iceraven/Nova source tree
+          cp -a iceraven/* .
+          cp -a iceraven/.* . 2>/dev/null || true
+          rm -rf iceraven
+
+      - name: Clean up build-only scripts (keep them in a tools/ dir)
+        run: |
+          mkdir -p tools
+          [ -f nova-branding.sh ] && mv nova-branding.sh tools/ || true
+          [ -f nova-devtools.sh ] && mv nova-devtools.sh tools/ || true
+          [ -d nova-icons ] && mv nova-icons tools/ || true
+          [ -d nova-assets ] && mv nova-assets tools/ || true
+
+      - name: Commit and push to target branch
+        run: |
+          git config user.name "codegeasse"
+          git config user.email "chattered199@gmail.com"
+          git checkout -b "${{ inputs.target_branch }}"
+          git add -A
+          git commit -m "Import Nova Browser source from Firefox for Android (Iceraven 2.46.0 base)
+
+          Full source tree imported and rebranded as Nova Browser.
+          Includes:
+          - GeckoView engine and Fenix UI
+          - Nova branding (teal palette, Nova name, Nova icons)
+          - Built-in uBlock Origin + Nova Ad Block
+          - Background playback, password CSV import/export
+          - Developer options: inspect element, console, about:config, remote debugging
+          - View page source menu item
+
+          This is a standalone source tree — no build-time cloning or patching.
+          Edit code directly in this repo."
+          git push origin "${{ inputs.target_branch }}"
