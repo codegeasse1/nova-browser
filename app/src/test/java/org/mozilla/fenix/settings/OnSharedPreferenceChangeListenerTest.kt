@@ -1,0 +1,60 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.settings
+
+import android.content.SharedPreferences
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import io.mockk.Called
+import io.mockk.mockk
+import io.mockk.verify
+import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
+class OnSharedPreferenceChangeListenerTest {
+
+    private lateinit var sharedPrefs: SharedPreferences
+    private val listenerCalls = mutableListOf<Pair<SharedPreferences, String?>>()
+    private val listener: (SharedPreferences, String?) -> Unit = { prefs, key ->
+        listenerCalls.add(prefs to key)
+    }
+    private lateinit var owner: LifecycleOwner
+    private lateinit var lifecycleRegistry: LifecycleRegistry
+
+    @Before
+    fun setup() {
+        sharedPrefs = mockk(relaxUnitFun = true)
+        owner = object : LifecycleOwner {
+            override val lifecycle: Lifecycle
+                get() = lifecycleRegistry
+        }
+        lifecycleRegistry = LifecycleRegistry(owner)
+    }
+
+    @Test
+    fun `test listener is registered based on lifecycle`() {
+        sharedPrefs.registerOnSharedPreferenceChangeListener(owner, listener)
+        verify { sharedPrefs wasNot Called }
+
+        lifecycleRegistry.currentState = Lifecycle.State.CREATED
+        verify { sharedPrefs.registerOnSharedPreferenceChangeListener(any()) }
+
+        lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
+        verify { sharedPrefs.unregisterOnSharedPreferenceChangeListener(any()) }
+    }
+
+    @Test
+    fun `listener should call lambda`() {
+        val wrapper = OnSharedPreferenceChangeListener(mockk(), listener)
+        wrapper.onSharedPreferenceChanged(sharedPrefs, "key")
+
+        assertEquals(listOf(sharedPrefs to "key"), listenerCalls)
+    }
+}

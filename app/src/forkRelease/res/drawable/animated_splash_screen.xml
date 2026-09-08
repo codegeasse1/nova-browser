@@ -1,0 +1,47 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector xmlns:android="http://schemas.android.com/apk/res/android"
+            android:width="432dp"
+            android:height="432dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+            <path
+                android:pathData="M0,0 L108,0 L108,108 L0,108 Z"
+                android:fillColor="#0B7E78"/>
+            <group
+                android:name="nova_n">
+                <path
+                    android:pathData="M38,80 L38,40 L74,72 L74,40"
+                    android:strokeColor="#FFFFFF"
+                    android:strokeWidth="10"
+                    android:strokeLineCap="round"
+                    android:strokeLineJoin="round"/>
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="nova_n">
+        <aapt:attr name="android:animation">
+            <set android:interpolator="@android:interpolator/decelerate_cubic"
+                android:ordering="together"
+                android:repeatMode="reverse"
+                android:repeatCount="infinite">
+                <objectAnimator
+                    android:propertyName="scaleX"
+                    android:duration="500"
+                    android:valueFrom="0.75"
+                    android:valueTo="1"/>
+                <objectAnimator
+                    android:propertyName="scaleY"
+                    android:duration="500"
+                    android:valueFrom="0.75"
+                    android:valueTo="1"/>
+                <objectAnimator
+                    android:propertyName="alpha"
+                    android:duration="500"
+                    android:valueFrom="0.35"
+                    android:valueTo="1"/>
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

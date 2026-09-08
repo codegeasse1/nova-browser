@@ -1,0 +1,69 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.reviewprompt
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import mozilla.components.lib.state.Middleware
+import mozilla.components.lib.state.Store
+import org.mozilla.fenix.settings.SupportUtils
+
+/**
+ * [Middleware] that emits [CustomReviewPromptNavigationEvent]s handled by the hosting fragment
+ * when an action results in navigation.
+ */
+class CustomReviewPromptNavigationMiddleware(
+    private val scope: CoroutineScope,
+) : Middleware<CustomReviewPromptState, CustomReviewPromptAction> {
+
+    override fun invoke(
+        store: Store<CustomReviewPromptState, CustomReviewPromptAction>,
+        next: (CustomReviewPromptAction) -> Unit,
+        action: CustomReviewPromptAction,
+    ) {
+        val events = (store as CustomReviewPromptStore).navigationEvents
+        when (action) {
+            CustomReviewPromptAction.RateButtonClicked -> {
+                scope.launch {
+                    events.emit(CustomReviewPromptNavigationEvent.OpenPlayStoreReviewPrompt)
+                    events.emit(CustomReviewPromptNavigationEvent.Dismiss)
+                }
+            }
+
+            CustomReviewPromptAction.LeaveFeedbackButtonClicked -> {
+                scope.launch {
+                    events.emit(CustomReviewPromptNavigationEvent.OpenInNewTab(SupportUtils.ANDROID_SUPPORT_SUMO_URL))
+                    events.emit(CustomReviewPromptNavigationEvent.Dismiss)
+                }
+            }
+
+            CustomReviewPromptAction.NegativePrePromptButtonClicked -> {}
+            CustomReviewPromptAction.PositivePrePromptButtonClicked -> {}
+            CustomReviewPromptAction.Displayed -> {}
+            CustomReviewPromptAction.Dismissed -> {}
+        }
+        next(action)
+    }
+}
+
+/**
+ * Events to emit to the fragment to handle navigation side-effects.
+ */
+sealed class CustomReviewPromptNavigationEvent {
+    /**
+     * Dismiss the custom review prompt bottom sheet.
+     */
+    data object Dismiss : CustomReviewPromptNavigationEvent()
+
+    /**
+     * Call the Play In-App Review API to show the review prompt.
+     */
+    data object OpenPlayStoreReviewPrompt : CustomReviewPromptNavigationEvent()
+
+    /**
+     * Open a [url] in a new tab.
+     */
+    data class OpenInNewTab(val url: String) : CustomReviewPromptNavigationEvent()
+}

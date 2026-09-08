@@ -1,0 +1,89 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.components.menu.compose.header
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import mozilla.components.compose.base.button.IconButton
+import org.mozilla.fenix.theme.FirefoxTheme
+import org.mozilla.fenix.theme.PreviewThemeProvider
+import org.mozilla.fenix.theme.Theme
+import mozilla.components.ui.icons.R as iconsR
+
+@Composable
+internal fun SubmenuHeader(
+    header: String,
+    backButtonContentDescription: String? = null,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .padding(start = 4.dp, end = 16.dp)
+            .defaultMinSize(minHeight = 56.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+            IconButton(
+                onClick = { onClick() },
+                contentDescription = backButtonContentDescription,
+            ) {
+                Icon(
+                    painter = painterResource(id = iconsR.drawable.mozac_ic_back_24),
+                    contentDescription = null,
+                )
+            }
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            Text(
+                text = header,
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics { heading() },
+                style = FirefoxTheme.typography.headline7,
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SubmenuHeaderPreview(
+    @PreviewParameter(PreviewThemeProvider::class) theme: Theme,
+) {
+    FirefoxTheme(theme) {
+        Column(
+            modifier = Modifier
+                .background(color = MaterialTheme.colorScheme.surface),
+        ) {
+            SubmenuHeader(
+                header = "sub-menu header",
+                onClick = {},
+            )
+        }
+    }
+}

@@ -1,0 +1,3 @@
+[submodule "android-components"]
+	path = android-components
+	url = https://github.com/akliuxingyuan/android-components

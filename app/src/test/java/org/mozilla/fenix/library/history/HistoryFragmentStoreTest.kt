@@ -1,0 +1,257 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.library.history
+
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import kotlin.test.assertIs
+
+class HistoryFragmentStoreTest {
+    private val historyItem = History.Regular(0, "title", "url", 0.toLong(), HistoryItemTimeGroup.timeGroupForTimestamp(0))
+    private val newHistoryItem = History.Regular(1, "title", "url", 0.toLong(), HistoryItemTimeGroup.timeGroupForTimestamp(0))
+    private val pendingDeletionItem = historyItem.toPendingDeletionHistory()
+
+    @Test
+    fun exitEditMode() = runTest {
+        val initialState = oneItemEditState()
+        val store = HistoryFragmentStore(initialState)
+
+        store.dispatch(HistoryFragmentAction.ExitEditMode)
+        assertNotSame(initialState, store.state)
+        assertEquals(store.state.mode, HistoryFragmentState.Mode.Normal)
+    }
+
+    @Test
+    fun itemAddedForRemoval() = runTest {
+        val initialState = emptyDefaultState()
+        val store = HistoryFragmentStore(initialState)
+
+        store.dispatch(HistoryFragmentAction.AddItemForRemoval(newHistoryItem))
+        assertNotSame(initialState, store.state)
+        assertEquals(
+            store.state.mode,
+            HistoryFragmentState.Mode.Editing(setOf(newHistoryItem)),
+        )
+    }
+
+    @Test
+    fun removeItemForRemoval() = runTest {
+        val initialState = twoItemEditState()
+        val store = HistoryFragmentStore(initialState)
+
+        store.dispatch(HistoryFragmentAction.RemoveItemForRemoval(newHistoryItem))
+        assertNotSame(initialState, store.state)
+        assertEquals(store.state.mode, HistoryFragmentState.Mode.Editing(setOf(historyItem)))
+    }
+
+    @Test
+    fun startSync() = runTest {
+        val initialState = emptyDefaultState()
+        val store = HistoryFragmentStore(initialState)
+
+        store.dispatch(HistoryFragmentAction.StartSync)
+        assertNotSame(initialState, store.state)
+        assertEquals(HistoryFragmentState.Mode.Syncing, store.state.mode)
+    }
+
+    @Test
+    fun finishSync() = runTest {
+        val initialState = HistoryFragmentState(
+            items = listOf(),
+            mode = HistoryFragmentState.Mode.Syncing,
+            pendingDeletionItems = emptySet(),
+            isEmpty = false,
+            isDeletingItems = false,
+            isSearching = false,
+        )
+        val store = HistoryFragmentStore(initialState)
+
+        store.dispatch(HistoryFragmentAction.FinishSync)
+        assertNotSame(initialState, store.state)
+        assertEquals(HistoryFragmentState.Mode.Normal, store.state.mode)
+    }
+
+    @Test
+    fun changeEmptyState() = runTest {
+        val initialState = emptyDefaultState()
+        val store = HistoryFragmentStore(initialState)
+
+        store.dispatch(HistoryFragmentAction.ChangeEmptyState(true))
+        assertNotSame(initialState, store.state)
+        assertTrue(store.state.isEmpty)
+
+        store.dispatch(HistoryFragmentAction.ChangeEmptyState(false))
+        assertNotSame(initialState, store.state)
+        assertFalse(store.state.isEmpty)
+    }
+
+    @Test
+    fun updatePendingDeletionItems() = runTest {
+        val initialState = emptyDefaultState()
+        val store = HistoryFragmentStore(initialState)
+
+        store.dispatch(HistoryFragmentAction.UpdatePendingDeletionItems(setOf(pendingDeletionItem)))
+        assertNotSame(initialState, store.state)
+        assertEquals(setOf(pendingDeletionItem), store.state.pendingDeletionItems)
+
+        store.dispatch(HistoryFragmentAction.UpdatePendingDeletionItems(emptySet()))
+        assertNotSame(initialState, store.state)
+        assertEquals(emptySet<PendingDeletionHistory>(), store.state.pendingDeletionItems)
+    }
+
+    @Test
+    fun `GIVEN items have been selected WHEN selected item is clicked THEN item is unselected`() = runTest {
+        val store = HistoryFragmentStore(twoItemEditState())
+
+        store.dispatch(HistoryFragmentAction.HistoryItemClicked(historyItem))
+
+        assertEquals(1, store.state.mode.selectedItems.size)
+        assertEquals(newHistoryItem, store.state.mode.selectedItems.first())
+    }
+
+    @Test
+    fun `GIVEN items have been selected WHEN unselected item is clicked THEN item is selected`() {
+        val initialState = oneItemEditState().copy(items = listOf(newHistoryItem))
+        val store = HistoryFragmentStore(initialState)
+
+        store.dispatch(HistoryFragmentAction.HistoryItemClicked(newHistoryItem))
+
+        assertEquals(2, store.state.mode.selectedItems.size)
+        assertTrue(store.state.mode.selectedItems.contains(newHistoryItem))
+    }
+
+    @Test
+    fun `GIVEN items have been selected WHEN last selected item is clicked THEN editing mode is exited`() {
+        val store = HistoryFragmentStore(oneItemEditState())
+
+        store.dispatch(HistoryFragmentAction.HistoryItemClicked(historyItem))
+
+        assertEquals(0, store.state.mode.selectedItems.size)
+        assertIs<HistoryFragmentState.Mode.Normal>(store.state.mode)
+    }
+
+    @Test
+    fun `GIVEN items have not been selected WHEN item is clicked THEN state is unchanged`() {
+        val store = HistoryFragmentStore(emptyDefaultState())
+
+        store.dispatch(HistoryFragmentAction.HistoryItemClicked(historyItem))
+
+        assertEquals(0, store.state.mode.selectedItems.size)
+        assertIs<HistoryFragmentState.Mode.Normal>(store.state.mode)
+    }
+
+    @Test
+    fun `GIVEN mode is syncing WHEN item is clicked THEN state is unchanged`() {
+        val store = HistoryFragmentStore(emptyDefaultState().copy(mode = HistoryFragmentState.Mode.Syncing))
+
+        store.dispatch(HistoryFragmentAction.HistoryItemClicked(historyItem))
+
+        assertEquals(0, store.state.mode.selectedItems.size)
+        assertIs<HistoryFragmentState.Mode.Syncing>(store.state.mode)
+    }
+
+    @Test
+    fun `GIVEN mode is syncing WHEN item is long-clicked THEN state is unchanged`() {
+        val store = HistoryFragmentStore(emptyDefaultState().copy(mode = HistoryFragmentState.Mode.Syncing))
+
+        store.dispatch(HistoryFragmentAction.HistoryItemLongClicked(historyItem))
+
+        assertEquals(0, store.state.mode.selectedItems.size)
+        assertIs<HistoryFragmentState.Mode.Syncing>(store.state.mode)
+    }
+
+    @Test
+    fun `GIVEN mode is not syncing WHEN item is long-clicked THEN mode becomes editing`() {
+        val store = HistoryFragmentStore(oneItemEditState())
+
+        store.dispatch(HistoryFragmentAction.HistoryItemLongClicked(newHistoryItem))
+
+        assertEquals(2, store.state.mode.selectedItems.size)
+        assertTrue(store.state.mode.selectedItems.contains(newHistoryItem))
+    }
+
+    @Test
+    fun `GIVEN mode is not syncing WHEN item is long-clicked THEN item is selected`() {
+        val store = HistoryFragmentStore(emptyDefaultState())
+
+        store.dispatch(HistoryFragmentAction.HistoryItemLongClicked(historyItem))
+
+        assertEquals(1, store.state.mode.selectedItems.size)
+        assertTrue(store.state.mode.selectedItems.contains(historyItem))
+    }
+
+    @Test
+    fun `GIVEN mode is editing WHEN back pressed THEN mode becomes normal`() {
+        val store = HistoryFragmentStore(
+            emptyDefaultState().copy(
+                mode = HistoryFragmentState.Mode.Editing(
+                    setOf(),
+                ),
+            ),
+        )
+
+        store.dispatch(HistoryFragmentAction.BackPressed)
+
+        assertEquals(HistoryFragmentState.Mode.Normal, store.state.mode)
+    }
+
+    @Test
+    fun `GIVEN mode is not editing WHEN back pressed THEN does not change`() {
+        val store = HistoryFragmentStore(emptyDefaultState().copy(mode = HistoryFragmentState.Mode.Syncing))
+
+        store.dispatch(HistoryFragmentAction.BackPressed)
+
+        assertEquals(HistoryFragmentState.Mode.Syncing, store.state.mode)
+    }
+
+    @Test
+    fun `WHEN search is clicked THEN update state`() {
+        val store = HistoryFragmentStore(emptyDefaultState().copy(isSearching = true))
+
+        store.dispatch(HistoryFragmentAction.SearchClicked)
+
+        assertTrue(store.state.isSearching)
+    }
+
+    @Test
+    fun `WHEN search is dismissed THEN update state`() {
+        val store = HistoryFragmentStore(emptyDefaultState().copy(isSearching = false))
+
+        store.dispatch(HistoryFragmentAction.SearchDismissed)
+
+        assertFalse(store.state.isSearching)
+    }
+
+    private fun emptyDefaultState(): HistoryFragmentState = HistoryFragmentState(
+        items = listOf(),
+        mode = HistoryFragmentState.Mode.Normal,
+        pendingDeletionItems = emptySet(),
+        isEmpty = false,
+        isDeletingItems = false,
+        isSearching = false,
+    )
+
+    private fun oneItemEditState(): HistoryFragmentState = HistoryFragmentState(
+        items = listOf(),
+        mode = HistoryFragmentState.Mode.Editing(setOf(historyItem)),
+        pendingDeletionItems = emptySet(),
+        isEmpty = false,
+        isDeletingItems = false,
+        isSearching = false,
+    )
+
+    private fun twoItemEditState(): HistoryFragmentState = HistoryFragmentState(
+        items = listOf(),
+        mode = HistoryFragmentState.Mode.Editing(setOf(historyItem, newHistoryItem)),
+        pendingDeletionItems = emptySet(),
+        isEmpty = false,
+        isDeletingItems = false,
+        isSearching = false,
+    )
+}

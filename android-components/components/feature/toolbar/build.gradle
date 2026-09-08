@@ -1,0 +1,44 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+plugins {
+    alias(libs.plugins.dependency.analysis)
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace = 'mozilla.components.feature.toolbar'
+}
+
+dependencies {
+    api project(':components:concept-toolbar')
+
+    implementation project(':components:browser-domains')
+    implementation project(':components:browser-state')
+    implementation project(':components:concept-engine')
+    implementation project(':components:concept-storage')
+    implementation project(':components:feature-session')
+    implementation project(':components:lib-publicsuffixlist')
+    implementation project(':components:support-ktx')
+    implementation project(':components:support-utils')
+    implementation project(':components:ui-icons')
+
+    implementation libs.androidx.core.ktx
+    implementation libs.kotlinx.coroutines
+
+    testImplementation project(':components:support-test')
+    testImplementation project(':components:support-test-libstate')
+    testImplementation testFixtures(project(':components:concept-toolbar'))
+
+    testImplementation libs.androidx.test.core
+    testImplementation libs.androidx.test.junit
+    testImplementation libs.kotlin.test
+    testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.robolectric
+}
+
+apply from: '../../../common-config.gradle'
+apply from: '../../../publish.gradle'
+ext.configurePublish(config.componentsGroupId, project.name, project.ext.description)

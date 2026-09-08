@@ -1,0 +1,16 @@
+diff --git a/components/browser/toolbar/src/main/res/layout/mozac_browser_toolbar_displaytoolbar.xml b/components/browser/toolbar/src/main/res/layout/mozac_browser_toolbar_displaytoolbar.xml
+index b435db2ef9..00bf29a2c2 100644
+--- a/components/browser/toolbar/src/main/res/layout/mozac_browser_toolbar_displaytoolbar.xml
++++ b/components/browser/toolbar/src/main/res/layout/mozac_browser_toolbar_displaytoolbar.xml
+@@ -142,9 +142,10 @@
+ 
+     <mozilla.components.browser.menu.view.MenuButton
+         android:id="@+id/mozac_browser_toolbar_menu"
+-        android:layout_width="@dimen/mozac_browser_toolbar_button_width"
++        android:layout_width="wrap_content"
+         android:layout_height="@dimen/mozac_browser_toolbar_button_height"
+         android:layout_marginTop="4dp"
++        android:layout_marginEnd="8dp"
+         android:background="?android:attr/selectableItemBackgroundBorderless"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:layout_constraintTop_toTopOf="parent" />

@@ -1,0 +1,48 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.browser.store
+
+import mozilla.components.lib.state.Middleware
+import mozilla.components.lib.state.Store
+import org.mozilla.fenix.browser.store.BrowserScreenAction.CancelPrivateDownloadsOnPrivateTabsClosedAccepted
+import org.mozilla.fenix.browser.store.BrowserScreenAction.ClosingLastPrivateTab
+import org.mozilla.fenix.browser.store.BrowserScreenAction.CustomTabColorsUpdated
+import org.mozilla.fenix.browser.store.BrowserScreenAction.PageTranslationStatusUpdated
+import org.mozilla.fenix.browser.store.BrowserScreenAction.ReaderModeStatusUpdated
+
+/**
+ * [Store] for the browser screen.
+ *
+ * @param initialState The initial state of the store.
+ * @param middleware The middlewares to be applied to this store.
+ */
+class BrowserScreenStore(
+    initialState: BrowserScreenState = BrowserScreenState(),
+    middleware: List<Middleware<BrowserScreenState, BrowserScreenAction>> = emptyList(),
+) : Store<BrowserScreenState, BrowserScreenAction>(
+    initialState = initialState,
+    reducer = ::reduce,
+    middleware = middleware,
+)
+
+private fun reduce(state: BrowserScreenState, action: BrowserScreenAction): BrowserScreenState = when (action) {
+    is ClosingLastPrivateTab -> state.copy(
+        cancelPrivateDownloadsAccepted = false,
+    )
+
+    is CancelPrivateDownloadsOnPrivateTabsClosedAccepted -> state.copy(
+        cancelPrivateDownloadsAccepted = true,
+    )
+
+    is ReaderModeStatusUpdated -> state.copy(
+        readerModeStatus = action.readerModeStatus,
+    )
+
+    is PageTranslationStatusUpdated -> state.copy(pageTranslationStatus = action.pageTranslationStatus)
+
+    is CustomTabColorsUpdated -> state.copy(
+        customTabColors = action.customTabColors,
+    )
+}

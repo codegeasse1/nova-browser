@@ -1,0 +1,65 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+plugins {
+    alias(libs.plugins.dependency.analysis)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-parcelize'
+
+android {
+    buildFeatures {
+        compose = true
+    }
+
+    buildTypes {
+        release {
+            consumerProguardFiles 'proguard-rules-consumer.pro'
+        }
+    }
+
+    namespace = 'mozilla.components.browser.state'
+}
+
+dependencies {
+    // We expose this as API because we are using Response in our public API and do not want every
+    // consumer to have to manually import "concept-fetch".
+    api project(':components:concept-fetch')
+    api project(':components:lib-state')
+    compileOnly libs.mockito
+
+    implementation project(':components:concept-awesomebar')
+    implementation project(':components:concept-engine')
+    implementation project(':components:concept-storage')
+    implementation project(':components:support-ktx')
+    implementation project(':components:support-utils')
+
+    implementation libs.androidx.browser
+    implementation platform(libs.androidx.compose.bom)
+    implementation libs.androidx.compose.ui
+    implementation libs.kotlinx.coroutines
+
+    testImplementation project(':components:support-test')
+    testImplementation project(':components:support-test-libstate')
+
+    testImplementation libs.androidx.test.junit
+    testImplementation libs.kotlin.test
+    testImplementation platform(libs.junit.bom)
+    testImplementation libs.junit4
+    testRuntimeOnly libs.junit.platform.launcher
+    testRuntimeOnly libs.junit.vintage
+    testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.robolectric
+
+    androidTestImplementation libs.androidx.compose.ui.test
+    androidTestImplementation libs.androidx.compose.ui.test.manifest
+    androidTestImplementation libs.androidx.test.junit
+}
+
+apply from: '../../../common-config.gradle'
+apply from: '../../../publish.gradle'
+ext.configurePublish(config.componentsGroupId, project.name, project.ext.description)

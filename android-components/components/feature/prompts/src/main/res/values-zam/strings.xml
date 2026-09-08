@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<resources>
+  <!-- Text for confirmation for a positive action in dialog -->
+  <string name="mozac_feature_prompts_ok">ăɁ</string>
+  <!-- Text for confirmation for a negative action in dialog. -->
+  <string name="mozac_feature_prompts_cancel">B-láɁ=y</string>
+  <!-- Text for a button that clears the selected input in the date/time picker. -->
+  <string name="mozac_feature_prompts_clear">Tòmbî</string>
+  <!-- Text for the title of an authentication dialog. -->
+  <string name="mozac_feature_prompt_sign_in">-taɁ lélù lèɁn</string>
+  <!-- Text for username field in an authentication dialog. -->
+  <string name="mozac_feature_prompt_username_hint">Chó lèl</string>
+</resources>

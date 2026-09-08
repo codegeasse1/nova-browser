@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova Ad Block</title>
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+<header>
+  <h1>Nova Ad Block</h1>
+  <p class="sub">Requests to domains on the block list are stopped everywhere (all their subdomains too). The allow list always wins. You can also paste a whole <b>hosts file</b> (StevenBlack hosts, AdAway, ...) &mdash; or grab a big blocklist with one tap.</p>
+</header>
+<section>
+  <label for="blocked">Block these domains (one per line)</label>
+  <textarea id="blocked" spellcheck="false" placeholder="ads.example.com&#10;tracker.example.net"></textarea>
+</section>
+<section>
+  <label for="allowed">Always allow these domains &mdash; whitelist (one per line)</label>
+  <textarea id="allowed" spellcheck="false" placeholder="example.com&#10;payments.example.net"></textarea>
+</section>
+<section>
+  <label for="hosts">Hosts-file blocklist &mdash; paste any hosts file here</label>
+  <textarea id="hosts" spellcheck="false" placeholder="0.0.0.0 ads.example.com&#10;127.0.0.1 tracker.example.net&#10;# lines starting with # are ignored"></textarea>
+  <div class="presets">
+    <button id="preset-stevenblack" type="button">StevenBlack hosts</button>
+    <button id="preset-adaway" type="button">AdAway hosts</button>
+    <button id="preset-easylist" type="button">EasyList</button>
+  </div>
+  <div class="urldiv">
+    <input id="hostsUrl" type="url" placeholder="or paste a hosts-file URL and tap Import" spellcheck="false">
+    <button id="fetchUrl" type="button">Import</button>
+  </div>
+</section>
+<footer>
+  <button id="save">Save</button>
+  <span id="status"></span>
+</footer>
+<script src="options.js"></script>
+</body>
+</html>
