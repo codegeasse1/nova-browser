@@ -1,0 +1,41 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+plugins {
+    alias(libs.plugins.dependency.analysis)
+}
+
+apply plugin: 'java-library'
+apply plugin: 'kotlin'
+
+dependencies {
+  compileOnly libs.android.lint.api
+  compileOnly libs.android.lint.checks
+  compileOnly libs.kotlin.reflect
+
+  testImplementation libs.android.lint
+  testImplementation libs.android.lint.tests
+  testImplementation platform(libs.junit.bom)
+  testImplementation libs.junit4
+  testRuntimeOnly libs.junit.platform.launcher
+  testRuntimeOnly libs.junit.vintage
+  testImplementation libs.kotlin.reflect
+  testImplementation libs.mockito
+}
+
+jar {
+  manifest {
+    attributes('Lint-Registry-v2': 'mozilla.components.tooling.lint.LintIssueRegistry')
+  }
+}
+
+tasks.register("lint") {
+  doLast {
+    // Do nothing. We execute the same set of tasks for all our modules in parallel on taskcluster.
+    // This project doesn't have a lint task. To avoid special casing our automation I just added
+    // an empty lint task here.
+  }
+}

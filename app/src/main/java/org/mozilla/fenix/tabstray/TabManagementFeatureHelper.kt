@@ -1,0 +1,65 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.tabstray
+
+import androidx.compose.runtime.staticCompositionLocalOf
+import org.mozilla.fenix.Config
+import org.mozilla.fenix.nimbus.FxNimbus
+
+/**
+ * Feature helper for managing the release of the Tabs Tray UI enhancements.
+ */
+interface TabManagementFeatureHelper {
+
+    /**
+     * Whether the Tab Manager opening animation is enabled.
+     */
+    val openingAnimationEnabled: Boolean
+
+    /**
+     * Whether the Tab Groups feature is enabled.
+     */
+    val tabGroupsEnabled: Boolean
+
+    /**
+     * Whether drag and drop is enabled for the Tab Groups feature.
+     */
+    val tabGroupsDragAndDropEnabled: Boolean
+
+    /**
+     * Determines whether the "Share" button is displayed for tab groups in the tabs tray.
+     */
+    val shareTabGroupEnabled: Boolean
+
+    /**
+     * Whether onboarding is enabled for the Tab Groups feature.
+     */
+    val tabGroupsOnboardingEnabled: Boolean
+}
+
+/**
+ * The default implementation of [TabManagementFeatureHelper].
+ */
+data object DefaultTabManagementFeatureHelper : TabManagementFeatureHelper {
+
+    override val openingAnimationEnabled: Boolean
+        get() = Config.channel.isDebug || FxNimbus.features.tabManagementEnhancements.value().openingAnimationEnabled
+
+    override val tabGroupsEnabled: Boolean
+        get() = Config.channel.isDebug || FxNimbus.features.tabGroups.value().enabled
+
+    override val tabGroupsDragAndDropEnabled: Boolean
+        get() = Config.channel.isDebug || FxNimbus.features.tabGroupsDragAndDrop.value().enabled
+
+    override val shareTabGroupEnabled: Boolean
+        get() = false
+
+    override val tabGroupsOnboardingEnabled: Boolean
+        get() = Config.channel.isDebug || FxNimbus.features.tabGroupsOnboarding.value().enabled
+}
+
+val LocalTabManagementFeatureHelper = staticCompositionLocalOf<TabManagementFeatureHelper> {
+    DefaultTabManagementFeatureHelper
+}

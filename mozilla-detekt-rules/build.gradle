@@ -1,0 +1,17 @@
+apply plugin: 'kotlin'
+
+dependencies {
+  compileOnly libs.detekt.api
+
+  implementation libs.androidx.annotation
+
+  testImplementation libs.detekt.api
+  testImplementation libs.detekt.test
+  testImplementation platform(libs.junit.bom)
+  testImplementation libs.junit.jupiter
+  testRuntimeOnly libs.junit.platform.launcher
+}
+
+test {
+  useJUnitPlatform {}
+}

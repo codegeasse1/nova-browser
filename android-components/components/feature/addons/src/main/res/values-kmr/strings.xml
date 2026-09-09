@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this file,
+  You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<resources xmlns:tools="http://schemas.android.com/tools">
+  <!-- Description for giving an add-on access to users's data on one site. %1$s  will be replaced by the DNS host name for which a web extension is requesting access (e.g., www.mozilla.org). -->
+  <string name="mozac_feature_addons_permissions_one_site_description">Ji bo %1$s’ê xwe bigihîne daneyên xwe</string>
+  <!-- Description for giving an add-on access to users's data in multiple sites in the domain %1$s. %1$s will be replaced by the DNS domain for which a web extension is requesting access (e.g., mozilla.org). -->
+  <string name="mozac_feature_addons_permissions_sites_in_domain_description">Xwe bigihîne daneyên malperên te yên aîdî domaîna %1$s’ê</string>
+  <!--
+    When an add-on requires access to more than 4 sites, for example the add-on requires access for 5 sites. We will show the first 4 sites in individual entries, as in mozac_feature_addons_permissions_one_site_description,
+    then we will show another collapsed entry saying "Access your data on another site".
+  -->
+  <string name="mozac_feature_addons_permissions_one_extra_site_description_2">Li ser malpereke din xwe bigihîne daneyên xwe</string>
+  <!--
+    When an add-on requires access to more than 4 sites, for example the add-on requires access for 6 sites. We will show the first 4 sites in individual entries, as in mozac_feature_addons_permissions_one_site_description,
+    then we will show another collapsed entry saying "Access your data on other sites".
+  -->
+  <string name="mozac_feature_addons_permissions_extra_sites_description_2">Li ser malpereke din xwe bigihîne daneyên xwe</string>
+  <!--
+    When an add-on requires access to more than 4 domains, for example the add-on requires access for 5 domains. We will show the first 4 domains in individual entries, as in mozac_feature_addons_permissions_sites_in_domain_description,
+    then we will show another collapsed entry saying "Access your data on another domain.
+  -->
+  <string name="mozac_feature_addons_permissions_one_extra_domain_description_2">Xwe bigihîne daneyên xwe yên li ser domaîneke din</string>
+  <!--
+    When an add-on requires access to more than 4 domains, for example the add-on requires access for 6 domains. We will show the first 4 domains in individual entries, as in mozac_feature_addons_permissions_sites_in_domain_description,
+    then we will show another collapsed entry saying "Access your data on other domains".
+  -->
+  <string name="mozac_feature_addons_permissions_extra_domains_description_plural_2">Xwe bigihîne daneyên xwe yên li ser domaîneke din</string>
+  <plurals name="mozac_feature_addons_permissions_all_domain_count_description_2">
+    <!-- When an add-on requires access to domains, this entry is used to describe the total number of domains. Underneath it will be the list of all the domains. %1$d is the number of all the domains that will be shown to the user as required. -->
+    <item quantity="one">Xwe bigihîne daneyên xwe yên ji bo malperên di domaînên %1$d de</item>
+    <item quantity="other">Xwe bigihîne daneyên xwe yên ji bo malperên di domaînên %1$d de</item>
+  </plurals>
+  <!-- Content description for a permission item, for an installed add-on details page. %1$s will be replaced with the permission text name, %2$d will be replaced with the permission position in the list and %3$d will be replaced with the total number of permissions in the list.Taking as an example "Read and modify privacy settings" the whole text will read Read and modify privacy settings, 2 of 6. -->
+  <string name="mozac_feature_addons_permissions_content_description_item">%1$s, %2$d ji %3$d</string>
+  <!-- Description for the "privacy" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_privacy_description">Sazkariyên nihêniyê bixwîne û biguherîne</string>
+  <!-- Description for the "<all_urls>" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_all_urls_description">Ji bo hemû malperan xwe bigihîne daneyên te</string>
+  <!-- Description for the "tabs" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_tabs_description">Xwe bigihîne hilpekînên gerokê</string>
+  <!-- Description for the "webNavigation" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_web_navigation_description">Di dema gerînê de xwe bigihîne çalakiya gerokê</string>
+  <!-- Description for the "bookmarks" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_bookmarks_description">Xwendin û guhertina favoriyan</string>
+  <!-- Description for the "browserSettings" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_browser_setting_description">Xwendin û guhertina sazkariyên gerokê</string>
+  <!-- Description for the "browsingData" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_browser_data_description">Paqijkirina raboriya gerînê, kûkî û daneyên têkildar</string>
+  <!-- Description for the "clipboardRead" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_clipboard_read_description">Daneyan ji panoyê bistîne</string>
+  <!-- Description for the "clipboardWrite" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_clipboard_write_description">Daneyan bişîne panoyê</string>
+  <!-- Description for the "declarativeNetRequest" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_declarative_net_request_description">Naveroka li ser hemû rûpelan asteng bike</string>
+  <!-- Description for the "declarativeNetRequestFeedback" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_declarative_net_request_feedback_description">Raboriya geroka xwe bixwîne</string>
+  <!-- Description for the "downloads" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_downloads_description">Dosyeyan daxîne, raboriya gerokê bixwîne û biguherîne</string>
+  <!-- Description for the "downloads.open" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_downloads_open_description">Vekirina dosyeyên li cîhaza te barkirî</string>
+  <!-- Description for the "find" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_find_description">Xwendina nivîsên hemû hilpekînên vekirî</string>
+  <!-- Description for the "geolocation" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_geolocation_description">Xwegihandina cîgeha te</string>
+  <!-- Description for the "history" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_history_description">Xwegihandina raboriya gerokê</string>
+  <!-- Description for the "management" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_management_description">Temaşekirina bikaranîna pêvekan û birêvebirina temayan</string>
+  <!-- Description for the "nativeMessaging" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_native_messaging_description">Şandina/stendina peyaman bi sepanên din ên Ji bilî vê</string>
+  <!-- Description for the "notifications" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_notifications_description">Danezanan ji te re nîşan bide</string>
+  <!-- Description for the "pkcs11" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_pkcs11_description">Dabînkirina xizmetên rastandinê ji bo nasnameya krîptografîkî</string>
+  <!-- Description for the "proxy" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_proxy_description">Kontrolkirina eyarên proxya gerokê</string>
+  <!-- Description for the "sessions" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_sessions_description">Xwegihandina hilpekînên herî dawî</string>
+  <!-- Description for the "tabHide" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_tab_hide_description">Veşartin û nîşandana hilpekînên gerokê</string>
+  <!-- Description for the "topSites" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_top_sites_description">Xwegihandina raboriya gerînê</string>
+  <!-- Description for the "trialML" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_trial_ml_description">Modelên AI`ê bar bike ser cîhaza xwe û bixebitîne</string>
+  <!-- Description for the "userScripts" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_user_scripts_description">Destûrê bide skrîptên partiya sêyemîn ên nepesendkirî ku xwe bigihînin daneyên te</string>
+  <!-- Description for the "devtools" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_devtools_description">Firehkirina amûrên pêşvebirinê ji bo xwegihandina daneyên di hilpekînên vekirî de</string>
+  <!-- Description for the "privacy" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_privacy_description_for_update">Sazkariyên nihêniyê bixwîne û biguherîne.</string>
+  <!-- Description for the "<all_urls>" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_all_urls_description_for_update">Xwe bigihîne aghiyên xwe yên ji bo hemû malperan.</string>
+  <!-- Description for the "tabs" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_tabs_description_for_update">Xwe bigihîne hilpekînên gerokê.</string>
+  <!-- Description for the "webNavigation" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_web_navigation_description_for_update">Di dema gerînê de xwe bigihîne çalakiya gerokê.</string>
+  <!-- Description for the "bookmarks" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_bookmarks_description_for_update">Xwendin û guhertina favoriyan.</string>
+  <!-- Description for the "browserSettings" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_browser_settings_description_for_update">Xwendin û guhertina eyarên gerokê.</string>
+  <!-- Description for the "browsingData" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_browsing_data_description_for_update">Raboriya dawiyê ya gerê, çerezan û agahiyên têkildar jê bibe.</string>
+  <!-- Description for the "clipboardRead" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_clipboard_read_description_for_update">Daneyan ji panoyê bistîne.</string>
+  <!-- Description for the "clipboardWrite" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_clipboard_write_description_for_update">Daneyan bişîne panoyê.</string>
+  <!-- Description for the "declarativeNetRequest" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_declarative_net_request_description_for_update">Naveroka li ser hemû rûpelan asteng bike.</string>
+  <!-- Description for the "declarativeNetRequestFeedback" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_declarative_net_request_feedback_description_for_update">Raboriya xwe ya gerê bixwîne.</string>
+  <!-- Description for the "downloads" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_downloads_description_for_update">Jêbarkirina pelan, xwendin û guhertina mêjûya gerokê.</string>
+  <!-- Description for the "downloads.open" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_downloads_open_description_for_update">Pelên ku li ser cîhaza te hatine barkirin veke.</string>
+  <!-- Description for the "find" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_find_description_for_update">Xwendina nivîsên hemû hilpekînên vekirî.</string>
+  <!-- Description for the "geolocation" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_geolocation_description_for_update">Xwegihandina cîgeha te.</string>
+  <!-- Description for the "history" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_history_description_for_update">Têkeve raboriya gerê.</string>
+  <!-- Description for the "management" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_management_description_for_update">Temaşekirina bikaranîna pêvekan û birêvebirina temayan.</string>
+  <!-- Description for the "nativeMessaging" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_native_messaging_description_for_update">Pevguherîna peyaman bi bernamokên ji bilî vê bernamokê.</string>
+  <!-- Description for the "notifications" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_notifications_description_for_update">Nîşandana danezanên ji bo te.</string>
+  <!-- Description for the "pkcs11" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_pkcs11_description_for_update">Dabînkirina xizmetên pesendkirina nasnameyan ya krîptografîk.</string>
+  <!-- Description for the "proxy" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_proxy_description_for_update">Kontrolkirina eyarên proksiya gerokê.</string>
+  <!-- Description for the "sessions" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_sessions_description_for_update">Xwegihandina hilpekînên dawiyê hatine girtin.</string>
+  <!-- Description for the "tabHide" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_tab_hide_description_for_update">Veşartin û nîşandana hilpekînên gerokê.</string>
+  <!-- Description for the "topSites" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_top_sites_description_for_update">Têkeve raboriya gerê.</string>
+  <!-- Description for the "trialML" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_trial_ml_description_for_update">Modelên ZÇ`ê jêbar bike û li ser amûra xwe bixebitîne.</string>
+  <!-- Description for the "userScripts" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_user_scripts_description_for_update">Destûrê bide ku skrîptên partiya sêyemîn xwe bigihînin daneyên te.</string>
+  <!-- Description for the "devtools" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_devtools_description_for_update">Berfirehkirina amûrên pêşdebiran ji bo di hilpekînên vekirî de xwe bigihînin daneyên te.</string>
+  <!-- Description for giving an add-on access to users's data on one site. %1$s  will be replaced by the DNS host name for which a web extension is requesting access (e.g., www.mozilla.org). -->
+  <string name="mozac_feature_addons_permissions_one_site_description_for_update">Ji bo %1$s ê xwe bigihîne daneyên xwe.</string>
+  <!-- Description for giving an add-on access to users's data in multiple sites in the domain %1$s. %1$s will be replaced by the DNS domain for which a web extension is requesting access (e.g., mozilla.org). -->
+  <string name="mozac_feature_addons_permissions_sites_in_domain_description_for_update">Ji bo malperên di domaîna %1$s de xwe bigihîne daneyên xwe.</string>
+  <!--
+    When an add-on requires access to more than 2 domains, for example the add-on requires access for 3 domains. We will show the first 2 domains in individual entries, as in mozac_feature_addons_permissions_sites_in_domain_description_for_update,
+    then we will show another collapsed entry saying "Access your data on another domain.".
+  -->
+  <string name="mozac_feature_addons_permissions_one_extra_domain_description_for_update">Xwe bigihîne daneyên xwe yên li ser domaîneke din.</string>
+  <!--
+    When an add-on requires access to more than 2 domains, for example the add-on requires access for 4 domains. We will show the first 2 domains in individual entries, as in mozac_feature_addons_permissions_sites_in_domain_description_for_update,
+    then we will show another collapsed entry saying "Access your data on other domains.".
+  -->
+  <string name="mozac_feature_addons_permissions_extra_domains_description_plural_for_update">Xwe bigihîne daneyên xwe yên li ser domaîneke din.</string>
+  <!--
+    When an add-on requires access to more than 2 sites, for example the add-on requires access for 3 sites. We will show the first 2 sites in individual entries, as in mozac_feature_addons_permissions_one_site_description_for_update,
+    then we will show another collapsed entry saying "Access your data on another site.".
+  -->
+  <string name="mozac_feature_addons_permissions_one_extra_site_description_for_update">Xwe bigihîne daneyên xwe yên li ser malpereke din.</string>
+  <!--
+    When an add-on requires access to more than 2 sites, for example the add-on requires access for 4 sites. We will show the first 2 sites in individual entries, as in mozac_feature_addons_permissions_one_site_description_for_update,
+    then we will show another collapsed entry saying "Access your data on other sites.".
+  -->
+  <string name="mozac_feature_addons_permissions_extra_sites_description_for_update">Xwe bigihîne daneyên xwe yên li ser malperên din.</string>
+  <!-- The text shown when an extension requests the userScripts permission, near the usual description of the userScripts permission -->
+  <string name="mozac_feature_addons_permissions_user_scripts_extra_warning">Skrîptên nepesendkirî dikarin xetereyên ewlehî û nepenîtiyê derxînin holê. Tenê skrîptên bi niçik yan ji çavkaniyên ku hûn pê bawer in bidin xebitandin.</string>
+  <!-- The sentence used when the extension has data collection permissions. %1$s is a formatted list of permissions. -->
+  <string name="mozac_feature_addons_permissions_required_data_collection_description_2">Pêşdebir dibêje ku ev pêvek vê/van berhev dike: %1$s</string>
+  <!-- The sentence used when the developer of an extension has explicitly stated that they do not collect any data collection. -->
+  <string name="mozac_feature_addons_permissions_none_required_data_collection_description">Pêşdebir dibêje ku ev pêvek ne hewceyî berhevkirina daneyan e.</string>
+  <!-- The sentence used when the extension requests new data collection permissions. %1$s is a formatted list of permissions. -->
+  <string name="mozac_feature_addons_permissions_data_collection_optional_description">Pêşdebir dibêje ku ev pêvek dixwaze vê/van berhev bike: %1$s</string>
+  <!-- Description for text button that expands the list of domain permissions -->
+  <string name="mozac_feature_addons_permissions_show_all_sites">Hemû malperan nîşan bide</string>
+  <!-- Description for text button that hides the majority of the list of domain permissions -->
+  <string name="mozac_feature_addons_permissions_show_fewer_sites">Hindiktir malperan nîşan bide</string>
+  <!-- Short description for the authenticationInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_authenticationInfo_short_description">agahiyên pejirandinê</string>
+  <!-- Short description for the bookmarksInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_bookmarksInfo_short_description">bijare</string>
+  <!-- Short description for the browsingActivity data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_browsingActivity_short_description">çalakiya gerokê</string>
+  <!-- Short description for the financialAndPaymentInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_financialAndPaymentInfo_short_description">agahdariya darayî û dravdanê</string>
+  <!-- Short description for the healthInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_healthInfo_short_description">agahiyên tenduristiyê</string>
+  <!-- Short description for the locationInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_locationInfo_short_description">cî</string>
+  <!-- Short description for the personalCommunications data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_personalCommunications_short_description">danûstandinên şexsî</string>
+  <!-- Short description for the personallyIdentifyingInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_personallyIdentifyingInfo_short_description">agahiyên kesane yên nasnameyê</string>
+  <!-- Short description for the searchTerms data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_searchTerms_short_description">peyvên lêgerînê</string>
+  <!-- Short description for the technicalAndInteraction data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_technicalAndInteraction_short_description">daneyên teknîkî û danûstandinê</string>
+  <!-- Short description for the websiteActivity data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_websiteActivity_short_description">çalakiya malperê</string>
+  <!-- Short description for the websiteContent data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_websiteContent_short_description">naveroka malperê</string>
+  <!-- Long description for the authenticationInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_authenticationInfo_long_description">Agahiyên pejirandinê bi pêşdebirê pêvekan re parve bike</string>
+  <!-- Long description for the bookmarksInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_bookmarksInfo_long_description">Agahiyên favoriyan bi pêşdebirên pêvekan re parve bike</string>
+  <!-- Long description for the browsingActivity data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_browsingActivity_long_description">Çalakiya gerokê bi pêşdebirên pêvekan re parve bike</string>
+  <!-- Long description for the financialAndPaymentInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_financialAndPaymentInfo_long_description">Agahiyên darayî û dravdanê bi pêşdebirê vebijarkê re parve bike</string>
+  <!-- Long description for the healthInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_healthInfo_long_description">Agahiyên tenduristiyê bi pêşdebirên pêvekan re parve bike</string>
+  <!-- Long description for the locationInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_locationInfo_long_description">Agahiyên cîgehê bi pêşdebirên pêvekan re parve bike</string>
+  <!-- Long description for the personalCommunications data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_personalCommunications_long_description">Agahiyên şexsî bi pêşdebirên pêvekan re parve bike</string>
+  <!-- Long description for the personallyIdentifyingInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_personallyIdentifyingInfo_long_description">Agahiyên şexsî yên nasnameyî bi pêşdebirên pêvekan re parve bike</string>
+  <!-- Long description for the searchTerms data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_searchTerms_long_description">Peyvên lêgerînê bi pêşdebirên pêvekan re parve bike</string>
+  <!-- Long description for the technicalAndInteraction data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_technicalAndInteraction_long_description">Agahiyên teknîkî û yên peywendiyê bi pêşdebirên pêvekan re parve bike</string>
+  <!-- Long description for the websiteActivity data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_websiteActivity_long_description">Çalakiyên malperan bi pêşdebirên pêvekan re parve bike</string>
+  <!-- Long description for the websiteContent data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_websiteContent_long_description">Naverokên malperan bi pêşdebirên pêvekan re parve bike</string>
+  <!-- The version on of add-on. -->
+  <string name="mozac_feature_addons_version">Guherto</string>
+  <!-- The author of an add-on. -->
+  <string name="mozac_feature_addons_author">Niväskar</string>
+  <!-- The last date that the add-on was updated. -->
+  <string name="mozac_feature_addons_last_updated">Nûvekirina dawî</string>
+  <!-- The developer website (Homepage) of the add-on. -->
+  <string name="mozac_feature_addons_home_page">Serrûpel</string>
+  <!-- A link where users can find more information about add-ons permissions. -->
+  <string name="mozac_feature_addons_learn_more">Derbarê destûran de zêdêtir fêr bibe</string>
+  <!-- The rating of the add-on. -->
+  <string name="mozac_feature_addons_rating">Puan</string>
+  <!-- A link that points to the detail page of the extension. -->
+  <string name="mozac_feature_addons_more_info_link_2">Zêdetir agahî li ser vê pêvekê</string>
+  <!-- The settings of the add-on. -->
+  <string name="mozac_feature_addons_settings">Sazkarî</string>
+  <!-- Indicates the add-on is enabled. -->
+  <string name="mozac_feature_addons_settings_on">Vekirî</string>
+  <!-- Indicates the add-on is allowed in private browsing mode. -->
+  <string name="mozac_feature_addons_settings_allow_in_private_browsing_2">Destûrê bide pêvekan ku di gera nepenî de bixebitin</string>
+  <!-- Indicates the add-on is allowed in private browsing mode. -->
+  <string name="mozac_feature_addons_settings_run_in_private_browsing">Di gerîna veşartî de bixebitîne</string>
+  <!-- This is displayed when the add-on is not allowed to run in private browsing. -->
+  <string name="mozac_feature_addons_not_allowed_in_private_browsing">Di pencereyên nepen de destûr nayê dayîn</string>
+  <!-- Indicates the add-on is enabled. -->
+  <string name="mozac_feature_addons_enabled">Çalak</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the installed section. -->
+  <string name="mozac_feature_addons_installed_section">Sazkirî</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the recommended section. -->
+  <string name="mozac_feature_addons_recommended_section">Yên pêşniyar</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the not yet supported section. -->
+  <string name="mozac_feature_addons_unsupported_section">Hîn nayê piştgirîkirin</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the not yet available section. -->
+  <string name="mozac_feature_addons_unavailable_section">Hîn ne mewcûd e</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the disabled section. -->
+  <string name="mozac_feature_addons_disabled_section">Neçalak</string>
+  <!-- Displays a page with all the details of an add-on. -->
+  <string name="mozac_feature_addons_details">Hûrgilî</string>
+  <!-- Displays a page with all the permissions of an add-on. -->
+  <string name="mozac_feature_addons_permissions">Destûr</string>
+  <!-- This is a button to remove (i.e. uninstall) an add-on. -->
+  <string name="mozac_feature_addons_remove">Rake</string>
+  <!-- This is a button to report an add-on. -->
+  <string name="mozac_feature_addons_report">Gilî bike</string>
+  <!-- This is the title of a dialog that asks the users if they to install or not an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_permissions_dialog_title_2">%1$s`ê têxê</string>
+  <!-- This is the title of a dialog that asks the users to grant optional permissions. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_optional_permissions_with_data_collection_dialog_title">%1$s destûrên zêdetir dixwaze</string>
+  <!-- This is the title of a dialog that asks the users to grant optional data collection permissions only. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_optional_permissions_with_data_collection_only_dialog_title">%1$s berheva daneyan ya pêvekî dixwaze</string>
+  <!-- Heading for the permissions section in the add-on install dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_required_permissions">Destûrên pêwist:</string>
+  <!-- Heading for the data collection permissions section in the add-on install dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_required_data_collection">Berhevkirina daneyên pêwist:</string>
+  <!-- Heading for the optional settings section in the add-on install dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_optional_settings">Sazkariyên vebijarkî:</string>
+  <!-- Heading for the permissions section in the optional permissions request dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_optional_permissions">Destûrên nû:</string>
+  <!-- Heading for the data collection permissions section in the optional permissions request dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_optional_data_collection">Berheva daneyan ya nû:</string>
+  <!-- This is a button to add (install) an add-on . -->
+  <string name="mozac_feature_addons_permissions_dialog_add">Tevlî bike</string>
+  <!-- This is a button to allow the optional permissions requested by an add-on . -->
+  <string name="mozac_feature_addons_permissions_dialog_allow">Destûrê bide</string>
+  <!-- This is a button to deny the optional permissions requested by an add-on . -->
+  <string name="mozac_feature_addons_permissions_dialog_deny">Red bike</string>
+  <!-- Text link to learn more about permission requests on the add-on permissions dialog . -->
+  <string name="mozac_feature_addons_permissions_dialog_learn_more">Zêdetir bizane</string>
+  <!-- This is the text for the "technical and interaction" checkbox shown in the add-on permissions dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_technical_and_interaction_data">Agahiyên teknîkî û yên peywendiyê bi pêşdebirên pêvekan re parve bike</string>
+  <!-- This is a button to cancel the add-on installation . -->
+  <string name="mozac_feature_addons_permissions_dialog_cancel">Betal bike</string>
+  <!-- Accessibility content description to install add-on button. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_install_addon_content_description_2">%1$s saz bike</string>
+  <!-- This is the label of a button to cancel an ongoing add-on installation. -->
+  <string name="mozac_feature_addons_install_addon_dialog_cancel">Betal bike</string>
+  <!-- Indicates how many users have rated an add-on. %1$s will be replaced with number of reviews -->
+  <string name="mozac_feature_addons_user_rating_count_2">Nirxandin: %1$s</string>
+  <!-- Accessibility content description for the amount of stars that add-on has, where %1$.02f will be the amount of stars. -->
+  <string name="mozac_feature_addons_rating_content_description_2">Nirxandin: jin 5an %1$.02f</string>
+  <!-- This is the title of page where all the add-ons are listed -->
+  <string name="mozac_feature_addons_addons">Pêvek</string>
+  <!-- Label for add-ons sub menu item for add-ons manager -->
+  <string name="mozac_feature_addons_addons_manager">Rêvebera pêvekan</string>
+  <!-- The title of the "crash" notification in the extensions manager -->
+  <string name="mozac_feature_extensions_manager_notification_title_text">Pêvek demkî hatine neçalakkirin</string>
+  <!-- The content of the "crash" notification in the extensions manager -->
+  <string name="mozac_feature_extensions_manager_notification_content_text">Pêvekek yan jî zêdetir pêvek êdî naxebitin û dibe ku ev pergala te bêîstîqrar bike.</string>
+  <!-- Button to re-enable the extensions in the "crash" notification -->
+  <string name="mozac_feature_extensions_manager_notification_restart_button">Pêvekan ji nû ve bide destpêkirin</string>
+  <!-- Button in the extensions manager that opens AMO in a tab -->
+  <string name="mozac_feature_addons_find_more_extensions_button_text">Zêdetir pêvekan bibîne</string>
+  <!-- The label of the update button on the system notification shown to the user when an add-on has an update that requires the user to accept new permissions. -->
+  <string name="mozac_feature_addons_updater_notification_update_button">Nûve bike</string>
+  <!-- The label of the cancel button on a notification, this will be shown to the user when an add-on needs new permissions. Indicates the user denies the new permissions and prevents the add-on from be updated -->
+  <string name="mozac_feature_addons_updater_notification_cancel_button">Betal bike</string>
+  <!-- The title of the system notification shown to the user when an add-on has a new update that requires new permissions. %1$s is the name of the add-on. -->
+  <string name="mozac_feature_addons_updater_notification_title_2">Nûvekirineke nû ya %1$s’ê heye</string>
+  <!-- A short explanation shown in the notification displayed when an add-on has a new update that requires new permissions. -->
+  <string name="mozac_feature_addons_updater_notification_short_intro">Ji bo parastina guhertoya xwe ya niha û mîhengan, betal bike.</string>
+  <!-- The heading for the permissions section in the system notification shown when an add-on has an update that requires user confirmation. %1$s is a list of sentences. -->
+  <string name="mozac_feature_addons_updater_notification_heading_permissions">Destûrên nû yên pêwîst: %1$s</string>
+  <!-- The heading for the data collection permission section in the system notification shown when an add-on has an update that requires user confirmation. %1$s is a list of permissions. -->
+  <string name="mozac_feature_addons_updater_notification_heading_data_collection_permissions">Berheva daneyên nû yên pêwist: Pêşdebir dibêje ku pêvek dê %1$s berhev bike.</string>
+  <!-- Name of the "notification channel" used for displaying a notification for updating an extension. See https://developer.android.com/training/notify-user/channels -->
+  <string name="mozac_feature_addons_updater_notification_channel_2">Venûkirinên pêvekan</string>
+  <!-- Name of the "notification channel" used for displaying a notification for new supported add-ons. See https://developer.android.com/training/notify-user/channels -->
+  <string name="mozac_feature_addons_supported_checker_notification_channel" tools:ignore="UnusedResources">Kontrolkera pêvekan a tê piştgirîkirin</string>
+  <!-- The tile of the notification, this will be shown to the user when one newly supported add-on is available. -->
+  <string name="mozac_feature_addons_supported_checker_notification_title" tools:ignore="UnusedResources">Pêveka nû mewcûd e</string>
+  <!-- The tile of the notification, this will be shown to the user when more than one newly supported add-ons are available. -->
+  <string name="mozac_feature_addons_supported_checker_notification_title_plural" tools:ignore="UnusedResources">Pêvekên nû mewcûd in</string>
+  <!-- The content of the notification, this will be shown to the user when one newly supported add-on is available. %1$s is the add-on name and %2$s is the app name (in most cases Firefox). -->
+  <string name="mozac_feature_addons_supported_checker_notification_content_one">Pêveka %1$s’ê tevlî %2$s’ê bike</string>
+  <!-- The content of the notification, this will be shown to the user when two newly supported add-ons are available. %1$s is the first add-on name. %2$s is the second add-on name. %3$s is the app name (in most cases Firefox). -->
+  <string name="mozac_feature_addons_supported_checker_notification_content_two">Pêvekên %1$s û %2$s’ê tevlî %3$s’ê bike</string>
+  <!-- The content of the notification, this will be shown to the user when more than two newly supported add-ons are available. %1$s is the app name (in most cases Firefox). -->
+  <string name="mozac_feature_addons_supported_checker_notification_content_more_than_two">Pêvekan tevlî %1$s’ê bike</string>
+  <!-- This is the caption for not yet supported screen caption -->
+  <string name="mozac_feature_addons_not_yet_supported_caption2">Em niha ji bo Pêvekên Pêşniyarkirî destekê ava dikin.</string>
+  <!-- This is the caption for the extension installation progress overlay -->
+  <string name="mozac_extension_install_progress_caption">Pêvek tê jêbarkirin û kontrolkirin…</string>
+  <!-- Error shown when unable to find a translation for an add-on field. %1$s is the locale of the user and %2$s is the default language of the add-on -->
+  <string name="mozac_feature_addons_failed_to_translate">Werger ne ji bo %1$s ne jî ji bo zimanê %2$s hat dîtin</string>
+  <!-- Text shown after successfully installed an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_successfully_installed">%1$s bi serkeftî hate sazkirin</string>
+  <!-- Text shown after failing to install an add-on (when add-on type isn't supported or an unknown has errored). %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_install">%1$s nehate sazkirin</string>
+  <!-- Text shown after failing to install an extension for which we don't have its name (when add-on type isn't supported or an unknown has errored). -->
+  <string name="mozac_feature_addons_extension_failed_to_install">Sazkirina vê pêvekê bi ser neket.</string>
+  <!-- Text shown when installing an add-on has failed. -->
+  <string name="mozac_feature_addons_cant_install_extension">Ev pêvek nayê sazkirin</string>
+  <!-- Text shown when attempting to install an extension and a network error happened. -->
+  <string name="mozac_feature_addons_extension_failed_to_install_network_error">Ev pêvek ji ber çewtiyeke girêdanê nehat jêbarkirin.</string>
+  <!-- Text shown when attempting to install an extension and the downloaded file is corrupted. -->
+  <string name="mozac_feature_addons_extension_failed_to_install_corrupt_error">Ev pêvek nehat sazkirin, wisa xuya ye xirabe ye.</string>
+  <!-- Text shown when attempting to install an add-on and an error occurred because the extension was not signed. -->
+  <string name="mozac_feature_addons_extension_failed_to_install_not_signed_error">Ev pêvek nehat sazkirin, ji ber ku nehatiye pesendkirin.</string>
+  <!-- Text shown when attempting to install an add-on and an error occurred because the extension was incompatible. %1$s is the add-on name, %2$s is the app name and %3$s is the app version. -->
+  <string name="mozac_feature_addons_failed_to_install_incompatible_error">%1$s nehat sazkirin ji ber ku bi %2$s %3$s re ne lihevhatî ye.</string>
+  <!-- Text shown when attempting to install a (hard) blocked add-on. %1$s is the add-on name. %2$s is the app name. -->
+  <string name="mozac_feature_addons_blocklisted_2" tools:ignore="BrandUsage">%1$s polîtîkayên Mozillayê binpê dike û nikare li %2$s bê sazkirin.</string>
+  <!-- Text shown when attempting to install an add-on that can only be install via Enterprise Policies, which is not supported on Android.  %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_admin_install_only">%1$s nehat sazkirin, ji ber ku ew tenê dikare ji hêla rêxistineke ku polîtîkayên pargîdaniyê bikar tîne ve bê sazkirin, ku li ser vê platformê nayê piştgirîkirin.</string>
+  <!-- Text shown when attempting to install an add-on that is soft-blocked. %1$s is the add-on name. %2$s is the app name. -->
+  <string name="mozac_feature_addons_soft_blocked_2">%1$s bi sînor e û nikare li ser %2$s bê sazkirin.</string>
+  <!-- Text shown after failed to enable an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_enable">%1$s nehate çalakkirin</string>
+  <!-- Text shown after failed to disable an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_disable">%1$s nehate neçalakkirin</string>
+  <!-- Text shown after failed to uninstall an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_uninstall">%1$s nehate rakirin</string>
+  <!-- Text shown after successfully removed an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_successfully_removed" tools:ignore="UnusedResources">%1$s bi serkeftî hate rakirin</string>
+  <!-- Text shown after failed to remove an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_remove" tools:ignore="UnusedResources">%1$s nehate rakirin</string>
+  <!-- Label shown to indicate that the add-on was migrated from a previous version of the app. %1$s is the app name most of the case it will be Firefox. -->
+  <string name="mozac_feature_addons_migrated_from_a_previous_version_label" tools:ignore="UnusedResources">Ev pêvek ji guhertoyeke kevn a %1$s’ê hatiye anîn</string>
+  <!-- Text shown in not yet supported add-ons section. -->
+  <string name="mozac_feature_addons_unsupported_caption_2">Pêvekek</string>
+  <!-- Text shown in not yet supported add-ons section - plural. %1$s is the number of unsupported extensions. -->
+  <string name="mozac_feature_addons_unsupported_caption_plural_2">%1$s pêvek</string>
+  <!-- Text link to a sumo page for learning more about unsupported add-ons. -->
+  <string name="mozac_feature_addons_unsupported_learn_more">Zêdetir bizane</string>
+  <!-- Displayed in the "Status" field for the updater when an add-on has been correctly updated. -->
+  <string name="mozac_feature_addons_updater_status_successfully_updated">Bi serkeftî hate nûvekirin</string>
+  <!-- Displayed in the "Status" field for the updater when an add-on has no updates available. -->
+  <string name="mozac_feature_addons_updater_status_no_update_available">Ti nûvekirin tune</string>
+  <!-- Displayed in the "Status" field for the updater when there was an error during the add-on update. -->
+  <string name="mozac_feature_addons_updater_status_error">Çewtî</string>
+  <!-- Text shown in a dialog that displays information about the last attempt to update an add-on. This is the title of the dialog. -->
+  <string name="mozac_feature_addons_updater_dialog_title">Agahiyên Nûvekerê</string>
+  <!-- Label in the dialog displaying information for the last attempt to update add-ons. It's followed by the date of the last attempt. -->
+  <string name="mozac_feature_addons_updater_dialog_last_attempt">Ceribandina dawî:</string>
+  <!-- Displayed in the "Status" field for the updater when an add-on has been correctly updated -->
+  <string name="mozac_feature_addons_updater_dialog_status">Rewş:</string>
+  <!-- Text shown in the dialog when add-on installation is completed. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_installed_dialog_title_2">%1$s hate lêzêdekirin</string>
+  <!-- Used as text for the link in the description of the post-installation dialog. -->
+  <string name="mozac_feature_addons_installed_dialog_description_link_text">sazkariyên pêvekan</string>
+  <!-- Text shown in the dialog when add-on installation is completed. %1$s is replaced by an active link, using mozac_feature_addons_installed_dialog_description_link_text as text ("extension settings"). -->
+  <string name="mozac_feature_addons_installed_dialog_description_3">Destûran û tercîhên daneyan her dema bixwazî di %1$s de nûve bike.</string>
+  <!-- Confirmation button text for the dialog when add-on installation is completed. -->
+  <string name="mozac_feature_addons_installed_dialog_okay_button_2">Baş e</string>
+  <!-- "Learn more" link displayed below an add-on status message. -->
+  <string name="mozac_feature_addons_status_learn_more">Zêdetir bizane</string>
+  <!-- "See details" link displayed below an add-on status message. -->
+  <string name="mozac_feature_addons_status_see_details">Kitekitan bibîne</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on has been blocklisted. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_status_blocklisted_1" tools:ignore="BrandUsage">Ev pêvek ji ber binpêkirina polîtîkayên Mozillayê hat astengkirin û hate neçalakkirin.</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on has been soft-blocked. -->
+  <string name="mozac_feature_addons_status_softblocked_2">Ev pêvek bi sînor e û hatiye neçalakkirin. Tu dikarî wê çalak bikî, lê dibe ku ev xeternak be.</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on has been soft-blocked but the user re-enabled it. -->
+  <string name="mozac_feature_addons_status_softblocked_re_enabled_2">Ev pêvek sînorkirî ye. Bikaranîna wê dibe ku xeternak be.</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on hasn't been signed correctly. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_status_unsigned">%1$s wekî ewledar nehat piştrastkirin û hate neçalakkirin.</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on isn't compatible with the application version. %1$s is the add-on name, %2$s is the app name and %3$s is the app version. -->
+  <string name="mozac_feature_addons_status_incompatible">%1$s bi guhertoya we ya %2$s re (guhertoya %3$s) hevaheng nîne.</string>
+</resources>

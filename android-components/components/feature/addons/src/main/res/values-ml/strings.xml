@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this file,
+  You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<resources xmlns:tools="http://schemas.android.com/tools">
+  <!-- Description for giving an add-on access to users's data on one site. %1$s  will be replaced by the DNS host name for which a web extension is requesting access (e.g., www.mozilla.org). -->
+  <string name="mozac_feature_addons_permissions_one_site_description">%1$s-നു് നിങ്ങളുടെ ദത്ത ഉപയോഗിക്കാൻ സമ്മതം കൊടുക്കുക</string>
+  <!-- Description for giving an add-on access to users's data in multiple sites in the domain %1$s. %1$s will be replaced by the DNS domain for which a web extension is requesting access (e.g., mozilla.org). -->
+  <string name="mozac_feature_addons_permissions_sites_in_domain_description">%1$s മേഖലയിന്റെ സൈറ്റുകൾക്കായുള്ള താങ്ങളുടെ ദത്ത ഉപയോഗിക്കുക</string>
+  <!--
+    When an add-on requires access to more than 4 sites, for example the add-on requires access for 5 sites. We will show the first 4 sites in individual entries, as in mozac_feature_addons_permissions_one_site_description,
+    then we will show another collapsed entry saying "Access your data on another site".
+  -->
+  <string name="mozac_feature_addons_permissions_one_extra_site_description_2">മറ്റൊരു വെബ്ബിടത്തിൽ താങ്ങളുടെ ഡാറ്റ ഉപയോഗിക്കുക</string>
+  <!--
+    When an add-on requires access to more than 4 sites, for example the add-on requires access for 6 sites. We will show the first 4 sites in individual entries, as in mozac_feature_addons_permissions_one_site_description,
+    then we will show another collapsed entry saying "Access your data on other sites".
+  -->
+  <string name="mozac_feature_addons_permissions_extra_sites_description_2">മറ്റെ വെബ്ബിടങ്ങളിൽ താങ്ങളുടെ ഡാറ്റ ഉപയോഗിക്കുക</string>
+  <!--
+    When an add-on requires access to more than 4 domains, for example the add-on requires access for 5 domains. We will show the first 4 domains in individual entries, as in mozac_feature_addons_permissions_sites_in_domain_description,
+    then we will show another collapsed entry saying "Access your data on another domain.
+  -->
+  <string name="mozac_feature_addons_permissions_one_extra_domain_description_2">മറ്റൊരു മേഖലയിൽ താങ്ങളുടെ ഡാറ്റ ഉപയോഗിക്കുക</string>
+  <!--
+    When an add-on requires access to more than 4 domains, for example the add-on requires access for 6 domains. We will show the first 4 domains in individual entries, as in mozac_feature_addons_permissions_sites_in_domain_description,
+    then we will show another collapsed entry saying "Access your data on other domains".
+  -->
+  <string name="mozac_feature_addons_permissions_extra_domains_description_plural_2">മറ്റെ മേഖലകളിൽ താങ്ങളുടെ ഡാറ്റ ഉപയോഗിക്കുക</string>
+  <plurals name="mozac_feature_addons_permissions_all_domain_count_description_2">
+    <!-- When an add-on requires access to domains, this entry is used to describe the total number of domains. Underneath it will be the list of all the domains. %1$d is the number of all the domains that will be shown to the user as required. -->
+    <item quantity="one">%1$d മേഖലകളിൽ താങ്ങളുടെ വെബ്ബിട ഡാറ്റ ഉപയോഗിക്കുക</item>
+    <item quantity="other">%1$d മേഖലകളിൽ താങ്ങളുടെ വെബ്ബിട ഡാറ്റ ഉപയോഗിക്കുക</item>
+  </plurals>
+  <!-- Content description for a permission item, for an installed add-on details page. %1$s will be replaced with the permission text name, %2$d will be replaced with the permission position in the list and %3$d will be replaced with the total number of permissions in the list.Taking as an example "Read and modify privacy settings" the whole text will read Read and modify privacy settings, 2 of 6. -->
+  <string name="mozac_feature_addons_permissions_content_description_item">%1$s, %2$d/%3$d</string>
+  <!-- Description for the "privacy" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_privacy_description">സ്വകാര്യതാ ക്രമീകരണങ്ങൾ വായിക്കുക പരിഷ്കരിക്കുക</string>
+  <!-- Description for the "<all_urls>" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_all_urls_description">എല്ലാ വെബ്സൈറ്റുകൾക്കുമായുള്ള നിങ്ങളുടെ ദത്ത ലഭ്യമാക്കുക</string>
+  <!-- Description for the "tabs" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_tabs_description">ബ്രൌസര്‍ ടാബുകള്‍ പരിശോധിക്കുക</string>
+  <!-- Description for the "webNavigation" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_web_navigation_description">നാവിഗേഷൻ ചെയ്യുമ്പോൾ ബ്രൗസർ പ്രവർത്തനം ആക്സസ്സുചെയ്യുക</string>
+  <!-- Description for the "bookmarks" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_bookmarks_description">അടയാളക്കുറിപ്പുകൾ വായിക്കുക പരിഷ്കരിക്കുക</string>
+  <!-- Description for the "browserSettings" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_browser_setting_description">ബ്രൗസർ ക്രമീകരണങ്ങൾ വായിക്കുക പരിഷ്കരിക്കുക</string>
+  <!-- Description for the "browsingData" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_browser_data_description">സമീപകാല തിരച്ചിൽനാൾവഴിയും കുക്കികളും അതുമായി ബന്ധപ്പെട്ട ദത്ത എന്നിവ മായ്ക്കുക</string>
+  <!-- Description for the "clipboardRead" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_clipboard_read_description">പകർത്തൽപെട്ടി നിന്നു് ദത്ത എടുക്കുക</string>
+  <!-- Description for the "clipboardWrite" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_clipboard_write_description">പകർത്തൽപെട്ടിലേക്കു് ദത്ത നൽകുക</string>
+  <!-- Description for the "declarativeNetRequest" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_declarative_net_request_description">ഏത് താളിലും ഉള്ളടക്കം തടയുക</string>
+  <!-- Description for the "declarativeNetRequestFeedback" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_declarative_net_request_feedback_description">തിരയൽ നാൾവഴി വായിക്കുക</string>
+  <!-- Description for the "downloads" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_downloads_description">ഫയലുകൾ ഇറക്കിവയ്ക്കുകയും അന്വേഷിയന്ത്രത്തിന്റെ ഇറക്കിവയ്ക്കൽ നാൾവഴി വായിക്കുകയും പരിഷ്ക്കരിക്കുകയും ചെയ്യുക</string>
+  <!-- Description for the "downloads.open" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_downloads_open_description">താങ്ങളുടെ ഉപകരണത്തിലോട്ടു് ഇറക്കിവച്ച ഫയലുകൾ തുറക്കുക</string>
+  <!-- Description for the "find" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_find_description">തുറന്നിരിക്കുന്ന എല്ലാ ടാബുകളിലേയും കുറിപ്പ്‌ വായിക്കുക</string>
+  <!-- Description for the "geolocation" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_geolocation_description">നിങ്ങളുടെ സ്ഥലവിവരം ലഭ്യമാക്കുക</string>
+  <!-- Description for the "history" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_history_description">തിരച്ചിൽ നാൾവഴി പരിശോധിക്കുക</string>
+  <!-- Description for the "management" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_management_description">എക്സ്റ്റന്‍ഷന്‍ ഉപയോഗം നിരീക്ഷിക്കുകയും തീമുകള്‍ കൈകാര്യം ചെയ്യുകയും ചെയ്യുക</string>
+  <!-- Description for the "nativeMessaging" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_native_messaging_description">മറ്റ് ആപ്ലിക്കേഷനുകളുമായി സന്ദേശങ്ങള്‍ കൈമാറുക</string>
+  <!-- Description for the "notifications" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_notifications_description">അറിയിപ്പുകൾ പ്രദർശിപ്പിക്കുക</string>
+  <!-- Description for the "pkcs11" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_pkcs11_description">ക്രിപ്റ്റോഗ്രാഫിക് പ്രമാണീകരണ സേവനങ്ങൾ നൽകുക</string>
+  <!-- Description for the "proxy" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_proxy_description">ബ്രൌസറിന്റെ പ്രോക്സി ക്രമീകരണങ്ങള്‍ നിയന്ത്രിക്കുക</string>
+  <!-- Description for the "sessions" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_sessions_description">സമീപകാലത്ത് അടച്ച ടാബുകള്‍ പരിശോധിക്കുക</string>
+  <!-- Description for the "tabHide" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_tab_hide_description">ബ്രൗസർ ടാബുകൾ മറയ്ക്കുകയും കാണിക്കുകയും ചെയ്യുക</string>
+  <!-- Description for the "topSites" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_top_sites_description">തിരയൽ നാള്‍വഴി പരിശോധിക്കുക</string>
+  <!-- Description for the "trialML" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_trial_ml_description">താങ്ങളുടെ ഉപകരണത്തിൽ നിർമിതബുദ്ധിമാതൃക പ്രവർത്തനപ്പിക്കുക</string>
+  <!-- Description for the "userScripts" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_user_scripts_description">മൂന്നാം കക്ഷിയായ നിർദേശലിപികളെ താങ്ങളുടെ ദത്ത ഉപയോഗിക്കാൻ അനുമതി നല്കുക</string>
+  <!-- Description for the "devtools" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_devtools_description">വികസനാക്താവുക്കരുകൾക്കു് തുറന്ന ടാബുകളിലെ ഡാറ്റ എടുക്കാന്‍ അനുമതി നല്‍കുക</string>
+  <!-- Description for the "privacy" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_privacy_description_for_update">സ്വകാര്യത ക്രമീകരണങ്ങൾ വായിച്ചിട്ടു അവയെ തിരുത്തുക.</string>
+  <!-- Description for the "<all_urls>" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_all_urls_description_for_update">താങ്ങളുടെ എല്ലാ വെബ്ബിടങ്ങളുടെ ഡാറ്റ ഉപയോഗിക്കുക.</string>
+  <!-- Description for the "tabs" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_tabs_description_for_update">അന്വേഷിയന്ത്ര ടാബുകൾ ഉപയോഗിക്കുക.</string>
+  <!-- Description for the "webNavigation" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_web_navigation_description_for_update">വഴിക്കാട്ടൽ വ്യവസ്ഥയുപയോഗിക്കുമ്പോഴു അന്വേഷിയന്ത്ര പ്രവൎത്തികൾ ഉപയോഗിക്കുക.</string>
+  <!-- Description for the "bookmarks" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_bookmarks_description_for_update">അടയാളക്കുറിപ്പുകളെ വായിച്ചിട്ടു പരിഷ്കരിക്കുക.</string>
+  <!-- Description for the "browserSettings" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_browser_settings_description_for_update">അന്വേഷിയന്ത്ര ക്രമീകരണങ്ങൾ വായിച്ചിട്ടു തിരുത്തുക.</string>
+  <!-- Description for the "browsingData" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_browsing_data_description_for_update">സമീപകാല തിരച്ചിൽനാൾവഴിയും കുക്കികളും അതുമായി ബന്ധപ്പെട്ട ദത്ത എന്നിവ മായ്ക്കുക.</string>
+  <!-- Description for the "clipboardRead" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_clipboard_read_description_for_update">പകൎത്തൽപെട്ടിയിൽ നിന്നു ഡാറ്റ ഉപയോഗിക്കുക.</string>
+  <!-- Description for the "clipboardWrite" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_clipboard_write_description_for_update">പകൎത്തൽപെട്ടിലേക്കു ദത്ത നല്കുക.</string>
+  <!-- Description for the "declarativeNetRequest" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_declarative_net_request_description_for_update">ഏതു താളിലും ഉള്ളടക്കം തടയുക.</string>
+  <!-- Description for the "declarativeNetRequestFeedback" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_declarative_net_request_feedback_description_for_update">തിരയൽ നാൾവഴി വായിക്കുക.</string>
+  <!-- Description for the "downloads" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_downloads_description_for_update">ഫയലുകൾ ഇറക്കിവയ്ക്കുകയും അന്വേഷിയന്ത്രത്തിന്റെ ഇറക്കിവയ്ക്കൽ നാൾവഴി വായിക്കുകയും പരിഷ്ക്കരിക്കുകയും ചെയ്യുക.</string>
+  <!-- Description for the "downloads.open" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_downloads_open_description_for_update">താങ്ങളുടെ ഉപകരണത്തിലോട്ടു ഇറക്കിവെച്ച ഫയലുകൾ തുറക്കുക.</string>
+  <!-- Description for the "find" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_find_description_for_update">തുറന്നിരിക്കുന്ന എല്ലാ ടാബുകളിലേയും എഴുത്തു് വായിക്കുക.</string>
+  <!-- Description for the "geolocation" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_geolocation_description_for_update">താങ്ങളുടെ ഇടവിവരം ഉപയോഗിക്കുക.</string>
+  <!-- Description for the "history" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_history_description_for_update">തിരയൽ നാള്‍വഴി പരിശോധിക്കുക.</string>
+  <!-- Description for the "management" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_management_description_for_update">വിപുലീകരണ ഉപയോഗം നിരീക്ഷിക്കുകയും അലങ്കാരങ്ങൾ കൈകാര്യം ചെയ്യുകയും ചെയ്യുക.</string>
+  <!-- Description for the "nativeMessaging" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_native_messaging_description_for_update">ഈ പ്രയോഗമൊഴികെ മറ്റു പ്രയോഗങ്ങളുമായി സന്ദേശങ്ങൾ കൈമാറുക.</string>
+  <!-- Description for the "notifications" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_notifications_description_for_update">അറിയിപ്പുകൾ കാട്ടുക.</string>
+  <!-- Description for the "sessions" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_sessions_description_for_update">അടുത്തിടെ അടച്ച ടാബുകൾ ഉപയോഗിക്കുക</string>
+  <!-- Description for the "tabHide" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_tab_hide_description_for_update">അന്വേഷിയന്ത്ര ടാബുകൾ മറയ്ക്കുകയും കാണിക്കുകയും ചെയ്യുക.</string>
+  <!-- Description for the "topSites" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_top_sites_description_for_update">തിരയൽ നാള്‍വഴി പരിശോധിക്കുക.</string>
+  <!-- Description for giving an add-on access to users's data on one site. %1$s  will be replaced by the DNS host name for which a web extension is requesting access (e.g., www.mozilla.org). -->
+  <string name="mozac_feature_addons_permissions_one_site_description_for_update">%1$s--നായുള്ള താങ്ങളുടെ ഡാറ്റ ഉപയോഗിക്കുക.</string>
+  <!--
+    When an add-on requires access to more than 2 domains, for example the add-on requires access for 3 domains. We will show the first 2 domains in individual entries, as in mozac_feature_addons_permissions_sites_in_domain_description_for_update,
+    then we will show another collapsed entry saying "Access your data on another domain.".
+  -->
+  <string name="mozac_feature_addons_permissions_one_extra_domain_description_for_update">മറ്റൊരു മേഖലയിൽ താങ്ങളുടെ ഡാറ്റ ഉപയോഗിക്കുക.</string>
+  <!--
+    When an add-on requires access to more than 2 domains, for example the add-on requires access for 4 domains. We will show the first 2 domains in individual entries, as in mozac_feature_addons_permissions_sites_in_domain_description_for_update,
+    then we will show another collapsed entry saying "Access your data on other domains.".
+  -->
+  <string name="mozac_feature_addons_permissions_extra_domains_description_plural_for_update">മറ്റെ മേഖലകളിൽ താങ്ങളുടെ ഡാറ്റ ഉപയോഗിക്കുക.</string>
+  <!--
+    When an add-on requires access to more than 2 sites, for example the add-on requires access for 3 sites. We will show the first 2 sites in individual entries, as in mozac_feature_addons_permissions_one_site_description_for_update,
+    then we will show another collapsed entry saying "Access your data on another site.".
+  -->
+  <string name="mozac_feature_addons_permissions_one_extra_site_description_for_update">മറ്റൊരു വെബ്ബിടത്തിൽ താങ്ങളുടെ ഡാറ്റ ഉപയോഗിക്കുക.</string>
+  <!--
+    When an add-on requires access to more than 2 sites, for example the add-on requires access for 4 sites. We will show the first 2 sites in individual entries, as in mozac_feature_addons_permissions_one_site_description_for_update,
+    then we will show another collapsed entry saying "Access your data on other sites.".
+  -->
+  <string name="mozac_feature_addons_permissions_extra_sites_description_for_update">മറ്റെ വെബ്ബിടങ്ങളിൽ താങ്ങളുടെ ഡാറ്റ ഉപയോഗിക്കുക.</string>
+  <!-- The text shown when an extension requests the userScripts permission, near the usual description of the userScripts permission -->
+  <string name="mozac_feature_addons_permissions_user_scripts_extra_warning">പരിശോധിച്ചുറപ്പിക്കാത്ത സ്ക്രിപ്റ്റുകൾ സുരക്ഷയും സ്വകാര്യതയും അപകടസാധ്യതകൾ സൃഷ്ടിക്കും. നിങ്ങൾ വിശ്വസിക്കുന്ന വിപുലീകരണങ്ങളിൽ നിന്നോ ഉറവിടങ്ങളിൽ നിന്നോ മാത്രം സ്ക്രിപ്റ്റുകൾ പ്രവർത്തിപ്പിക്കുക.</string>
+  <!-- The sentence used when the extension has data collection permissions. %1$s is a formatted list of permissions. -->
+  <string name="mozac_feature_addons_permissions_required_data_collection_description_2">ഈ വിപുലീകരണം ശേഖരിക്കുന്നത് ഇവയാണെന്ന് വികസിനാക്താവു് പറയുന്നു: %1$s</string>
+  <!-- The sentence used when the developer of an extension has explicitly stated that they do not collect any data collection. -->
+  <string name="mozac_feature_addons_permissions_none_required_data_collection_description">ഡാറ്റ പിരിവുവേണ്ടയെന്നു് ഈ വിപുലീകരണത്തിന്റെ വികസിനാക്താവു് പറയുന്നു.</string>
+  <!-- The sentence used when the extension requests new data collection permissions. %1$s is a formatted list of permissions. -->
+  <string name="mozac_feature_addons_permissions_data_collection_optional_description">ഈ വിപുലീകരണം പ്രവൎത്തിക്കാൻ വേണ്ടി ശേഖരിക്കേണ്ടതു് ഇവയാണെന്നു് വികസിനാക്താവു് പറയുന്നു: %1$s</string>
+  <!-- Description for text button that expands the list of domain permissions -->
+  <string name="mozac_feature_addons_permissions_show_all_sites">എല്ലാ വെബിടങ്ങൾ കാണിക്കുക</string>
+  <!-- Description for text button that hides the majority of the list of domain permissions -->
+  <string name="mozac_feature_addons_permissions_show_fewer_sites">വെബുസ്ഥാനങ്ങൾ കുറവായി കാണിക്കുക</string>
+  <!-- Short description for the authenticationInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_authenticationInfo_short_description">അധികാരികമാക്കൽ വിവരം</string>
+  <!-- Short description for the bookmarksInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_bookmarksInfo_short_description">അടയാളക്കുറിപ്പുകള്‍</string>
+  <!-- Short description for the browsingActivity data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_browsingActivity_short_description">തിരച്ചിൽ നാൾവഴി</string>
+  <!-- Short description for the financialAndPaymentInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_financialAndPaymentInfo_short_description">സാമ്പത്തികവിവരങ്ങളും പണമടക്കൽ വിവരങ്ങളും</string>
+  <!-- Short description for the healthInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_healthInfo_short_description">ആരോഗ്യവിവരം</string>
+  <!-- Short description for the locationInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_locationInfo_short_description">ഇടം</string>
+  <!-- Short description for the personalCommunications data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_personalCommunications_short_description">വ്യക്തിഗത ആശയവിനിമയങ്ങൾ</string>
+  <!-- Short description for the personallyIdentifyingInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_personallyIdentifyingInfo_short_description">വ്യക്തിപരമായി തിരിച്ചറിയാൻ കഴിയുന്ന വിവരങ്ങൾ</string>
+  <!-- Short description for the searchTerms data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_searchTerms_short_description">തിരയൽ പദങ്ങൾ</string>
+  <!-- Short description for the technicalAndInteraction data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_technicalAndInteraction_short_description">സാങ്കേതിയും ഇടപാടുനീയ ദത്ത</string>
+  <!-- Short description for the websiteActivity data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_websiteActivity_short_description">വെബ്ബിട പ്രവൎത്തനം</string>
+  <!-- Short description for the websiteContent data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_websiteContent_short_description">വെബ്ബിടയുള്ളടക്കം</string>
+  <!-- Long description for the authenticationInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_authenticationInfo_long_description">അധികാരിക്കൽ വിവരം വിപുലീകരണ വികസിനാക്താവിനോടൊപ്പം പങ്കിടുക</string>
+  <!-- Long description for the bookmarksInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_bookmarksInfo_long_description">അടയാളക്കുറിപ്പുകളെ പറ്റിയുള്ള വിവരം വിപുലീകരണ വികസിനാക്താവിനോടൊപ്പം പങ്കിടുക</string>
+  <!-- Long description for the browsingActivity data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_browsingActivity_long_description">തിരച്ചിൽ നാൾവഴി വിവരം വിപുലീകരണ വികസിനാക്താവിനോടൊപ്പം പങ്കിടുക</string>
+  <!-- Long description for the financialAndPaymentInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_financialAndPaymentInfo_long_description">സാമ്പതിക വിവരവും പണമടക്കൽ വിവരവും വിപുലീകരണ വികസിനാക്താവിനോടൊപ്പം പങ്കിടുക</string>
+  <!-- Long description for the healthInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_healthInfo_long_description">ആരോഗ്യ വിവരം വിപുലീകരണ വികസിനാക്താവിനോടൊപ്പം പങ്കിടുക</string>
+  <!-- Long description for the locationInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_locationInfo_long_description">ഇടവിവരം വിപുലീകരണ വികസിനാക്താവിനോടൊപ്പം പങ്കിടുക</string>
+  <!-- Long description for the personalCommunications data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_personalCommunications_long_description">വിപുലീകരണ വളൎത്താക്താവിനോടൊപ്പം വ്യക്തിഗത ആശയവിനിമയങ്ങൾ പങ്കിടുക</string>
+  <!-- Long description for the personallyIdentifyingInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_personallyIdentifyingInfo_long_description">തിരിച്ചറിയാനുപയോഗിക്കുന്ന വിവരങ്ങൾ വിപുലീകരണ വികസിനാക്താവിനോടൊപ്പം പങ്കിടുക</string>
+  <!-- Long description for the searchTerms data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_searchTerms_long_description">തിരയൽവാക്കുകൾ വിപുലീകരണ വികസിനാക്താവിനോടൊപ്പം പങ്കിടുക</string>
+  <!-- Long description for the technicalAndInteraction data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_technicalAndInteraction_long_description">സാങ്കേതികയും ഇടപാടനീയ ഡാറ്റ വിപുലീകരണ വളൎത്താക്താവിനോടൊപ്പം പങ്കിടുക</string>
+  <!-- Long description for the websiteActivity data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_websiteActivity_long_description">\u0020വെബ്ബിട നാൾവഴി വിവരം വിപുലീകരണ വളൎത്താക്താവിനോടൊപ്പം പങ്കിടുക</string>
+  <!-- Long description for the websiteContent data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_websiteContent_long_description">വെബ്ബിട ഉള്ളടക്കം വിപുലീകരണ വളൎത്താക്താവിനോടൊപ്പം പങ്കിടുക</string>
+  <!-- The version on of add-on. -->
+  <string name="mozac_feature_addons_version">പതിപ്പു്</string>
+  <!-- The author of an add-on. -->
+  <string name="mozac_feature_addons_author">രചയിതാവു്</string>
+  <!-- The last date that the add-on was updated. -->
+  <string name="mozac_feature_addons_last_updated">ഏറ്റവും ഒടുവില്‍ പരിഷ്കരിച്ചതു്</string>
+  <!-- The developer website (Homepage) of the add-on. -->
+  <string name="mozac_feature_addons_home_page">പൂമുഖം</string>
+  <!-- A link where users can find more information about add-ons permissions. -->
+  <string name="mozac_feature_addons_learn_more">അനുമതികളെക്കുറിച്ച് കൂടുതലറിയുക</string>
+  <!-- The rating of the add-on. -->
+  <string name="mozac_feature_addons_rating">റേറ്റിങ്</string>
+  <!-- A link that points to the detail page of the extension. -->
+  <string name="mozac_feature_addons_more_info_link_2">ഈ വിപുലീകരണമെക്കുറിച്ചു് കൂടുതലറിയുക</string>
+  <!-- The settings of the add-on. -->
+  <string name="mozac_feature_addons_settings">ക്രമീകരണങ്ങള്‍</string>
+  <!-- Indicates the add-on is enabled. -->
+  <string name="mozac_feature_addons_settings_on">ഓണ്‍</string>
+  <!-- Indicates the add-on is allowed in private browsing mode. -->
+  <string name="mozac_feature_addons_settings_allow_in_private_browsing_2">സ്വകാര്യ ജാലകങ്ങളിൽ പ്രവർത്തിക്കുന്നതിന് ഈ വിപുലീകരണത്തിനെ അനുവദിക്കുക</string>
+  <!-- Indicates the add-on is allowed in private browsing mode. -->
+  <string name="mozac_feature_addons_settings_run_in_private_browsing">സ്വകാര്യ ബ്രൗസിംഗിൽ തുറക്കുക</string>
+  <!-- This is displayed when the add-on is not allowed to run in private browsing. -->
+  <string name="mozac_feature_addons_not_allowed_in_private_browsing">സ്വകാര്യ ജാലകങ്ങളില്‍ അനുവദനീയമല്ല</string>
+  <!-- Indicates the add-on is enabled. -->
+  <string name="mozac_feature_addons_enabled">പ്രാപ്തമാക്കി</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the installed section. -->
+  <string name="mozac_feature_addons_installed_section">ഇൻസ്റ്റാൾ ചെയ്തു</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the recommended section. -->
+  <string name="mozac_feature_addons_recommended_section">ശുപാർശിതം</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the not yet supported section. -->
+  <string name="mozac_feature_addons_unsupported_section">ഇതുവരെ പിന്തുണയ്‌ക്കുന്നില്ല</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the not yet available section. -->
+  <string name="mozac_feature_addons_unavailable_section">ഇതുവരെ ലഭ്യമല്ല</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the disabled section. -->
+  <string name="mozac_feature_addons_disabled_section">പ്രവര്‍ത്തനരഹിതമാക്കി</string>
+  <!-- Displays a page with all the details of an add-on. -->
+  <string name="mozac_feature_addons_details">വിശദാംശങ്ങള്‍</string>
+  <!-- Displays a page with all the permissions of an add-on. -->
+  <string name="mozac_feature_addons_permissions">അനുമതികൾ</string>
+  <!-- This is a button to remove (i.e. uninstall) an add-on. -->
+  <string name="mozac_feature_addons_remove">നീക്കം ചെയ്യുക</string>
+  <!-- This is a button to report an add-on. -->
+  <string name="mozac_feature_addons_report">വിവരം അറിയിക്കുക</string>
+  <!-- This is the title of a dialog that asks the users if they to install or not an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_permissions_dialog_title_2">%1$s ചേൎക്കുക</string>
+  <!-- This is the title of a dialog that asks the users to grant optional permissions. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_optional_permissions_with_data_collection_dialog_title">%1$s ഇനിയും അനുമതികളിനു് ചോദിക്കുന്നു</string>
+  <!-- This is the title of a dialog that asks the users to grant optional data collection permissions only. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_optional_permissions_with_data_collection_only_dialog_title">%1$s ഇനിയും ഡാറ്റപ്പിരിവിനു് ചോദിക്കുന്നു</string>
+  <!-- Heading for the permissions section in the add-on install dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_required_permissions">ആവശ്യപ്പെട്ടവനുമതികൾ:</string>
+  <!-- Heading for the data collection permissions section in the add-on install dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_required_data_collection">ആവശ്യപ്പെട്ട ഡാറ്റപ്പിരിവു് :</string>
+  <!-- Heading for the permissions section in the optional permissions request dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_optional_permissions">പുതിയ അനുമതികൾ:</string>
+  <!-- Heading for the data collection permissions section in the optional permissions request dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_optional_data_collection">പുതിയ ഡാറ്റപ്പിരിവു് :</string>
+  <!-- This is a button to add (install) an add-on . -->
+  <string name="mozac_feature_addons_permissions_dialog_add">കൂട്ടിച്ചേര്‍ക്കുക</string>
+  <!-- This is a button to allow the optional permissions requested by an add-on . -->
+  <string name="mozac_feature_addons_permissions_dialog_allow">അനുമതി നല്കുക</string>
+  <!-- This is a button to deny the optional permissions requested by an add-on . -->
+  <string name="mozac_feature_addons_permissions_dialog_deny">അനുമതി നല്കരുതു്</string>
+  <!-- Text link to learn more about permission requests on the add-on permissions dialog . -->
+  <string name="mozac_feature_addons_permissions_dialog_learn_more">കൂടുതല്‍ അറിയുക</string>
+  <!-- This is the text for the "technical and interaction" checkbox shown in the add-on permissions dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_technical_and_interaction_data">സാങ്കേതികയും ഇടപാടനീയ ഡാറ്റ വിപുലീകരണ വളൎത്താക്താവിനോടൊപ്പം പങ്കിടുക</string>
+  <!-- This is a button to cancel the add-on installation . -->
+  <string name="mozac_feature_addons_permissions_dialog_cancel">റദ്ദാക്കുക</string>
+  <!-- Accessibility content description to install add-on button. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_install_addon_content_description_2">%1$s-നു് സ്ഥാപിക്കുക</string>
+  <!-- This is the label of a button to cancel an ongoing add-on installation. -->
+  <string name="mozac_feature_addons_install_addon_dialog_cancel">റദ്ദാക്കുക</string>
+  <!-- Indicates how many users have rated an add-on. %1$s will be replaced with number of reviews -->
+  <string name="mozac_feature_addons_user_rating_count_2">അവലോകനങ്ങൾ: %1$s</string>
+  <!-- Accessibility content description for the amount of stars that add-on has, where %1$.02f will be the amount of stars. -->
+  <string name="mozac_feature_addons_rating_content_description_2">സ്ഥാനക്രമം: 5-ൽ %1$.02f</string>
+  <!-- This is the title of page where all the add-ons are listed -->
+  <string name="mozac_feature_addons_addons">ആഡ്-ഓണുകള്‍</string>
+  <!-- Label for add-ons sub menu item for add-ons manager -->
+  <string name="mozac_feature_addons_addons_manager">ആഡ്-ഓണ്‍ മാനേജര്‍</string>
+  <!-- The title of the "crash" notification in the extensions manager -->
+  <string name="mozac_feature_extensions_manager_notification_title_text">വിപുലീകരണങ്ങൾ താല്ക്കാലികമായി പ്രവർത്തനരഹിതമാക്കി</string>
+  <!-- The content of the "crash" notification in the extensions manager -->
+  <string name="mozac_feature_extensions_manager_notification_content_text">ഒന്നോ കൂടുതലോ വിപുലീകരണങ്ങൾ പ്രവർത്തിക്കാൻ നി‌ർത്തി. ഇതു് കാരണം താങ്ങളുടെ വ്യവസ്ഥ അസ്ഥിരമായിയിരിക്കുന്നു.</string>
+  <!-- Button to re-enable the extensions in the "crash" notification -->
+  <string name="mozac_feature_extensions_manager_notification_restart_button">വിപുലീകരണങ്ങൾ വീണ്ടും തുടങ്ങുക</string>
+  <!-- Button in the extensions manager that opens AMO in a tab -->
+  <string name="mozac_feature_addons_find_more_extensions_button_text">ഇനിയും വിപുലീകരണങ്ങൾ കണ്ടെത്തുക</string>
+  <!-- The label of the update button on the system notification shown to the user when an add-on has an update that requires the user to accept new permissions. -->
+  <string name="mozac_feature_addons_updater_notification_update_button">പുതുക്കുക</string>
+  <!-- The label of the cancel button on a notification, this will be shown to the user when an add-on needs new permissions. Indicates the user denies the new permissions and prevents the add-on from be updated -->
+  <string name="mozac_feature_addons_updater_notification_cancel_button">റദ്ദാക്കുക</string>
+  <!-- The title of the system notification shown to the user when an add-on has a new update that requires new permissions. %1$s is the name of the add-on. -->
+  <string name="mozac_feature_addons_updater_notification_title_2">%1$s ന് ഒരു പുതുക്കൽ ലഭ്യമാണു്</string>
+  <!-- The heading for the permissions section in the system notification shown when an add-on has an update that requires user confirmation. %1$s is a list of sentences. -->
+  <string name="mozac_feature_addons_updater_notification_heading_permissions">പുതുവായി ആവിശ്യപ്പെട്ടയനുമതികൾ: %1$s</string>
+  <!-- Name of the "notification channel" used for displaying a notification for updating an extension. See https://developer.android.com/training/notify-user/channels -->
+  <string name="mozac_feature_addons_updater_notification_channel_2">വിപുലീകരണ പരിഷ്കരണങ്ങൾ</string>
+  <!-- Name of the "notification channel" used for displaying a notification for new supported add-ons. See https://developer.android.com/training/notify-user/channels -->
+  <string name="mozac_feature_addons_supported_checker_notification_channel" tools:ignore="UnusedResources">പിന്തുണയുള്ള ആഡ്-ഓണുകൾക്കായുള്ള പരിശോധകർ</string>
+  <!-- The tile of the notification, this will be shown to the user when one newly supported add-on is available. -->
+  <string name="mozac_feature_addons_supported_checker_notification_title" tools:ignore="UnusedResources">പുതിയ ആഡ്-ഓൺ ലഭ്യമാണ്</string>
+  <!-- The tile of the notification, this will be shown to the user when more than one newly supported add-ons are available. -->
+  <string name="mozac_feature_addons_supported_checker_notification_title_plural" tools:ignore="UnusedResources">പുതിയ ആഡ്-ഓണുകൾ ലഭ്യമാണ്</string>
+  <!-- The content of the notification, this will be shown to the user when one newly supported add-on is available. %1$s is the add-on name and %2$s is the app name (in most cases Firefox). -->
+  <string name="mozac_feature_addons_supported_checker_notification_content_one">%2$s ലേക്ക് %1$s ചേർക്കുക</string>
+  <!-- The content of the notification, this will be shown to the user when two newly supported add-ons are available. %1$s is the first add-on name. %2$s is the second add-on name. %3$s is the app name (in most cases Firefox). -->
+  <string name="mozac_feature_addons_supported_checker_notification_content_two">%3$s ലേക്ക് %1$s ഉം %2$s ഉം ചേർക്കുക</string>
+  <!-- The content of the notification, this will be shown to the user when more than two newly supported add-ons are available. %1$s is the app name (in most cases Firefox). -->
+  <string name="mozac_feature_addons_supported_checker_notification_content_more_than_two">ഇവയെ %1$s ലേക്ക് ചേർക്കുക</string>
+  <!-- This is the caption for not yet supported screen caption -->
+  <string name="mozac_feature_addons_not_yet_supported_caption2">ശുപാർശ ചെയ്യപ്പെട്ട വിപുലീകരണങ്ങളുടെ പ്രാരംഭ തിരഞ്ഞെടുപ്പിനായി ഞങ്ങൾ നിലവിൽ പിന്തുണ സജ്ജീകരിക്കുകയാണ്.</string>
+  <!-- This is the caption for the extension installation progress overlay -->
+  <string name="mozac_extension_install_progress_caption">വിപുലീകരണം ഇറക്കിവയ്ക്കുകയും പരിശോധിക്കുകയും ചെയ്യുന്നു…</string>
+  <!-- Error shown when unable to find a translation for an add-on field. %1$s is the locale of the user and %2$s is the default language of the add-on -->
+  <string name="mozac_feature_addons_failed_to_translate">വിവർത്തനം കണ്ടെത്തിയില്ല,%1$s ഭാഷയ്‌ക്ക് സ്ഥിരസ്ഥിതി ഭാഷ %2$s അല്ല</string>
+  <!-- Text shown after successfully installed an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_successfully_installed">%1$s വിജയകരമായി ഇൻസ്റ്റാൾ ചെയ്തു</string>
+  <!-- Text shown after failing to install an add-on (when add-on type isn't supported or an unknown has errored). %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_install">%1$s ഇൻസ്റ്റാൾ ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു</string>
+  <!-- Text shown after failing to install an extension for which we don't have its name (when add-on type isn't supported or an unknown has errored). -->
+  <string name="mozac_feature_addons_extension_failed_to_install">ഈ വിപുലീകരണം സ്ഥാപിക്കാൻ പറ്റിയില്ല.</string>
+  <!-- Text shown when installing an add-on has failed. -->
+  <string name="mozac_feature_addons_cant_install_extension">വിപുലീകരണം സ്ഥാപിക്കാൻ പറ്റന്നില്ല</string>
+  <!-- Text shown when attempting to install an extension and a network error happened. -->
+  <string name="mozac_feature_addons_extension_failed_to_install_network_error">ഒരു സമ്പർക്കപിഴ കാരണം ഈ വിപുലീകരണം സ്ഥാപിക്കാൻ കഴിഞ്ഞില്ല.</string>
+  <!-- Text shown when attempting to install an extension and the downloaded file is corrupted. -->
+  <string name="mozac_feature_addons_extension_failed_to_install_corrupt_error">അഴിമതി കാരണം ഈ വിപുലീകരണം സ്ഥാപിക്കാൻ കഴിഞ്ഞില്ല.</string>
+  <!-- Text shown when attempting to install an add-on and an error occurred because the extension was not signed. -->
+  <string name="mozac_feature_addons_extension_failed_to_install_not_signed_error">ഈ വിപുലീകരണം ആധാരിക്കുപെടാത്തുകൊണ്ടു സ്ഥാപിക്കാൻ കഴിഞ്ഞില്ല.</string>
+  <!-- Text shown when attempting to install an add-on and an error occurred because the extension was incompatible. %1$s is the add-on name, %2$s is the app name and %3$s is the app version. -->
+  <string name="mozac_feature_addons_failed_to_install_incompatible_error">%2$s %3$s -ന്റെ കൂടെ പൊരുത്തമില്ലാത്തുകൊണ്ടു് %1$s-നെ സ്ഥാപിക്കാൻ പറ്റിയില്ല.</string>
+  <!-- Text shown when attempting to install a (hard) blocked add-on. %1$s is the add-on name. %2$s is the app name. -->
+  <string name="mozac_feature_addons_blocklisted_2" tools:ignore="BrandUsage">%1$s മോസില്ലയുടെ നയങ്ങൾ ലംഘിക്കുന്നതിനാൽ %2$s-ൽ സ്ഥാപിക്കാൻ കഴിയില്ല.</string>
+  <!-- Text shown when attempting to install an add-on that can only be install via Enterprise Policies, which is not supported on Android.  %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_admin_install_only">%1$s സ്ഥാപിക്കാൻ പറ്റിയില്ല കാരണം ഇതു് വെറും ഉദ്യമനയങ്ങൾ ഉപയോഗിക്കുന്നയൊരു സ്ഥാപനത്തിനെ സ്ഥാപിക്കാൻ കഴിയും. ഈ മഞ്ചത്തിൽ ഇതിനു് പിന്തുണയില്ല.</string>
+  <!-- Text shown after failed to enable an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_enable">%1$s പ്രവർത്തനസജ്ജമാക്കുന്നതിൽ പരാജയപ്പെട്ടു</string>
+  <!-- Text shown after failed to disable an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_disable">%1$s പ്രവർത്തനരഹിതമാക്കുന്നതിൽ പരാജയപ്പെട്ടു</string>
+  <!-- Text shown after failed to uninstall an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_uninstall">%1$s നീക്കം ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു</string>
+  <!-- Text shown after successfully removed an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_successfully_removed" tools:ignore="UnusedResources">%1$s വിജയകരമായി നീക്കം ചെയ്‌തു</string>
+  <!-- Text shown after failed to remove an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_remove" tools:ignore="UnusedResources">%1$s നീക്കം ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു</string>
+  <!-- Label shown to indicate that the add-on was migrated from a previous version of the app. %1$s is the app name most of the case it will be Firefox. -->
+  <string name="mozac_feature_addons_migrated_from_a_previous_version_label" tools:ignore="UnusedResources">%1$s ന്റെ മുമ്പത്തെ പതിപ്പിൽ നിന്ന് ഈ ആഡ്-ഓൺ മൈഗ്രേറ്റ് ചെയ്തതാണ്</string>
+  <!-- Text shown in not yet supported add-ons section. -->
+  <string name="mozac_feature_addons_unsupported_caption_2">1 വിപുലീകരണം</string>
+  <!-- Text shown in not yet supported add-ons section - plural. %1$s is the number of unsupported extensions. -->
+  <string name="mozac_feature_addons_unsupported_caption_plural_2">%1$s വിപുലീകരണങ്ങൾ</string>
+  <!-- Text link to a sumo page for learning more about unsupported add-ons. -->
+  <string name="mozac_feature_addons_unsupported_learn_more">കൂടുതല്‍ അറിയുക</string>
+  <!-- Displayed in the "Status" field for the updater when an add-on has been correctly updated. -->
+  <string name="mozac_feature_addons_updater_status_successfully_updated">വിജയകരമായി പുതുക്കി</string>
+  <!-- Displayed in the "Status" field for the updater when an add-on has no updates available. -->
+  <string name="mozac_feature_addons_updater_status_no_update_available">പുതുക്കലുകൾ ലഭ്യമല്ല</string>
+  <!-- Displayed in the "Status" field for the updater when there was an error during the add-on update. -->
+  <string name="mozac_feature_addons_updater_status_error">പിശക്</string>
+  <!-- Text shown in a dialog that displays information about the last attempt to update an add-on. This is the title of the dialog. -->
+  <string name="mozac_feature_addons_updater_dialog_title">അപ്‌ഡേറ്റർ‌ വിവരങ്ങൾ‌</string>
+  <!-- Label in the dialog displaying information for the last attempt to update add-ons. It's followed by the date of the last attempt. -->
+  <string name="mozac_feature_addons_updater_dialog_last_attempt">അവസാന ശ്രമം:</string>
+  <!-- Displayed in the "Status" field for the updater when an add-on has been correctly updated -->
+  <string name="mozac_feature_addons_updater_dialog_status">സ്ഥിതി:</string>
+  <!-- Text shown in the dialog when add-on installation is completed. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_installed_dialog_title_2">%1$s ചേൎക്കപ്പെട്ടു</string>
+  <!-- Used as text for the link in the description of the post-installation dialog. -->
+  <string name="mozac_feature_addons_installed_dialog_description_link_text">വിപുലീകരണ ക്രമീകരണങ്ങൾ</string>
+  <!-- Confirmation button text for the dialog when add-on installation is completed. -->
+  <string name="mozac_feature_addons_installed_dialog_okay_button_2">ശരി</string>
+  <!-- "Learn more" link displayed below an add-on status message. -->
+  <string name="mozac_feature_addons_status_learn_more">കൂടുതല്‍ അറിയുക</string>
+  <!-- "See details" link displayed below an add-on status message. -->
+  <string name="mozac_feature_addons_status_see_details">വിശദാംശങ്ങൾ കാണിക്കുക</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on has been blocklisted. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_status_blocklisted_1" tools:ignore="BrandUsage">മോസില്ലയുടെ നയങ്ങൾ ലംഘിച്ചതിനാൽ ഈ വിപുലീകരണം തടയുകയും പ്രവർത്തനരഹിതമാക്കുകയും ചെയ്തു.</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on has been soft-blocked. -->
+  <string name="mozac_feature_addons_status_softblocked_2">ഈ വിപുലീകരണം വിലക്കപ്പെട്ടതും പ്രവൎത്തനരഹിതവും ആണു്. താങ്ങൾക്കിതിനെ പ്രവൎത്തനക്ഷമമാക്കാൻ പറ്റും എന്നാൽ ഇതു് അപകടകരമായേക്കാം.</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on has been soft-blocked but the user re-enabled it. -->
+  <string name="mozac_feature_addons_status_softblocked_re_enabled_2">ഈ വിപുലീകരണം വിലക്കപ്പെട്ടിരിക്കുന്നു. ഇതുപയോഗിക്കുന്നതു് അപകടകരമാവാം.</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on hasn't been signed correctly. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_status_unsigned">%1$s സുരക്ഷിതമാണെന്നു് ഉറപ്പിക്കാൻ കഴിഞ്ഞില്ല അതുകൊണ്ടു് അതിനെ പ്രവൎത്തനരഹിതമാക്കിയിരിക്കുന്നു.</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on isn't compatible with the application version. %1$s is the add-on name, %2$s is the app name and %3$s is the app version. -->
+  <string name="mozac_feature_addons_status_incompatible">%1$s താങ്ങളുടെ %2$s (പതിപ്പു് %3$s)-ന്റെ പതിപ്പുമായി പൊരുത്തപ്പെടുന്നില്ല</string>
+</resources>

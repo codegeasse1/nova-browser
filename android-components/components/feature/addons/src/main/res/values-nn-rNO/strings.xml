@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this file,
+  You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<resources xmlns:tools="http://schemas.android.com/tools">
+  <!-- Description for giving an add-on access to users's data on one site. %1$s  will be replaced by the DNS host name for which a web extension is requesting access (e.g., www.mozilla.org). -->
+  <string name="mozac_feature_addons_permissions_one_site_description">Få tilgang til dine data for %1$s</string>
+  <!-- Description for giving an add-on access to users's data in multiple sites in the domain %1$s. %1$s will be replaced by the DNS domain for which a web extension is requesting access (e.g., mozilla.org). -->
+  <string name="mozac_feature_addons_permissions_sites_in_domain_description">Få tilgang til dine data frå nettstadar under %1$s-domenet</string>
+  <!--
+    When an add-on requires access to more than 4 sites, for example the add-on requires access for 5 sites. We will show the first 4 sites in individual entries, as in mozac_feature_addons_permissions_one_site_description,
+    then we will show another collapsed entry saying "Access your data on another site".
+  -->
+  <string name="mozac_feature_addons_permissions_one_extra_site_description_2">Få tilgang til dataa dine på ein annan nettstad</string>
+  <!--
+    When an add-on requires access to more than 4 sites, for example the add-on requires access for 6 sites. We will show the first 4 sites in individual entries, as in mozac_feature_addons_permissions_one_site_description,
+    then we will show another collapsed entry saying "Access your data on other sites".
+  -->
+  <string name="mozac_feature_addons_permissions_extra_sites_description_2">Få tilgang til dataa dine på andre nettstadar</string>
+  <!--
+    When an add-on requires access to more than 4 domains, for example the add-on requires access for 5 domains. We will show the first 4 domains in individual entries, as in mozac_feature_addons_permissions_sites_in_domain_description,
+    then we will show another collapsed entry saying "Access your data on another domain.
+  -->
+  <string name="mozac_feature_addons_permissions_one_extra_domain_description_2">Få tilgang til dataa dine på eit anna domene</string>
+  <!--
+    When an add-on requires access to more than 4 domains, for example the add-on requires access for 6 domains. We will show the first 4 domains in individual entries, as in mozac_feature_addons_permissions_sites_in_domain_description,
+    then we will show another collapsed entry saying "Access your data on other domains".
+  -->
+  <string name="mozac_feature_addons_permissions_extra_domains_description_plural_2">Få tilgang til dataa dine på andre domene</string>
+  <plurals name="mozac_feature_addons_permissions_all_domain_count_description_2">
+    <!-- When an add-on requires access to domains, this entry is used to describe the total number of domains. Underneath it will be the list of all the domains. %1$d is the number of all the domains that will be shown to the user as required. -->
+    <item quantity="one">Få tilgang til dataa dine for nettstadar i %1$d domene</item>
+    <item quantity="other">Få tilgang til dataa dine for nettstadar i %1$d domene</item>
+  </plurals>
+  <!-- Content description for a permission item, for an installed add-on details page. %1$s will be replaced with the permission text name, %2$d will be replaced with the permission position in the list and %3$d will be replaced with the total number of permissions in the list.Taking as an example "Read and modify privacy settings" the whole text will read Read and modify privacy settings, 2 of 6. -->
+  <string name="mozac_feature_addons_permissions_content_description_item">%1$s, %2$d av %3$d</string>
+  <!-- Description for the "privacy" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_privacy_description">Lese og endre personverninnstillingar</string>
+  <!-- Description for the "<all_urls>" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_all_urls_description">Få tilgang til dine data for alle nettstadar</string>
+  <!-- Description for the "tabs" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_tabs_description">Få tilgang til faner</string>
+  <!-- Description for the "webNavigation" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_web_navigation_description">Tilgang til nettlesaraktivitet under navigasjon</string>
+  <!-- Description for the "bookmarks" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_bookmarks_description">Lese og endre bokmerker</string>
+  <!-- Description for the "browserSettings" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_browser_setting_description">Lese og endre nettlesarinnstillingar</string>
+  <!-- Description for the "browsingData" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_browser_data_description">Fjern nyleg nettlesingshistorikk, infokapslar og relaterte data</string>
+  <!-- Description for the "clipboardRead" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_clipboard_read_description">Hente data frå utklippstavla</string>
+  <!-- Description for the "clipboardWrite" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_clipboard_write_description">Setje inn data på utklippstavla</string>
+  <!-- Description for the "declarativeNetRequest" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_declarative_net_request_description">Blokker innhald på alle sider</string>
+  <!-- Description for the "declarativeNetRequestFeedback" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_declarative_net_request_feedback_description">Les nettlesarhistorikken din</string>
+  <!-- Description for the "downloads" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_downloads_description">Laste ned filer og lese og endre nedlastingsloggen til nettlesaren</string>
+  <!-- Description for the "downloads.open" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_downloads_open_description">Opne filer som er lasta ned til eininga di</string>
+  <!-- Description for the "find" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_find_description">Lese teksten i alle opne faner</string>
+  <!-- Description for the "geolocation" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_geolocation_description">Sjå plasseringa di</string>
+  <!-- Description for the "history" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_history_description">Tilgang til nettlesarhistorikken</string>
+  <!-- Description for the "management" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_management_description">Overvake bruk av utvidingar og handsame tema</string>
+  <!-- Description for the "nativeMessaging" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_native_messaging_description">Utveksle meldingar med andre appar enn denne</string>
+  <!-- Description for the "notifications" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_notifications_description">Vise deg varsel</string>
+  <!-- Description for the "pkcs11" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_pkcs11_description">Tilby kryptografiske autentiserings-tenester</string>
+  <!-- Description for the "proxy" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_proxy_description">Kontrollere proxy-innstillingar for nettlesar</string>
+  <!-- Description for the "sessions" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_sessions_description">Tilgang til nyleg attletne faner</string>
+  <!-- Description for the "tabHide" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_tab_hide_description">Gøym og vis nettlesarfaner</string>
+  <!-- Description for the "topSites" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_top_sites_description">Tilgang til nettlesarhistorikken</string>
+  <!-- Description for the "trialML" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_trial_ml_description">Last ned og køyr KI-modellar på eininga di</string>
+  <!-- Description for the "userScripts" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_user_scripts_description">Tillat at ikkje stadfesta tredjepartsskript får tilgang til dataa dine</string>
+  <!-- Description for the "devtools" WebExtensions API permission. -->
+  <string name="mozac_feature_addons_permissions_devtools_description">Utvide utviklarverktøy for å få tilgang til dine data i opne faner</string>
+  <!-- Description for the "privacy" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_privacy_description_for_update">Lese og endre personverninnstillingar.</string>
+  <!-- Description for the "<all_urls>" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_all_urls_description_for_update">Få tilgang til dataa dine for alle nettstadar.</string>
+  <!-- Description for the "tabs" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_tabs_description_for_update">Få tilgang til nettlesarfaner.</string>
+  <!-- Description for the "webNavigation" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_web_navigation_description_for_update">Få tilgang til nettlesaraktivitet under navigasjon.</string>
+  <!-- Description for the "bookmarks" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_bookmarks_description_for_update">Lese og endre bokmerke.</string>
+  <!-- Description for the "browserSettings" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_browser_settings_description_for_update">Lese og endre nettlesarinnstillingar.</string>
+  <!-- Description for the "browsingData" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_browsing_data_description_for_update">Fjern nyleg nettlesingshistorikk, infokapslar og relaterte data.</string>
+  <!-- Description for the "clipboardRead" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_clipboard_read_description_for_update">Hente data frå utklippstavla.</string>
+  <!-- Description for the "clipboardWrite" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_clipboard_write_description_for_update">Leggje inn data i utklippstavla.</string>
+  <!-- Description for the "declarativeNetRequest" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_declarative_net_request_description_for_update">Blokker innhald på kva side som helst.</string>
+  <!-- Description for the "declarativeNetRequestFeedback" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_declarative_net_request_feedback_description_for_update">Lese nettlesarhistorikken din.</string>
+  <!-- Description for the "downloads" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_downloads_description_for_update">Laste ned filer og lese og endre nedlastingshistorikken til nettlesaren.</string>
+  <!-- Description for the "downloads.open" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_downloads_open_description_for_update">Opne filer som er lasta ned til eininga di.</string>
+  <!-- Description for the "find" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_find_description_for_update">Lese teksten i alle opne faner.</string>
+  <!-- Description for the "geolocation" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_geolocation_description_for_update">Få tilgang til plasseringa di.</string>
+  <!-- Description for the "history" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_history_description_for_update">Få tilgang til nettlesarhistorikken.</string>
+  <!-- Description for the "management" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_management_description_for_update">Overvake bruken av utvidingar og handsame tema.</string>
+  <!-- Description for the "nativeMessaging" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_native_messaging_description_for_update">Utveksle meldingar med andre appar enn denne.</string>
+  <!-- Description for the "notifications" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_notifications_description_for_update">Vise deg varsel.</string>
+  <!-- Description for the "pkcs11" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_pkcs11_description_for_update">Tilby kryptografiske godkjenningstenester.</string>
+  <!-- Description for the "proxy" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_proxy_description_for_update">Kontrollere proxy-innstillingar for nettlesar.</string>
+  <!-- Description for the "sessions" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_sessions_description_for_update">Få tilgang til nyleg attlatne faner.</string>
+  <!-- Description for the "tabHide" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_tab_hide_description_for_update">Skjule og vise nettlesarfaner.</string>
+  <!-- Description for the "topSites" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_top_sites_description_for_update">Få tilgang til nettlesarhistorikken.</string>
+  <!-- Description for the "trialML" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_trial_ml_description_for_update">Last ned og køyr KI-modellar på eininga di.</string>
+  <!-- Description for the "userScripts" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_user_scripts_description_for_update">Tillat at ikkje stadfesta tredjepartsskript får tilgang til dataa dine.</string>
+  <!-- Description for the "devtools" WebExtensions API permission for the update notification. Multiple permissions may be simply appended one after the other, and separated with a space, which is why the period is important. -->
+  <string name="mozac_feature_addons_permissions_devtools_description_for_update">Utvide utviklerverktøya til å få tilgang til dataa dine i opne faner.</string>
+  <!-- Description for giving an add-on access to users's data on one site. %1$s  will be replaced by the DNS host name for which a web extension is requesting access (e.g., www.mozilla.org). -->
+  <string name="mozac_feature_addons_permissions_one_site_description_for_update">Få tilgang til dataa dine for %1$s.</string>
+  <!-- Description for giving an add-on access to users's data in multiple sites in the domain %1$s. %1$s will be replaced by the DNS domain for which a web extension is requesting access (e.g., mozilla.org). -->
+  <string name="mozac_feature_addons_permissions_sites_in_domain_description_for_update">Få tilgang til dataa dine frå nettstadar under %1$s-domenet.</string>
+  <!--
+    When an add-on requires access to more than 2 domains, for example the add-on requires access for 3 domains. We will show the first 2 domains in individual entries, as in mozac_feature_addons_permissions_sites_in_domain_description_for_update,
+    then we will show another collapsed entry saying "Access your data on another domain.".
+  -->
+  <string name="mozac_feature_addons_permissions_one_extra_domain_description_for_update">Få tilgang til dataa dine på eit anna domene.</string>
+  <!--
+    When an add-on requires access to more than 2 domains, for example the add-on requires access for 4 domains. We will show the first 2 domains in individual entries, as in mozac_feature_addons_permissions_sites_in_domain_description_for_update,
+    then we will show another collapsed entry saying "Access your data on other domains.".
+  -->
+  <string name="mozac_feature_addons_permissions_extra_domains_description_plural_for_update">Få tilgang til dataa dine på andre domene.</string>
+  <!--
+    When an add-on requires access to more than 2 sites, for example the add-on requires access for 3 sites. We will show the first 2 sites in individual entries, as in mozac_feature_addons_permissions_one_site_description_for_update,
+    then we will show another collapsed entry saying "Access your data on another site.".
+  -->
+  <string name="mozac_feature_addons_permissions_one_extra_site_description_for_update">Få tilgang til dataa dine på ein annan nettstad.</string>
+  <!--
+    When an add-on requires access to more than 2 sites, for example the add-on requires access for 4 sites. We will show the first 2 sites in individual entries, as in mozac_feature_addons_permissions_one_site_description_for_update,
+    then we will show another collapsed entry saying "Access your data on other sites.".
+  -->
+  <string name="mozac_feature_addons_permissions_extra_sites_description_for_update">Få tilgang til dataa dine på andre nettstadar.</string>
+  <!-- The text shown when an extension requests the userScripts permission, near the usual description of the userScripts permission -->
+  <string name="mozac_feature_addons_permissions_user_scripts_extra_warning">Ikkje stadfesta skript kan utgjere sikkerheit- og personvernrisiko. Køyr berre skript frå utvidingar eller kjelder du stolar på.</string>
+  <!-- The sentence used when the extension has data collection permissions. %1$s is a formatted list of permissions. -->
+  <string name="mozac_feature_addons_permissions_required_data_collection_description_2">Utviklaren seier at denne utvidinga samlar inn: %1$s</string>
+  <!-- The sentence used when the developer of an extension has explicitly stated that they do not collect any data collection. -->
+  <string name="mozac_feature_addons_permissions_none_required_data_collection_description">Utviklaren seier at denne utvidinga ikkje krev datainnsamling.</string>
+  <!-- The sentence used when the extension requests new data collection permissions. %1$s is a formatted list of permissions. -->
+  <string name="mozac_feature_addons_permissions_data_collection_optional_description">Utviklaren seier at utvidinga ønskjer å samle inn: %1$s</string>
+  <!-- Description for text button that expands the list of domain permissions -->
+  <string name="mozac_feature_addons_permissions_show_all_sites">Vis alle nettstadar</string>
+  <!-- Description for text button that hides the majority of the list of domain permissions -->
+  <string name="mozac_feature_addons_permissions_show_fewer_sites">Vis færre nettstadar</string>
+  <!-- Short description for the authenticationInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_authenticationInfo_short_description">autentiseringsinformasjon</string>
+  <!-- Short description for the bookmarksInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_bookmarksInfo_short_description">bokmerke</string>
+  <!-- Short description for the browsingActivity data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_browsingActivity_short_description">nettlesaraktivitet</string>
+  <!-- Short description for the financialAndPaymentInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_financialAndPaymentInfo_short_description">finansiell- og betalingsinformasjon</string>
+  <!-- Short description for the healthInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_healthInfo_short_description">helseinformasjon</string>
+  <!-- Short description for the locationInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_locationInfo_short_description">plassering</string>
+  <!-- Short description for the personalCommunications data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_personalCommunications_short_description">personleg kommunikasjon</string>
+  <!-- Short description for the personallyIdentifyingInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_personallyIdentifyingInfo_short_description">personleg identifiserbar informasjon</string>
+  <!-- Short description for the searchTerms data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_searchTerms_short_description">søkeord</string>
+  <!-- Short description for the technicalAndInteraction data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_technicalAndInteraction_short_description">tekniske data og samhandlingsdata</string>
+  <!-- Short description for the websiteActivity data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_websiteActivity_short_description">nettstad-aktivitet</string>
+  <!-- Short description for the websiteContent data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_websiteContent_short_description">nettstad-innhald</string>
+  <!-- Long description for the authenticationInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_authenticationInfo_long_description">Del autentiseringsinformasjon med utvidingsutviklaren</string>
+  <!-- Long description for the bookmarksInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_bookmarksInfo_long_description">Del bokmerkeinformasjon med utvidingsutviklaren</string>
+  <!-- Long description for the browsingActivity data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_browsingActivity_long_description">Del nettlesaraktivitet med utvidingsutviklaren</string>
+  <!-- Long description for the financialAndPaymentInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_financialAndPaymentInfo_long_description">Del finansielle opplysningar og betalingsinformasjon med utvidingsutviklaren</string>
+  <!-- Long description for the healthInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_healthInfo_long_description">Del helseinformasjon med utvidingsutviklaren</string>
+  <!-- Long description for the locationInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_locationInfo_long_description">Del posisjonsinformasjon med utvidingsutviklaren</string>
+  <!-- Long description for the personalCommunications data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_personalCommunications_long_description">Del personleg kommunikasjon med utvidingsutviklaren</string>
+  <!-- Long description for the personallyIdentifyingInfo data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_personallyIdentifyingInfo_long_description">Del personleg identifiserbar informasjon med utvidingsutviklaren</string>
+  <!-- Long description for the searchTerms data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_searchTerms_long_description">Del søkeord med utvidingsutviklaren</string>
+  <!-- Long description for the technicalAndInteraction data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_technicalAndInteraction_long_description">Del tekniske data og samhandlingsdata med utvidingsutviklaren</string>
+  <!-- Long description for the websiteActivity data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_websiteActivity_long_description">Del nettstadaktivitet med utvidingsutviklaren</string>
+  <!-- Long description for the websiteContent data collection permission -->
+  <string name="mozac_feature_addons_permissions_data_collection_websiteContent_long_description">Del nettstadinnhald med utvidingsutviklaren</string>
+  <!-- The version on of add-on. -->
+  <string name="mozac_feature_addons_version">Versjon</string>
+  <!-- The author of an add-on. -->
+  <string name="mozac_feature_addons_author">Utviklar</string>
+  <!-- The last date that the add-on was updated. -->
+  <string name="mozac_feature_addons_last_updated">Sist oppdatert</string>
+  <!-- The developer website (Homepage) of the add-on. -->
+  <string name="mozac_feature_addons_home_page">Heimeside</string>
+  <!-- A link where users can find more information about add-ons permissions. -->
+  <string name="mozac_feature_addons_learn_more">Les meir om løyve</string>
+  <!-- The rating of the add-on. -->
+  <string name="mozac_feature_addons_rating">Vurdering</string>
+  <!-- A link that points to the detail page of the extension. -->
+  <string name="mozac_feature_addons_more_info_link_2">Meir om denne utvidinga</string>
+  <!-- The settings of the add-on. -->
+  <string name="mozac_feature_addons_settings">Innstillingar</string>
+  <!-- Indicates the add-on is enabled. -->
+  <string name="mozac_feature_addons_settings_on">På</string>
+  <!-- Indicates the add-on is allowed in private browsing mode. -->
+  <string name="mozac_feature_addons_settings_allow_in_private_browsing_2">Tillat at utvidinga køyrer i privat nettlesing</string>
+  <!-- Indicates the add-on is allowed in private browsing mode. -->
+  <string name="mozac_feature_addons_settings_run_in_private_browsing">Køyr i privat nettlesing</string>
+  <!-- This is displayed when the add-on is not allowed to run in private browsing. -->
+  <string name="mozac_feature_addons_not_allowed_in_private_browsing">Ikkje tillate i private vindauge</string>
+  <!-- Indicates the add-on is enabled. -->
+  <string name="mozac_feature_addons_enabled">Påslått</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the installed section. -->
+  <string name="mozac_feature_addons_installed_section">Installert</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the recommended section. -->
+  <string name="mozac_feature_addons_recommended_section">Tilrådd</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the not yet supported section. -->
+  <string name="mozac_feature_addons_unsupported_section">Ikkje støtta enno</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the not yet available section. -->
+  <string name="mozac_feature_addons_unavailable_section">Ikkje tilgjengeleg enno</string>
+  <!-- This is displayed in a page where the user can see the installed and recommended(not installed yet) add-ons, this string indicates the disabled section. -->
+  <string name="mozac_feature_addons_disabled_section">Avslått</string>
+  <!-- Displays a page with all the details of an add-on. -->
+  <string name="mozac_feature_addons_details">Detaljear</string>
+  <!-- Displays a page with all the permissions of an add-on. -->
+  <string name="mozac_feature_addons_permissions">Løyve</string>
+  <!-- This is a button to remove (i.e. uninstall) an add-on. -->
+  <string name="mozac_feature_addons_remove">Fjern</string>
+  <!-- This is a button to report an add-on. -->
+  <string name="mozac_feature_addons_report">Rapporter</string>
+  <!-- This is the title of a dialog that asks the users if they to install or not an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_permissions_dialog_title_2">Legg til %1$s</string>
+  <!-- This is the title of a dialog that asks the users to grant optional permissions. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_optional_permissions_with_data_collection_dialog_title">%1$s ber om ytterlegare innstillingar</string>
+  <!-- This is the title of a dialog that asks the users to grant optional data collection permissions only. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_optional_permissions_with_data_collection_only_dialog_title">%1$s ber om ytterlegare datainnsamling</string>
+  <!-- Heading for the permissions section in the add-on install dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_required_permissions">Påkravde løyve:</string>
+  <!-- Heading for the data collection permissions section in the add-on install dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_required_data_collection">Påkravd datainnsamling:</string>
+  <!-- Heading for the optional settings section in the add-on install dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_optional_settings">Valfrie innstillingar:</string>
+  <!-- Heading for the permissions section in the optional permissions request dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_optional_permissions">Nye løyve:</string>
+  <!-- Heading for the data collection permissions section in the optional permissions request dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_heading_optional_data_collection">Ny datainnsamling:</string>
+  <!-- This is a button to add (install) an add-on . -->
+  <string name="mozac_feature_addons_permissions_dialog_add">Legg til</string>
+  <!-- This is a button to allow the optional permissions requested by an add-on . -->
+  <string name="mozac_feature_addons_permissions_dialog_allow">Tillat</string>
+  <!-- This is a button to deny the optional permissions requested by an add-on . -->
+  <string name="mozac_feature_addons_permissions_dialog_deny">Avvis</string>
+  <!-- Text link to learn more about permission requests on the add-on permissions dialog . -->
+  <string name="mozac_feature_addons_permissions_dialog_learn_more">Les meir</string>
+  <!-- This is the text for the "technical and interaction" checkbox shown in the add-on permissions dialog. -->
+  <string name="mozac_feature_addons_permissions_dialog_technical_and_interaction_data">Del tekniske data og samhandlingsdata med utvidingsutviklaren</string>
+  <!-- This is a button to cancel the add-on installation . -->
+  <string name="mozac_feature_addons_permissions_dialog_cancel">Avbryt</string>
+  <!-- Accessibility content description to install add-on button. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_install_addon_content_description_2">Installer %1$s</string>
+  <!-- This is the label of a button to cancel an ongoing add-on installation. -->
+  <string name="mozac_feature_addons_install_addon_dialog_cancel">Avbryt</string>
+  <!-- Indicates how many users have rated an add-on. %1$s will be replaced with number of reviews -->
+  <string name="mozac_feature_addons_user_rating_count_2">Omtalar: %1$s</string>
+  <!-- Accessibility content description for the amount of stars that add-on has, where %1$.02f will be the amount of stars. -->
+  <string name="mozac_feature_addons_rating_content_description_2">Vurdering: %1$.02f av 5</string>
+  <!-- This is the title of page where all the add-ons are listed -->
+  <string name="mozac_feature_addons_addons">Tillegg</string>
+  <!-- Label for add-ons sub menu item for add-ons manager -->
+  <string name="mozac_feature_addons_addons_manager">Tilleggshandsamar</string>
+  <!-- The title of the "crash" notification in the extensions manager -->
+  <string name="mozac_feature_extensions_manager_notification_title_text">Utvidinga er mellombels deaktivert</string>
+  <!-- The content of the "crash" notification in the extensions manager -->
+  <string name="mozac_feature_extensions_manager_notification_content_text">Ei eller fleire utvidingar slutta å fungere, noko som gjorde systemet ditt ustabilt.</string>
+  <!-- Button to re-enable the extensions in the "crash" notification -->
+  <string name="mozac_feature_extensions_manager_notification_restart_button">Start utvidingar på nytt</string>
+  <!-- Button in the extensions manager that opens AMO in a tab -->
+  <string name="mozac_feature_addons_find_more_extensions_button_text">Finn fleire utvidingar</string>
+  <!-- The label of the update button on the system notification shown to the user when an add-on has an update that requires the user to accept new permissions. -->
+  <string name="mozac_feature_addons_updater_notification_update_button">Oppdater</string>
+  <!-- The label of the cancel button on a notification, this will be shown to the user when an add-on needs new permissions. Indicates the user denies the new permissions and prevents the add-on from be updated -->
+  <string name="mozac_feature_addons_updater_notification_cancel_button">Avbryt</string>
+  <!-- The title of the system notification shown to the user when an add-on has a new update that requires new permissions. %1$s is the name of the add-on. -->
+  <string name="mozac_feature_addons_updater_notification_title_2">%1$s har ei oppdatering</string>
+  <!-- A short explanation shown in the notification displayed when an add-on has a new update that requires new permissions. -->
+  <string name="mozac_feature_addons_updater_notification_short_intro">Avbryt for å behalde gjeldande versjon og innstillingar.</string>
+  <!-- The heading for the permissions section in the system notification shown when an add-on has an update that requires user confirmation. %1$s is a list of sentences. -->
+  <string name="mozac_feature_addons_updater_notification_heading_permissions">Nye nødvendige løyve: %1$s</string>
+  <!-- The heading for the data collection permission section in the system notification shown when an add-on has an update that requires user confirmation. %1$s is a list of permissions. -->
+  <string name="mozac_feature_addons_updater_notification_heading_data_collection_permissions">Ny nødvendig datainnsamling: Utviklaren seier at utvidinga vil samle inn %1$s.</string>
+  <!-- Name of the "notification channel" used for displaying a notification for updating an extension. See https://developer.android.com/training/notify-user/channels -->
+  <string name="mozac_feature_addons_updater_notification_channel_2">Utvidingsoppdateringar</string>
+  <!-- Name of the "notification channel" used for displaying a notification for new supported add-ons. See https://developer.android.com/training/notify-user/channels -->
+  <string name="mozac_feature_addons_supported_checker_notification_channel" tools:ignore="UnusedResources">Støtta tilleggskontroll</string>
+  <!-- The tile of the notification, this will be shown to the user when one newly supported add-on is available. -->
+  <string name="mozac_feature_addons_supported_checker_notification_title" tools:ignore="UnusedResources">Nytt tillegg tilgjengeleg</string>
+  <!-- The tile of the notification, this will be shown to the user when more than one newly supported add-ons are available. -->
+  <string name="mozac_feature_addons_supported_checker_notification_title_plural" tools:ignore="UnusedResources">Nytt tillegg tilgjengeleg</string>
+  <!-- The content of the notification, this will be shown to the user when one newly supported add-on is available. %1$s is the add-on name and %2$s is the app name (in most cases Firefox). -->
+  <string name="mozac_feature_addons_supported_checker_notification_content_one">Legg til %1$s i %2$s</string>
+  <!-- The content of the notification, this will be shown to the user when two newly supported add-ons are available. %1$s is the first add-on name. %2$s is the second add-on name. %3$s is the app name (in most cases Firefox). -->
+  <string name="mozac_feature_addons_supported_checker_notification_content_two">Legg til %1$s og %2$s i %3$s</string>
+  <!-- The content of the notification, this will be shown to the user when more than two newly supported add-ons are available. %1$s is the app name (in most cases Firefox). -->
+  <string name="mozac_feature_addons_supported_checker_notification_content_more_than_two">Legg dei til i %1$s</string>
+  <!-- This is the caption for not yet supported screen caption -->
+  <string name="mozac_feature_addons_not_yet_supported_caption2">Vi utviklar for tida støtte for eit første utval av tilrådde utvidingar.</string>
+  <!-- This is the caption for the extension installation progress overlay -->
+  <string name="mozac_extension_install_progress_caption">Lastar ned og stadfestar utvidinga…</string>
+  <!-- Error shown when extensions could not be loaded -->
+  <string name="mozac_feature_addons_failed_to_load_extensions">Klarte ikkje å laste inn utvidingar. Prøv på nytt seinare.</string>
+  <!-- Error shown when unable to find a translation for an add-on field. %1$s is the locale of the user and %2$s is the default language of the add-on -->
+  <string name="mozac_feature_addons_failed_to_translate">Fann ikkje omsettinga for språket %2$s, eller for standardspråket %1$s</string>
+  <!-- Text shown after successfully installed an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_successfully_installed">%1$s vart installert</string>
+  <!-- Text shown after failing to install an add-on (when add-on type isn't supported or an unknown has errored). %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_install">Klarte ikkje å installere %1$s</string>
+  <!-- Text shown after failing to install an extension for which we don't have its name (when add-on type isn't supported or an unknown has errored). -->
+  <string name="mozac_feature_addons_extension_failed_to_install">Klarte ikkje å installere denne utvidinga.</string>
+  <!-- Text shown when installing an add-on has failed. -->
+  <string name="mozac_feature_addons_cant_install_extension">Kan ikkje installere utvidinga</string>
+  <!-- Text shown when attempting to install an extension and a network error happened. -->
+  <string name="mozac_feature_addons_extension_failed_to_install_network_error">Klarte ikkje å laste ned utvidinga på grunn av ein tilkoplingsfeil.</string>
+  <!-- Text shown when attempting to install an extension and the downloaded file is corrupted. -->
+  <string name="mozac_feature_addons_extension_failed_to_install_corrupt_error">Klarte ikkje å installere denne utvidinga fordi ho ser ut til å vere skada.</string>
+  <!-- Text shown when attempting to install an add-on and an error occurred because the extension was not signed. -->
+  <string name="mozac_feature_addons_extension_failed_to_install_not_signed_error">Klarte ikkje å installere denne utvidinga fordi ho ikkje har blitt stadfesta.</string>
+  <!-- Text shown when attempting to install an add-on and an error occurred because the extension was incompatible. %1$s is the add-on name, %2$s is the app name and %3$s is the app version. -->
+  <string name="mozac_feature_addons_failed_to_install_incompatible_error">Klarte ikkje å installere %1$s fordi den ikkje er kompatibel med %2$s %3$s.</string>
+  <!-- Text shown when attempting to install a (hard) blocked add-on. %1$s is the add-on name. %2$s is the app name. -->
+  <string name="mozac_feature_addons_blocklisted_2" tools:ignore="BrandUsage">%1$s bryt Mozillas retningslinjer og kan ikkje installerast på %2$s.</string>
+  <!-- Text shown when attempting to install an add-on that can only be install via Enterprise Policies, which is not supported on Android.  %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_admin_install_only">%1$s kunne ikkje installerast fordi det berre kan installeres av ein organisasjon som brukar verksemd-policyar, som ikkje er støtta på denne plattforma.</string>
+  <!-- Text shown when attempting to install an add-on that is soft-blocked. %1$s is the add-on name. %2$s is the app name. -->
+  <string name="mozac_feature_addons_soft_blocked_2">%1$s er avgrensa og kan ikkje installerast på %2$s.</string>
+  <!-- Text shown after failed to enable an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_enable">klarte ikkje å aktivere %1$s</string>
+  <!-- Text shown after failed to disable an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_disable">Klarte ikkje å deaktivere %1$s</string>
+  <!-- Text shown after failed to uninstall an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_uninstall">Klarte ikkje å avinstallere %1$s</string>
+  <!-- Text shown after successfully removed an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_successfully_removed" tools:ignore="UnusedResources">%1$s vart fjerna</string>
+  <!-- Text shown after failed to remove an add-on. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_failed_to_remove" tools:ignore="UnusedResources">Klarte ikkje å fjerne %1$s</string>
+  <!-- Label shown to indicate that the add-on was migrated from a previous version of the app. %1$s is the app name most of the case it will be Firefox. -->
+  <string name="mozac_feature_addons_migrated_from_a_previous_version_label" tools:ignore="UnusedResources">Dette tillegget vart overført frå ein tidlegare versjon av %1$s</string>
+  <!-- Text shown in not yet supported add-ons section. -->
+  <string name="mozac_feature_addons_unsupported_caption_2">1 utviding</string>
+  <!-- Text shown in not yet supported add-ons section - plural. %1$s is the number of unsupported extensions. -->
+  <string name="mozac_feature_addons_unsupported_caption_plural_2">%1$s utvidingar</string>
+  <!-- Text link to a sumo page for learning more about unsupported add-ons. -->
+  <string name="mozac_feature_addons_unsupported_learn_more">Les meir</string>
+  <!-- Displayed in the "Status" field for the updater when an add-on has been correctly updated. -->
+  <string name="mozac_feature_addons_updater_status_successfully_updated">Oppdatert</string>
+  <!-- Displayed in the "Status" field for the updater when an add-on has no updates available. -->
+  <string name="mozac_feature_addons_updater_status_no_update_available">Inga oppdatering tilgjengeleg</string>
+  <!-- Displayed in the "Status" field for the updater when there was an error during the add-on update. -->
+  <string name="mozac_feature_addons_updater_status_error">Feil</string>
+  <!-- Text shown in a dialog that displays information about the last attempt to update an add-on. This is the title of the dialog. -->
+  <string name="mozac_feature_addons_updater_dialog_title">Oppdateringsinformasjon</string>
+  <!-- Label in the dialog displaying information for the last attempt to update add-ons. It's followed by the date of the last attempt. -->
+  <string name="mozac_feature_addons_updater_dialog_last_attempt">Siste forsøk:</string>
+  <!-- Displayed in the "Status" field for the updater when an add-on has been correctly updated -->
+  <string name="mozac_feature_addons_updater_dialog_status">Status:</string>
+  <!-- Text shown in the dialog when add-on installation is completed. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_installed_dialog_title_2">%1$s vart lagt til</string>
+  <!-- Used as text for the link in the description of the post-installation dialog. -->
+  <string name="mozac_feature_addons_installed_dialog_description_link_text">utvidingsinnstillingar</string>
+  <!-- Text shown in the dialog when add-on installation is completed. %1$s is replaced by an active link, using mozac_feature_addons_installed_dialog_description_link_text as text ("extension settings"). -->
+  <string name="mozac_feature_addons_installed_dialog_description_3">Oppdater løyve og datainnstillingar når som helst i %1$s.</string>
+  <!-- Confirmation button text for the dialog when add-on installation is completed. -->
+  <string name="mozac_feature_addons_installed_dialog_okay_button_2">OK</string>
+  <!-- "Learn more" link displayed below an add-on status message. -->
+  <string name="mozac_feature_addons_status_learn_more">Les meir</string>
+  <!-- "See details" link displayed below an add-on status message. -->
+  <string name="mozac_feature_addons_status_see_details">Sjå detaljar</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on has been blocklisted. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_status_blocklisted_1" tools:ignore="BrandUsage">Denne utvidinga er blokkert for brot på Mozillas retningslinjer og har blitt deaktivert.</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on has been soft-blocked. -->
+  <string name="mozac_feature_addons_status_softblocked_2">Denne utvidinga er avgrensa og har vorte deaktivert. Du kan aktivere den, men dette kan vere risikabelt.</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on has been soft-blocked but the user re-enabled it. -->
+  <string name="mozac_feature_addons_status_softblocked_re_enabled_2">Denne utvidinga er avgrensa. Bruk av den kan vere risikabelt.</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on hasn't been signed correctly. %1$s is the add-on name. -->
+  <string name="mozac_feature_addons_status_unsigned">Klarte ikkje å stadfeste %1$s som sikker, og er difor slått av.</string>
+  <!-- Status message below an add-on in the add-ons manager when this add-on isn't compatible with the application version. %1$s is the add-on name, %2$s is the app name and %3$s is the app version. -->
+  <string name="mozac_feature_addons_status_incompatible">%1$s er ikkje kompatibel med din versjon av %2$s (versjon %3$s).</string>
+</resources>

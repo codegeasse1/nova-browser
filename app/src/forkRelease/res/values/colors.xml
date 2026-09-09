@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#0B7E78</color>
+    <color name="novaViolet0">#EAF6F5</color>
+    <color name="novaViolet5">#D6EFEC</color>
+    <color name="novaViolet10">#BFE5E1</color>
+    <color name="novaViolet15">#A8DCD7</color>
+    <color name="novaViolet20">#8FCFC9</color>
+    <color name="novaViolet25">#76C2BB</color>
+    <color name="novaViolet30">#5FB7B0</color>
+    <color name="novaViolet40">#2E9E95</color>
+    <color name="novaViolet50">#178D84</color>
+    <color name="novaViolet60">#0B7E78</color>
+    <color name="novaViolet70">#0B7E78</color>
+    <color name="novaViolet80">#08564F</color>
+    <color name="novaViolet90">#063B37</color>
+    <color name="novaViolet100">#042622</color>
+    <color name="novaVioletDesaturated10">#DCE7E6</color>
+    <color name="novaVioletDesaturated30">#AFC4C1</color>
+    <color name="novaVioletDesaturated50">#84A09D</color>
+    <color name="novaVioletDesaturated70">#5C7572</color>
+    <color name="novaVioletDesaturated90">#2E3E3C</color>
+    <color name="novaVioletDesaturated90A70">#4D2E3E3C</color>
+</resources>

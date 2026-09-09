@@ -1,0 +1,50 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+buildscript {
+    repositories {
+        gradle.configureMavenRepositories(delegate)
+    }
+    dependencies {
+        classpath libs.kotlin.serialization
+    }
+}
+
+plugins {
+    alias(libs.plugins.dependency.analysis)
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+android {
+    namespace = 'mozilla.components.support.remotesettings'
+}
+
+dependencies {
+    implementation project(':components:support-appservices')
+    implementation project(':components:support-base')
+    implementation project(':components:support-ktx')
+    implementation project(':components:support-utils')
+
+    implementation ComponentsDependencies.mozilla_appservices_errorsupport
+    implementation ComponentsDependencies.mozilla_remote_settings
+    implementation libs.androidx.work.runtime
+    implementation libs.kotlinx.serialization.json
+
+    testImplementation project(':components:support-test')
+
+    testImplementation ComponentsDependencies.mozilla_remote_settings
+    testImplementation libs.androidx.test.core
+    testImplementation libs.androidx.test.junit
+    testImplementation libs.androidx.work.testing
+    testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.mockito
+    testImplementation libs.robolectric
+}
+
+apply from: '../../../common-config.gradle'
+apply from: '../../../publish.gradle'
+ext.configurePublish(config.componentsGroupId, project.name, project.ext.description)

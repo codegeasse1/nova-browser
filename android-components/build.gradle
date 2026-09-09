@@ -1,0 +1,249 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+import io.gitlab.arturbosch.detekt.Detekt
+import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
+
+buildscript {
+    repositories {
+        gradle.configureMavenRepositories(delegate)
+    }
+
+    dependencies {
+        classpath libs.android.gradle.plugin
+    }
+}
+
+plugins {
+    alias(libs.plugins.dependency.analysis)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.compose) apply false
+    alias(libs.plugins.ksp)
+}
+
+mozilla {
+    ktlintSourcePaths = ["components/**/*.kt", "samples/**/*.kt", "buildSrc/**/*.kt", "!**/build/**/*.kt"]
+}
+
+allprojects {
+    if (gradle.mozconfig.substs.DOWNLOAD_ALL_GRADLE_DEPENDENCIES) {
+        // Work around https://github.com/google/ksp/issues/1964 by explicitly
+        // declaring dependencies that are dynamically added during Gradle task
+        // execution.
+        pluginManager.withPlugin('com.google.devtools.ksp') {
+            project.configurations {
+                kspDependencies
+            }
+
+            project.dependencies {
+                kspDependencies libs.ksp.symbol.processing.aa
+                kspDependencies libs.ksp.symbol.processing.aa.embeddable
+                kspDependencies libs.ksp.symbol.processing.api
+                kspDependencies libs.ksp.symbol.processing.common.deps
+            }
+        }
+    }
+}
+
+subprojects {
+    apply plugin: 'jacoco'
+
+    // Prevent some dependencies used by Fenix/Focus from being used in AC.
+    project.configurations.all {
+        exclude group: 'com.adjust.sdk', module: 'adjust-android'
+        exclude group: 'io.mockk', module: 'mockk'
+    }
+
+    afterEvaluate {
+        if (it.hasProperty('android')) {
+            dependencies {
+                lintChecks project(':components:tooling-lint')
+            }
+
+            android {
+                // We can't have one baseline file at the root of android-components because
+                // this is not a project module and we would have to coordinate every module to
+                // merge baselines.
+                lint {
+                    baseline = file("${projectDir}/lint-baseline.xml")
+                }
+
+                testOptions {
+                    testCoverage {
+                        jacocoVersion = libs.versions.jacoco.get()
+                    }
+                    unitTests {
+                        includeAndroidResources = true
+                    }
+                }
+
+                androidResources {
+                    ignoreAssetsPattern = "manifest.template.json"
+                }
+            }
+
+            if (project.name != "support-test") {
+                android.buildTypes.configureEach { buildType ->
+                    tasks.withType(Test).configureEach() {
+                        jacoco {
+                            includeNoLocationClasses = true
+                            excludes = ['jdk.internal.*']
+                        }
+
+                        finalizedBy { "jacoco${buildType.name.capitalize()}TestReport" }
+                    }
+
+                    tasks.register("jacoco${buildType.name.capitalize()}TestReport", JacocoReport) {
+                        reports {
+                            xml.required = true
+                            html.required = true
+                        }
+
+                        def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*',
+                                          '**/*Test*.*', 'android/**/*.*', '**/*$[0-9].*']
+                        def kotlinDebugTree = fileTree(dir: "$project.layout.buildDirectory/tmp/kotlin-classes/${buildType.name}", excludes: fileFilter)
+                        def javaDebugTree = fileTree(dir: "$project.layout.buildDirectory/intermediates/classes/${buildType.name}", excludes: fileFilter)
+                        def mainSrc = "$project.projectDir/src/main/java"
+
+                        sourceDirectories.setFrom(files([mainSrc]))
+                        classDirectories.setFrom(files([kotlinDebugTree, javaDebugTree]))
+                        getExecutionData().setFrom(fileTree(project.layout.buildDirectory).include([
+                                "jacoco/test${buildType.name.capitalize()}UnitTest.exec"
+                        ]))
+                    }
+                }
+
+                android {
+                    buildTypes {
+                        debug {
+                            // Enable test coverage when fetching dependencies: it's an easy way to
+                            // ensure we fetch the Jacoco agent dependency `org.jacoco.agent`, which
+                            // resolves to `org.jacoco.agent-$VERSION-runtime.jar`.
+                            testCoverageEnabled = project.hasProperty("coverage") || gradle.mozconfig.substs.DOWNLOAD_ALL_GRADLE_DEPENDENCIES
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    tasks.withType(AbstractTestTask).configureEach {
+        failOnNoDiscoveredTests = false
+    }
+}
+
+if (findProject(":geckoview") == null) {
+    // Avoid adding this task if it already exists in a different root project.
+    tasks.register("clean", Delete) {
+        delete rootProject.layout.buildDirectory
+    }
+}
+
+detekt {
+    input = files("$projectDir/components", "$projectDir/buildSrc", "$projectDir/samples")
+    config = files("$projectDir/config/detekt.yml")
+    baseline = file("$projectDir/config/detekt-baseline.xml")
+
+    reports {
+        html {
+            enabled = true
+            destination = file("$projectDir/build/reports/detekt.html")
+        }
+        xml {
+            enabled = false
+        }
+        txt {
+            enabled = false
+        }
+    }
+}
+
+tasks.named("detekt").configure {
+    reports {
+        custom {
+            reportId = "suppression-count"
+            outputLocation.set(file("$projectDir/build/reports/suppressions.txt"))
+        }
+    }
+}
+
+tasks.withType(Detekt).configureEach() {
+    // Custom detekt rules should be built before.
+    // See https://detekt.dev/docs/introduction/extensions#pitfalls
+    dependsOn(":components:tooling-detekt:assemble")
+
+    autoCorrect = true
+
+    exclude "**/build.gradle.kts"
+    exclude "**/build/**"
+    exclude "**/docs/**"
+    exclude "**/resources/**"
+    exclude "**/src/androidTest/**"
+    exclude "**/src/iosTest/**"
+    exclude "**/src/main/assets/extensions/**"
+    exclude "**/src/test/**"
+    exclude "**/test/src/**"
+    exclude "**/tmp/**"
+    exclude "**/tooling/fetch-tests/**"
+}
+
+// Apply same path exclusions as for the main task
+tasks.withType(DetektCreateBaselineTask).configureEach() {
+    dependsOn(":components:browser-icons:updateBuiltInExtensionVersion")
+    dependsOn(":components:feature-accounts:updateBuiltInExtensionVersion")
+    dependsOn(":components:feature-readerview:updateBuiltInExtensionVersion")
+    dependsOn(":components:feature-search:updateAdsExtensionVersion")
+    dependsOn(":components:feature-search:updateCookiesExtensionVersion")
+    dependsOn(":components:samples-browser:updateBorderifyExtensionVersion")
+    dependsOn(":components:samples-browser:updateTestExtensionVersion")
+    dependsOn(":components:samples-compose-browser:updateBorderifyExtensionVersion")
+    dependsOn(":components:samples-compose-browser:updateTestExtensionVersion")
+    dependsOn(":components:tooling-detekt:assemble")
+
+    exclude "**/build.gradle.kts"
+    exclude "**/build/**"
+    exclude "**/docs/**"
+    exclude "**/resources/**"
+    exclude "**/src/androidTest/**"
+    exclude "**/src/iosTest/**"
+    exclude "**/src/main/assets/extensions/**"
+    exclude "**/src/test/**"
+    exclude "**/test/src/**"
+    exclude "**/tmp/**"
+    exclude "**/tooling/fetch-tests/**"
+}
+
+configurations {
+    detektDependencies
+}
+
+dependencies {
+    detektPlugins project(":components:tooling-detekt")
+    detekt libs.detekt.cli
+
+    detektDependencies libs.detekt.cli
+}
+
+tasks.register("lint") {
+    group = "verification"
+    description = "Runs lint on all android-components subprojects."
+
+    // The closure form of `dependsOn` is evaluated lazily at task graph resolution
+    // time, not at configuration time. Each component is required to implement a
+    // `lint` task though it can be empty.
+    dependsOn {
+        findProject(":components").subprojects.collect { "${it.path}:lint" }
+    }
+}
+
+tasks.register("listRepositories") {
+    def reposData = project.provider {
+        project.repositories.collect { repo ->
+            [name: repo.name, url: repo.url.toString()]
+        }
+    }
+    doLast {
+        println "Repositories:"
+        reposData.get().each { println "Name: " + it.name + "; url: " + it.url }
+    }
+}

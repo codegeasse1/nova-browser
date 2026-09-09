@@ -1,0 +1,51 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package org.mozilla.fenix.webcompat.middleware
+
+import mozilla.components.lib.state.Middleware
+import mozilla.components.lib.state.Store
+import mozilla.telemetry.glean.private.NoExtras
+import org.mozilla.fenix.GleanMetrics.Webcompatreporting
+import org.mozilla.fenix.webcompat.store.WebCompatReporterAction
+import org.mozilla.fenix.webcompat.store.WebCompatReporterState
+import org.mozilla.fenix.webcompat.store.WebCompatReporterStore
+
+/**
+ * A [Middleware] for recording telemetry based on [WebCompatReporterAction]s that are dispatched to the
+ * [WebCompatReporterStore].
+ */
+class WebCompatReporterTelemetryMiddleware :
+    Middleware<WebCompatReporterState, WebCompatReporterAction> {
+
+    override fun invoke(
+        store: Store<WebCompatReporterState, WebCompatReporterAction>,
+        next: (WebCompatReporterAction) -> Unit,
+        action: WebCompatReporterAction,
+    ) {
+        next(action)
+
+        when (action) {
+            is WebCompatReporterAction.ReasonChanged -> {
+                Webcompatreporting.reasonDropdown.set(action.newReason.name)
+            }
+
+            WebCompatReporterAction.AddMoreInfoClicked -> {
+                Webcompatreporting.addMoreInfo.record(NoExtras())
+            }
+
+            WebCompatReporterAction.SendReportClicked -> {
+                Webcompatreporting.send.record(
+                    Webcompatreporting.SendExtra(sentWithBlockedTrackers = store.state.includeEtpBlockedUrls),
+                )
+            }
+
+            WebCompatReporterAction.LearnMoreClicked -> {
+                Webcompatreporting.learnMore.record(NoExtras())
+            }
+
+            else -> {}
+        }
+    }
+}

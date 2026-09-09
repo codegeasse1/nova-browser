@@ -1,0 +1,177 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package mozilla.components.feature.top.sites
+
+import mozilla.components.browser.storage.sync.PlacesHistoryStorage
+import mozilla.components.feature.top.sites.ext.hasHost
+import mozilla.components.feature.top.sites.ext.hasUrl
+import mozilla.components.feature.top.sites.ext.toTopSite
+import mozilla.components.feature.top.sites.facts.emitTopSitesCountFact
+import mozilla.components.support.base.log.logger.Logger
+import mozilla.components.support.base.observer.Observable
+import mozilla.components.support.base.observer.ObserverRegistry
+
+/**
+ * Default implementation of [TopSitesStorage].
+ *
+ * @param pinnedSitesStorage An instance of [PinnedSiteStorage], used for storing pinned sites.
+ * @param historyStorage An instance of [PlacesHistoryStorage], used for retrieving top frecent
+ * sites from history.
+ * @param topSitesProvider An optional instance of [TopSitesProvider], used for retrieving
+ * additional top sites from a provider. The returned top sites are added before pinned sites.
+ */
+class DefaultTopSitesStorage private constructor(
+    private val pinnedSitesStorage: PinnedSiteStorage,
+    private val historyStorage: PlacesHistoryStorage,
+    private val topSitesProvider: TopSitesProvider? = null,
+) : TopSitesStorage, Observable<TopSitesStorage.Observer> by ObserverRegistry() {
+
+    private val logger = Logger("DefaultTopSitesStorage")
+
+    // Cache of the last retrieved top sites
+    var cachedTopSites = listOf<TopSite>()
+
+    companion object {
+        /**
+         * Creates a [DefaultTopSitesStorage] and optionally initializes it with a list of default top sites.
+         *
+         * @param pinnedSitesStorage An instance of [PinnedSiteStorage], used for storing pinned sites.
+         * @param historyStorage An instance of [PlacesHistoryStorage], used for retrieving top frecent
+         * sites from history.
+         * @param topSitesProvider An optional instance of [TopSitesProvider], used for retrieving
+         * additional top sites from a provider.
+         * @param defaultTopSites A list of [Pair]s (title to URL) representing the default top sites
+         * to be added to the storage if they do not already exist.
+         * @return A new instance of [DefaultTopSitesStorage].
+         */
+        suspend operator fun invoke(
+            pinnedSitesStorage: PinnedSiteStorage,
+            historyStorage: PlacesHistoryStorage,
+            topSitesProvider: TopSitesProvider? = null,
+            defaultTopSites: List<Pair<String, String>>,
+        ): DefaultTopSitesStorage {
+            val storage = DefaultTopSitesStorage(
+                pinnedSitesStorage,
+                historyStorage,
+                topSitesProvider,
+            )
+            if (defaultTopSites.isNotEmpty()) {
+                pinnedSitesStorage.addAllPinnedSites(defaultTopSites, isDefault = true)
+            }
+            return storage
+        }
+
+        /**
+         * Creates a [DefaultTopSitesStorage].
+         *
+         * @param pinnedSitesStorage An instance of [PinnedSiteStorage], used for storing pinned sites.
+         * @param historyStorage An instance of [PlacesHistoryStorage], used for retrieving top frecent
+         * sites from history.
+         * @param topSitesProvider An optional instance of [TopSitesProvider], used for retrieving
+         * additional top sites from a provider.
+         * @return A new instance of [DefaultTopSitesStorage].
+         */
+        operator fun invoke(
+            pinnedSitesStorage: PinnedSiteStorage,
+            historyStorage: PlacesHistoryStorage,
+            topSitesProvider: TopSitesProvider? = null,
+        ) = DefaultTopSitesStorage(pinnedSitesStorage, historyStorage, topSitesProvider)
+    }
+
+    override suspend fun addTopSite(title: String, url: String, isDefault: Boolean) {
+        pinnedSitesStorage.addPinnedSite(title, url, isDefault)
+        notifyObservers { onStorageUpdated() }
+    }
+
+    override suspend fun addTopSites(topSites: List<Pair<String, String>>, isDefault: Boolean) {
+        pinnedSitesStorage.addAllPinnedSites(topSites = topSites, isDefault = isDefault)
+        notifyObservers { onStorageUpdated() }
+    }
+
+    override suspend fun removeTopSite(topSite: TopSite) {
+        if (topSite is TopSite.Default || topSite is TopSite.Pinned) {
+            pinnedSitesStorage.removePinnedSite(topSite)
+        }
+
+        // Remove the top site from both history and pinned sites storage to avoid having it
+        // show up as a frecent site if it is a pinned site.
+        if (topSite !is TopSite.Provided) {
+            historyStorage.deleteVisitsFor(topSite.url)
+        }
+
+        notifyObservers { onStorageUpdated() }
+    }
+
+    override suspend fun updateTopSite(topSite: TopSite, title: String, url: String) {
+        if (topSite is TopSite.Default || topSite is TopSite.Pinned) {
+            pinnedSitesStorage.updatePinnedSite(topSite, title, url)
+        }
+
+        notifyObservers { onStorageUpdated() }
+    }
+
+    @Suppress("ComplexCondition", "TooGenericExceptionCaught")
+    override suspend fun getTopSites(
+        totalSites: Int,
+        frecencyConfig: TopSitesFrecencyConfig?,
+        providerConfig: TopSitesProviderConfig?,
+        showTopRecentSites: Boolean,
+    ): List<TopSite> {
+        val topSites = ArrayList<TopSite>()
+        val pinnedSites = pinnedSitesStorage.getPinnedSites().take(totalSites)
+        var providerTopSites = emptyList<TopSite>()
+        var numSitesRequired = totalSites - pinnedSites.size
+
+        if (numSitesRequired > 0 &&
+            topSitesProvider != null &&
+            providerConfig != null &&
+            providerConfig.showProviderTopSites &&
+            pinnedSites.size < providerConfig.maxThreshold
+        ) {
+            try {
+                providerTopSites = topSitesProvider
+                    .getTopSites(allowCache = true)
+                    .filter { providerConfig.providerFilter?.invoke(it) ?: true }
+                    // The total amount of pinned and provider top sites that are returned in
+                    // `topSites` should not exceed the `providerConfig.maxThreshold`.
+                    // To maintain this constraint, first determine the amount of provider top
+                    // sites that can be taken from the available pool provider top sites, and
+                    // then ensure the number of provider top sites added does not exceed the
+                    // `limit`.
+                    .take(providerConfig.maxThreshold - pinnedSites.size)
+                    .take(providerConfig.limit)
+                topSites.addAll(providerTopSites)
+                numSitesRequired -= providerTopSites.size
+            } catch (e: Exception) {
+                logger.error("Failed to fetch top sites from provider", e)
+            }
+        }
+
+        topSites.addAll(pinnedSites)
+
+        if (showTopRecentSites && frecencyConfig?.frecencyTresholdOption != null && numSitesRequired > 0) {
+            // Get 'totalSites' sites for duplicate entries with
+            // existing pinned sites
+            val frecentSites = historyStorage
+                .getTopFrecentSites(totalSites, frecencyConfig.frecencyTresholdOption)
+                .map { it.toTopSite() }
+                .filter {
+                    !pinnedSites.hasUrl(it.url) &&
+                        !providerTopSites.hasHost(it.url) &&
+                        frecencyConfig.frecencyFilter?.invoke(it) ?: true
+                }
+                .take(numSitesRequired)
+
+            topSites.addAll(frecentSites)
+        }
+
+        if (topSites != cachedTopSites) {
+            emitTopSitesCountFact(pinnedSites.size)
+            cachedTopSites = topSites
+        }
+
+        return topSites
+    }
+}

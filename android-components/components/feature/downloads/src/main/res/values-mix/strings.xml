@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<resources>
+  <!-- Name of the "notification channel" used for displaying download notification. See https://developer.android.com/training/notify-user/channels -->
+  <string name="mozac_feature_downloads_notification_channel">Snuù</string>
+  <!-- Alert dialog confirmation before download a file, this is the positive action. -->
+  <string name="mozac_feature_downloads_dialog_download">Snuù</string>
+  <!-- Button that pauses the download when pressed. -->
+  <string name="mozac_feature_downloads_button_pause">Kunchatu</string>
+  <!-- Button that opens the downloaded file when pressed. -->
+  <string name="mozac_feature_downloads_button_open">Kuna</string>
+  <!-- Content description for close button -->
+  <string name="mozac_feature_downloads_button_close">Kasi</string>
+</resources>

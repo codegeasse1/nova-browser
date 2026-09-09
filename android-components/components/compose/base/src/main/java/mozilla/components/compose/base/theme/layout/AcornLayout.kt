@@ -1,0 +1,104 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+package mozilla.components.compose.base.theme.layout
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import mozilla.components.compose.base.annotation.FlexibleWindowPreview
+import mozilla.components.compose.base.theme.AcornTheme
+
+/**
+ * A palette of tokens defining the layout of visual elements styled by the Acorn Design System.
+ */
+data class AcornLayout(
+    val space: AcornSpace,
+    val size: AcornSize,
+) {
+
+    val border: AcornBorder = AcornBorder
+    val elevation: AcornElevation = AcornElevation
+
+    /**
+     * A palette of tokens defining the borders of visual elements styled by the Acorn Design System.
+     */
+    object AcornBorder {
+        val thin: Dp = 1.dp
+        val normal: Dp = 2.dp
+        val thick: Dp = 4.dp
+    }
+
+    /**
+     * [AcornLayout] helper object
+     */
+    companion object {
+        /**
+         * Returns the palette of layout tokens corresponding to the [AcornWindowSize].
+         *
+         * @param windowSize The app window's current [AcornWindowSize].
+         */
+        fun fromWindowSize(windowSize: AcornWindowSize) = AcornLayout(
+            space = AcornSpace.fromWindowSize(windowSize = windowSize),
+            size = AcornSize.fromWindowSize(windowSize = windowSize),
+        )
+    }
+}
+
+private const val GRID_ITEMS = 200
+
+@FlexibleWindowPreview
+@Composable
+private fun AcornLayoutPreview() {
+    AcornTheme {
+        Surface {
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(AcornTheme.layout.space.dynamic400),
+                verticalArrangement = Arrangement.spacedBy(AcornTheme.layout.space.dynamic400),
+            ) {
+                repeat(GRID_ITEMS) {
+                    val color = Color(
+                        red = it,
+                        green = 0,
+                        blue = it,
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .size(size = AcornTheme.layout.size.static800)
+                            .background(
+                                color = color,
+                                shape = MaterialTheme.shapes.small,
+                            )
+                            .border(
+                                width = AcornTheme.layout.border.normal,
+                                color = Color(
+                                    red = color.red * 0.8f,
+                                    green = color.green * 0.8f,
+                                    blue = color.blue * 0.8f,
+                                ),
+                                shape = MaterialTheme.shapes.small,
+                            ),
+                    )
+                }
+            }
+        }
+    }
+}

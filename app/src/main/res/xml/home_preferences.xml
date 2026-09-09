@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<androidx.preference.PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.preference.PreferenceCategory
+        android:layout="@layout/preference_cat_style"
+        android:title="@string/preferences_set_homepage"
+        app:iconSpaceReserved="false">
+
+        <org.mozilla.fenix.settings.RadioButtonPreference
+            android:defaultValue="true"
+            android:key="@string/pref_key_default_homepage"
+            android:title="@string/preferences_default_homepage" />
+
+        <org.mozilla.fenix.settings.RadioButtonPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_custom_homepage"
+            android:title="@string/preferences_custom_homepage" />
+
+        <androidx.preference.EditTextPreference
+            android:dependency="@string/pref_key_custom_homepage"
+            android:key="@string/pref_key_custom_homepage_url"
+            android:dialogTitle="@string/preferences_custom_homepage"
+            app:useSimpleSummaryProvider="true" />
+
+    </androidx.preference.PreferenceCategory>
+
+    <androidx.preference.SwitchPreferenceCompat
+        app:allowDividerAbove="true"
+        android:key="@string/pref_key_show_top_sites"
+        android:title="@string/top_sites_toggle_top_recent_sites_4" />
+
+    <androidx.preference.SwitchPreferenceCompat
+        android:dependency="@string/pref_key_show_top_sites"
+        android:key="@string/pref_key_show_top_recent_sites"
+        android:title="@string/preferences_show_top_recent_sites" />
+
+    <androidx.preference.SwitchPreferenceCompat
+        android:key="@string/pref_key_privacy_report"
+        android:title="@string/customize_toggle_privacy_report" />
+
+    <androidx.preference.SwitchPreferenceCompat
+        android:key="@string/pref_key_recent_tabs"
+        android:title="@string/customize_toggle_jump_back_in" />
+
+    <androidx.preference.SwitchPreferenceCompat
+        android:key="@string/pref_key_show_homepage_sports_widget"
+        android:title="@string/customize_toggle_world_cup" />
+
+    <androidx.preference.SwitchPreferenceCompat
+        android:key="@string/pref_key_customization_bookmarks"
+        android:title="@string/customize_toggle_bookmarks" />
+
+    <androidx.preference.SwitchPreferenceCompat
+        android:key="@string/pref_key_history_metadata_feature"
+        android:title="@string/customize_toggle_recently_visited" />
+
+    <androidx.preference.SwitchPreferenceCompat
+        android:key="@string/pref_key_pocket_homescreen_recommendations"
+        android:title="@string/customize_toggle_pocket_3" />
+
+    <androidx.preference.Preference
+        android:key="@string/pref_key_wallpapers"
+        android:title="@string/customize_wallpapers" />
+
+    <androidx.preference.PreferenceCategory
+        android:layout="@layout/preference_cat_style"
+        android:title="@string/preferences_opening_screen"
+        app:allowDividerAbove="true"
+        app:iconSpaceReserved="false">
+
+        <org.mozilla.fenix.settings.RadioButtonPreference
+            android:key="@string/pref_key_start_on_home_always"
+            android:title="@string/opening_screen_homepage" />
+
+        <org.mozilla.fenix.settings.RadioButtonPreference
+            android:key="@string/pref_key_start_on_home_never"
+            android:title="@string/opening_screen_last_tab" />
+
+        <org.mozilla.fenix.settings.RadioButtonPreference
+            android:key="@string/pref_key_start_on_home_after_four_hours"
+            android:title="@string/opening_screen_after_four_hours_of_inactivity" />
+
+    </androidx.preference.PreferenceCategory>
+</androidx.preference.PreferenceScreen>

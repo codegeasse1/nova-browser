@@ -1,0 +1,68 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+plugins {
+    alias(libs.plugins.dependency.analysis)
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'com.google.devtools.ksp'
+
+android {
+    defaultConfig {
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas".toString())
+            arg("room.generateKotlin", "true")
+        }
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += ["room.incremental": "true"]
+            }
+        }
+    }
+
+    sourceSets {
+        test.assets.srcDirs += files("$projectDir/schemas".toString())
+    }
+
+    namespace = 'mozilla.components.feature.recentlyclosed'
+}
+
+dependencies {
+    implementation project(':components:browser-session-storage')
+    implementation project(':components:browser-state')
+    implementation project(':components:concept-engine')
+    implementation project(':components:support-base')
+    implementation project(':components:support-ktx')
+
+    implementation libs.androidx.lifecycle.livedata
+    implementation libs.androidx.room.runtime
+    ksp libs.androidx.room.compiler
+    implementation libs.kotlinx.coroutines
+
+    testImplementation project(':components:feature-session')
+    testImplementation project(':components:support-test')
+    testImplementation project(':components:support-test-libstate')
+
+    testImplementation libs.androidx.test.core
+    testImplementation libs.androidx.test.junit
+    testImplementation platform(libs.junit.bom)
+    testImplementation libs.junit4
+    testRuntimeOnly libs.junit.platform.launcher
+    testRuntimeOnly libs.junit.vintage
+    testImplementation libs.kotlinx.coroutines
+    testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.robolectric
+
+    androidTestImplementation project(':components:support-test-fakes')
+
+    androidTestImplementation libs.androidx.test.core
+    androidTestImplementation libs.androidx.test.runner
+}
+
+apply from: '../../../common-config.gradle'
+apply from: '../../../publish.gradle'
+ext.configurePublish(config.componentsGroupId, project.name, project.ext.description)

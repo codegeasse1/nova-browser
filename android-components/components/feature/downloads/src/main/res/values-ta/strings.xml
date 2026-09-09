@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<resources>
+  <!-- Name of the "notification channel" used for displaying download notification. See https://developer.android.com/training/notify-user/channels -->
+  <string name="mozac_feature_downloads_notification_channel">பதிவிறக்கங்கள்</string>
+  <!-- Text shown on the second row of a paused download notification. -->
+  <string name="mozac_feature_downloads_paused_notification_text">பதிவிறக்கம் இடைநிறுத்தப்பட்டது</string>
+  <!-- Text shown on the second row of an completed download notification. The filename is shown on the first row. -->
+  <string name="mozac_feature_downloads_completed_notification_text2">பதிவிறக்கம் முடிந்தது</string>
+  <!-- Text shown on the second row of an failed download notification. The filename is shown on the first row. -->
+  <string name="mozac_feature_downloads_failed_notification_text2">பதிவிறக்கம் தோல்வியடைந்தது</string>
+  <!-- Alert dialog confirmation before download a file, this is the positive action. -->
+  <string name="mozac_feature_downloads_dialog_download">பதிவிறக்கு</string>
+  <!-- Alert dialog confirmation before download a file, this is the negative action. -->
+  <string name="mozac_feature_downloads_dialog_cancel">இரத்து செய்</string>
+  <!-- Error shown when the user is trying to download a invalid file. %1$s will be replaced with the name of the app. -->
+  <string name="mozac_feature_downloads_file_not_supported2">%1$s இக்கோப்பு வகையைப் பதிவிறக்க இயலவில்லை</string>
+  <!-- Message that appears when the downloaded file could not be opened. -->
+  <string name="mozac_feature_downloads_could_not_open_file">கோப்பைத் திறக்க முடியவில்லை</string>
+  <!-- Message that appears when the downloaded file is a specific type (%1$s) that Android doesn't support opening. -->
+  <string name="mozac_feature_downloads_open_not_supported1">%1$s கோப்புகளைத் திறப்பதற்கான செயலிகள் இல்லை</string>
+  <!-- Button that pauses the download when pressed. -->
+  <string name="mozac_feature_downloads_button_pause">இடைநிறுத்து</string>
+  <!-- Button that resumes the download when pressed. -->
+  <string name="mozac_feature_downloads_button_resume">தொடர்க</string>
+  <!-- Button that cancels the download when pressed. -->
+  <string name="mozac_feature_downloads_button_cancel">ரத்துசெய்</string>
+  <!-- Button that opens the downloaded file when pressed. -->
+  <string name="mozac_feature_downloads_button_open">திற</string>
+  <!-- Button that restarts the download after a failed attempt. -->
+  <string name="mozac_feature_downloads_button_try_again">மீண்டும் முயற்சிக்கவும்</string>
+  <!-- Content description for close button -->
+  <string name="mozac_feature_downloads_button_close">மூடு</string>
+  <!-- Title for the third party download app chooser dialog -->
+  <string name="mozac_feature_downloads_third_party_app_chooser_dialog_title">பயன்படுத்தி செயற்பாட்டை முடி</string>
+  <!-- Message that appears when trying to download with an external app fails. %1$s will be replaced with the name the external app. -->
+  <string name="mozac_feature_downloads_unable_to_open_third_party_app">%1$s திறக்க முடியவில்லை</string>
+  <!-- Text for the info dialog when write to storage permissions have been denied but user tries to download a file. -->
+  <string name="mozac_feature_downloads_write_external_storage_permissions_needed_message">கோப்புகளைப் பதிவிறக்குவதற்குக் கோப்புகள் மற்றும் மீடியா அனுமதி தேவை. ஆண்ட்ராய்டு அமைப்புகளுக்குச் சென்று, அவற்றை அனுமதியுங்கள்.</string>
+  <!-- Alert dialog confirmation before cancelling downloads, this is the title -->
+  <string name="mozac_feature_downloads_cancel_active_downloads_warning_content_title">தனிப்பட்ட பதிவிறக்கங்களை ரத்துசெய்யவா?</string>
+</resources>

@@ -1,0 +1,10 @@
+{
+    "substs": {
+        "GRADLE_MAVEN_REPOSITORIES": [
+            "https://maven.mozilla.org/maven2",
+            "https://plugins.gradle.org/m2",
+            "https://maven.google.com",
+            "https://repo.maven.apache.org/maven2"
+        ]
+    }
+}

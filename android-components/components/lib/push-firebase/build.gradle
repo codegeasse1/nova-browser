@@ -1,0 +1,39 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+plugins {
+    alias(libs.plugins.dependency.analysis)
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace = 'mozilla.components.lib.push.firebase'
+}
+
+dependencies {
+    api libs.firebase.messaging
+
+    implementation project(':components:concept-push')
+    implementation project(':components:support-base')
+
+    implementation libs.kotlinx.coroutines
+    implementation libs.play.services.base
+
+    testImplementation project(':components:support-test')
+
+    testImplementation libs.androidx.test.core
+    testImplementation libs.kotlin.test
+    testImplementation libs.kotlinx.coroutines.test
+    testImplementation platform(libs.junit.bom)
+    testImplementation libs.junit4
+    testRuntimeOnly libs.junit.platform.launcher
+    testRuntimeOnly libs.junit.vintage
+    testImplementation libs.robolectric
+}
+
+apply from: '../../../common-config.gradle'
+apply from: '../../../publish.gradle'
+ext.configurePublish(config.componentsGroupId, project.name, project.ext.description)

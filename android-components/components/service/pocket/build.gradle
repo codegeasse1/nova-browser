@@ -1,0 +1,83 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+buildscript {
+    repositories {
+        gradle.configureMavenRepositories(delegate)
+    }
+
+    dependencies {
+        classpath libs.kotlin.serialization
+    }
+}
+
+plugins {
+    alias(libs.plugins.dependency.analysis)
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+android {
+    defaultConfig {
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas".toString())
+            arg("room.generateKotlin", "true")
+        }
+    }
+
+    sourceSets {
+        test.assets.srcDirs += files("$projectDir/schemas".toString())
+        androidTest.assets.srcDirs += files("$projectDir/schemas".toString())
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    namespace = 'mozilla.components.service.pocket'
+}
+
+dependencies {
+    implementation project(':components:concept-fetch')
+    implementation project(':components:support-base')
+    implementation project(':components:support-ktx')
+
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.room.runtime
+    ksp libs.androidx.room.compiler
+    implementation libs.androidx.work.runtime
+    implementation libs.kotlinx.coroutines
+    implementation libs.kotlinx.serialization.json
+
+    testImplementation project(':components:lib-fetch-httpurlconnection')
+    testImplementation project(':components:support-test')
+
+    testImplementation libs.androidx.arch.core.testing
+    testImplementation libs.androidx.concurrent
+    testImplementation libs.androidx.room.testing
+    testImplementation libs.androidx.test.core
+    testImplementation libs.androidx.test.junit
+    testImplementation libs.androidx.work.testing
+    testImplementation libs.kotlin.reflect
+    testImplementation libs.kotlin.test
+    testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.robolectric
+
+    androidTestImplementation project(':components:support-android-test')
+
+    androidTestImplementation libs.androidx.arch.core.testing
+    androidTestImplementation libs.androidx.room.testing
+    androidTestImplementation libs.androidx.test.core
+    androidTestImplementation libs.androidx.test.rules
+    androidTestImplementation libs.androidx.test.runner
+
+    androidTestRuntimeOnly libs.okhttp
+}
+
+apply from: '../../../common-config.gradle'
+apply from: '../../../publish.gradle'
+ext.configurePublish(config.componentsGroupId, project.name, project.ext.description)

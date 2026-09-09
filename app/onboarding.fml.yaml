@@ -1,0 +1,350 @@
+---
+features:
+
+  juno-onboarding:
+    description: A feature that shows the onboarding flow.
+
+    variables:
+      conditions:
+        description: >
+          A collection of out the box conditional expressions to be
+          used in determining whether a card should show or not.
+          Each entry maps to a valid JEXL expression.
+        type: Map<ConditionName, String>
+        string-alias: ConditionName
+        default: {
+          ALWAYS: "true",
+          NEVER: "false"
+        }
+      cards:
+        description: Collection of user facing onboarding cards.
+        type: Map<OnboardingCardKey, OnboardingCardData>
+        string-alias: OnboardingCardKey
+        default:
+            terms-of-service:
+              card-type: terms-of-service
+              ordering: 1
+              title: onboarding_welcome_to_firefox
+              image-res: nova_onboarding_tou
+              primary-button-label: nova_onboarding_continue_button
+              extra-data:
+                term-of-service-data:
+                  subheader-one-text: nova_onboarding_tou_subtitle
+                  line-one-text: nova_onboarding_tou_body_line_1
+                  line-one-link-text: nova_onboarding_tou_body_line_1_link_text
+                  line-two-text: nova_onboarding_tou_body_line_2
+                  line-two-link-text: nova_onboarding_tou_body_line_2_link_text
+                  line-three-text: nova_onboarding_tou_body_line_3
+                  line-three-link-text: nova_onboarding_tou_body_line_3_link_text
+
+            default-browser:
+              card-type: default-browser
+              ordering: 10
+              title: nova_onboarding_set_to_default_title_2
+              body: nova_onboarding_set_to_default_subtitle
+              image-res: nova_onboarding_set_to_default
+              primary-button-label: nova_onboarding_set_to_default_button
+              secondary-button-label: nova_onboarding_negative_button
+
+            add-search-widget:
+              card-type: add-search-widget
+              ordering: 20
+              title: nova_onboarding_add_search_widget_title
+              body: nova_onboarding_add_search_widget_subtitle
+              image-res: nova_onboarding_widget
+              primary-button-label: nova_onboarding_add_search_widget_button
+              secondary-button-label: nova_onboarding_negative_button
+
+            sync-sign-in:
+              card-type: sync-sign-in
+              ordering: 30
+              title: nova_onboarding_sync_title
+              body: nova_onboarding_sync_subtitle
+              image-res: nova_onboarding_sync
+              primary-button-label: nova_onboarding_sync_button
+              secondary-button-label: nova_onboarding_negative_button
+
+            notification-permission:
+              card-type: notification-permission
+              ordering: 40
+              title: nova_onboarding_notifications_title
+              body: nova_onboarding_notifications_subtitle
+              image-res: nova_onboarding_notifications
+              primary-button-label: nova_onboarding_notifications_button
+              secondary-button-label: nova_onboarding_negative_button
+
+            toolbar-placement:
+              card-type: toolbar-placement
+              ordering: 50
+              title: nova_onboarding_toolbar_selection_title
+              primary-button-label: nova_onboarding_continue_button
+              extra-data:
+                customization-toolbar-data:
+                  - toolbar-type: toolbar-top
+                    label: nova_onboarding_toolbar_selection_top_label
+                  - toolbar-type: toolbar-bottom
+                    label: nova_onboarding_toolbar_selection_bottom_label
+
+            marketing:
+              card-type: marketing-data
+              ordering: 60
+              title: nova_onboarding_marketing_title
+              image-res: nova_onboarding_marketing
+              primary-button-label: nova_onboarding_continue_button
+              secondary-button-label: nova_onboarding_marketing_secondary_button_text
+              extra-data:
+                marketing-data:
+                  body-line-one-text: nova_onboarding_marketing_body
+                  body-line-one-link-text: nova_onboarding_marketing_body_link_text
+    defaults:
+      - channel: nightly
+        value:
+          cards:
+            add-search-widget:
+              enabled: false
+            sync-sign-in:
+              enabled: false
+            notification-permission:
+              enabled: false
+            toolbar-placement:
+              enabled: false
+
+  continuous-onboarding:
+    description: >
+      Feature to enable the continuous onboarding flow. This feature reduces the number of upfront
+      onboarding cards and distributes the cards and other prompts progressively over a number of days.
+    variables:
+      enabled:
+        description: If true, the feature is enabled.
+        type: Boolean
+        default: false
+    defaults:
+      - channel: nightly
+        value:
+          enabled: true
+
+  continuous-onboarding:
+    description: >
+      Feature to enable the continuous onboarding flow. This feature reduces the number of upfront
+      onboarding cards and distributes the cards and other prompts progressively over a number of days.
+    variables:
+      enabled:
+        description: If true, the feature is enabled.
+        type: Boolean
+        default: false
+
+objects:
+
+  OnboardingCardData:
+    description: An object to describe a user facing onboarding card.
+    fields:
+      card-type:
+        type: OnboardingCardType
+        description: The type of the card.
+        # This should never be defaulted.
+        default: default-browser
+      enabled:
+        type: Boolean
+        description: If true, this card is shown to the user.
+        default: true
+      title:
+        type: Text
+        description: The title text displayed to the user.
+        # This should never be defaulted.
+        default: ""
+      body:
+        type: Text
+        description: The message text displayed to the user. May contain linkable text.
+        default: ""
+      image-res:
+        type: Image
+        description: The resource id of the image to be displayed.
+        # This should never be defaulted.
+        default: ic_onboarding_welcome
+      ordering:
+        type: Int
+        description: Used to sequence the cards.
+        # This should never be defaulted.
+        default: 0
+      primary-button-label:
+        type: Text
+        description: The text to display on the primary button.
+        # This should never be defaulted.
+        default: ""
+      secondary-button-label:
+        type: Text
+        description: The text to display on the secondary button.
+        # This can be defaulted if the card type does not required it.
+        default: ""
+      prerequisites:
+        type: List<ConditionName>
+        description: >
+          A list of strings corresponding to targeting expressions.
+          The card will be shown if all expressions are `true` and if
+          no expressions in the `disqualifiers` table are true, or
+          if the `disqualifiers` table is empty.
+        default: [ ALWAYS ]
+      disqualifiers:
+        type: List<ConditionName>
+        description: >
+          A list of strings corresponding to targeting expressions.
+          The card will not be shown if any expression is `true`.
+        default: [ NEVER ]
+      extra-data:
+        type: Option<ExtraCardData>
+        description: Optional extra data for cards that require additional data.
+        default: null
+
+  ExtraCardData:
+    description: Holds data for cards that require additional data, e.g. toolbar placement cards.
+    fields:
+      customization-toolbar-data:
+        type: List<CustomizationToolbarData>
+        description: >
+          An optional list of toolbar placements for the toolbar placement card.
+        default: []
+      term-of-service-data:
+        type: Option<TermsOfServiceData>
+        description: >
+          An optional terms of service data for the onboarding card.
+        default: null
+      marketing-data:
+        type: Option<MarketingData>
+        description: >
+          An optional marketing data for the onboarding card.
+        default: null
+
+  CustomizationToolbarData:
+    description: An object to describe the placement of the toolbar.
+    fields:
+      toolbar-type:
+        type: ToolbarType
+        description: The type of toolbar placement.
+        # This should never be defaulted.
+        default: toolbar-top
+      label:
+        type: Text
+        description: Display text for the toolbar placement option (e.g. "Top placement").
+        # This should never be defaulted.
+        default: ""
+      image-res:
+        type: Image
+        description: The resource id of toolbar placement image.
+        # Not used. This field as the image is defined in the Composable.
+        default: ic_onboarding_customize_toolbar
+
+  TermsOfServiceData:
+    description: An object to describe the terms of service onboarding card.
+    fields:
+      subheader-one-text:
+        type: Option<Text>
+        description: Optional text for the first subheader of the card.
+        default: null
+      subheader-two-text:
+        type: Option<Text>
+        description: Optional text for the second subheader of the card.
+        default: null
+      subheader-three-text:
+        type: Option<Text>
+        description: Optional text for the third subheader of the card.
+        default: null
+      line-one-text:
+        type: Text
+        description: The text for line one.
+        # This should never be defaulted.
+        default: ""
+      line-one-link-text:
+        type: Text
+        description: The text for the link of line one.
+        # This should never be defaulted.
+        default: ""
+      line-one-link-url:
+        type: Text
+        description: The url for the link of line one.
+        # This should never be defaulted.
+        default: ""
+      line-two-text:
+        type: Text
+        description: The text for line two.
+        # This should never be defaulted.
+        default: ""
+      line-two-link-text:
+        type: Text
+        description: The text for the link of line two.
+        # This should never be defaulted.
+        default: ""
+      line-two-link-url:
+        type: Text
+        description: The url for the link of line two.
+        # This should never be defaulted.
+        default: ""
+      line-three-text:
+        type: Text
+        description: The text for line three.
+        # This should never be defaulted.
+        default: ""
+      line-three-link-text:
+        type: Text
+        description: The text for the link of line three.
+        # This should never be defaulted.
+        default: ""
+
+  MarketingData:
+    description: An object to describe the marketing data onboarding card.
+    fields:
+      marketing-card-variant:
+        description: Which marketing card variant to use.
+        type: MarketingCardVariant
+        default: default
+      body-line-one-text:
+        type: Text
+        description: The text for line one of the body.
+        default: ""
+      body-line-one-link-text:
+        type: Text
+        description: The link text from line one of the body.
+        default: ""
+      body-line-two-text:
+        type: Text
+        description: The text for line two of the body.
+        default: ""
+
+enums:
+
+  OnboardingCardType:
+    description: An enum to describe a type of card.
+    variants:
+      default-browser:
+        description: Allows user to set Firefox as the default browser.
+      sync-sign-in:
+        description: Allows user to sync with a Firefox account.
+      notification-permission:
+        description: Allows user to enable notification permission.
+      add-search-widget:
+        description: Allows user to add search widget to homescreen.
+      toolbar-placement:
+        description: Allows user to choose the toolbar position.
+      terms-of-service:
+        description: Page to display the terms of services.
+      marketing-data:
+        description: Allows user to opt out of marketing data collection.
+
+  ToolbarType:
+    description: An enum to describe a toolbar placement option.
+    variants:
+      toolbar-top:
+        description: Sets the toolbar placement on the top.
+      toolbar-bottom:
+        description: Sets the toolbar placement on the bottom.
+
+  MarketingCardVariant:
+    description: An enum to describe a marketing card variation.
+    variants:
+      default:
+        description: The default marketing card variation.
+      treatment-a:
+        description: The Treatment A marketing card variation.
+      treatment-b:
+        description: The Treatment B marketing card variation.
+      treatment-c:
+        description: The Treatment C marketing card variation.
