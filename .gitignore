@@ -105,3 +105,7 @@ test_artifacts/
 
 # Web extensions: manifest.json files are generated
 manifest.json
+
+# Nova bundled extension manifests must stay tracked (written by nova-branding.sh)
+!app/src/main/assets/extensions/nova-shield/manifest.json
+!app/src/main/assets/extensions/ublock_origin/manifest.json

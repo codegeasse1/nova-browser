@@ -1,0 +1,39 @@
+{
+  "manifest_version": 2,
+  "name": "Nova Ad Block",
+  "version": "1.1.0",
+  "description": "Blocks requests to any domain you add to the block list - individually or via whole hosts files / blocklists (StevenBlack, AdAway, EasyList, ...). Domains on the allow list are never blocked.",
+  "icons": {
+    "48": "icons/48.png",
+    "96": "icons/96.png",
+    "128": "icons/128.png"
+  },
+  "permissions": [
+    "webRequest",
+    "webRequestBlocking",
+    "storage",
+    "unlimitedStorage",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_action": {
+    "default_title": "Nova Ad Block",
+    "default_popup": "options.html",
+    "default_icon": {
+      "16": "icons/16.png",
+      "48": "icons/48.png"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "applications": {
+    "gecko": {
+      "id": "nova-shield@nova.browser",
+      "strict_min_version": "115.0"
+    }
+  }
+}
