@@ -82,13 +82,12 @@ registerScriptlet(matchesStackTraceFn, {
 
 function abortOnStackTrace(
     chain = '',
-    needle = '',
-    ...varargs
+    needle = ''
 ) {
     if ( typeof chain !== 'string' ) { return; }
     const safe = safeSelf();
     const needleDetails = safe.initPattern(needle, { canNegate: true });
-    const extraArgs = safe.parseVarargs(varargs);
+    const extraArgs = safe.getExtraArgs(Array.from(arguments), 2);
     if ( needle === '' ) { extraArgs.log = 'all'; }
     const makeProxy = function(owner, chain) {
         const pos = chain.indexOf('.');

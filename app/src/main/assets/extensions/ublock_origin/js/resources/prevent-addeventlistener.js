@@ -55,11 +55,10 @@ import { safeSelf } from './safe-self.js';
 
 function preventAddEventListener(
     type = '',
-    pattern = '',
-    ...varargs
+    pattern = ''
 ) {
     const safe = safeSelf();
-    const extraArgs = safe.parseVarargs(varargs);
+    const extraArgs = safe.getExtraArgs(Array.from(arguments), 2);
     const logPrefix = safe.makeLogPrefix('prevent-addEventListener', type, pattern);
     const reType = safe.patternToRegex(type, undefined, true);
     const rePattern = safe.patternToRegex(pattern);
@@ -91,8 +90,8 @@ function preventAddEventListener(
         return parts.join('');
     };
     const shouldPrevent = (thisArg, type, handler) => {
-        const matchesType = safe.RegExp_test(reType, type);
-        const matchesHandler = safe.RegExp_test(rePattern, handler);
+        const matchesType = safe.RegExp_test.call(reType, type);
+        const matchesHandler = safe.RegExp_test.call(rePattern, handler);
         const matchesEither = matchesType || matchesHandler;
         const matchesBoth = matchesType && matchesHandler;
         if ( safe.logLevel > 1 && matchesEither ) {

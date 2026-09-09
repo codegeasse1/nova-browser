@@ -179,17 +179,6 @@ class GeckoEngineView @JvmOverloads constructor(
         }
     }
 
-    private fun forceReleaseSessionDisplay(session: GeckoSession) {
-        try {
-            val field = GeckoSession::class.java.getDeclaredField("mDisplay")
-            field.isAccessible = true
-            val display = field.get(session) as? org.mozilla.geckoview.GeckoDisplay ?: return
-            session.releaseDisplay(display)
-        } catch (e: Exception) {
-            android.util.Log.w("NovaGeckoView", "forced display release failed", e)
-        }
-    }
-
     private fun attachSelectionActionDelegate(session: GeckoSession) {
         val delegate = GeckoSelectionActionDelegate.maybeCreate(context, selectionActionDelegate)
         if (delegate != null) {

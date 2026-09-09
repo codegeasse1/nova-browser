@@ -1442,25 +1442,6 @@ class Settings(
         default = 0,
     )
 
-    // Nova: close all tabs the moment the app is really closed (removed from the
-    // app switcher, or Quit). Chosen in Settings -> Tabs -> Close tabs.
-    var closeTabsOnExit by booleanPreference(
-        appContext.getPreferenceKey(R.string.pref_key_close_tabs_on_exit),
-        default = false,
-    )
-
-    // Internal state for the close-on-exit detection (armed when the app goes to
-    // the background; consumed at the next launch by comparing the task id).
-    var closeTabsOnExitArmed by booleanPreference(
-        appContext.getPreferenceKey(R.string.pref_key_close_tabs_on_exit_armed),
-        default = false,
-    )
-
-    var closeTabsOnExitLastTask by intPreference(
-        appContext.getPreferenceKey(R.string.pref_key_close_tabs_on_exit_last_task),
-        default = 0,
-    )
-
     // Nova: developer mode — when on, enables GeckoView remote debugging so the
     // built-in DevTools (inspect element, console, network) can inspect the
     // current tab via about:debugging.

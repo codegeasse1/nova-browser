@@ -49,8 +49,6 @@ export function getSafeCookieValuesFn() {
         'decline', 'declined',
         'closed', 'next', 'mandatory',
         'disagree', 'agree',
-        'set', 'unset',
-        'given',
     ];
 }
 registerScriptlet(getSafeCookieValuesFn, {
@@ -195,8 +193,7 @@ registerScriptlet(setCookieFn, {
 export function setCookie(
     name = '',
     value = '',
-    path = '',
-    ...varargs
+    path = ''
 ) {
     if ( name === '' ) { return; }
     const safe = safeSelf();
@@ -217,7 +214,7 @@ export function setCookie(
         value,
         '',
         path,
-        safe.parseVarargs(varargs)
+        safe.getExtraArgs(Array.from(arguments), 3)
     );
 
     if ( done ) {
@@ -274,8 +271,7 @@ export function trustedSetCookie(
     name = '',
     value = '',
     offsetExpiresSec = '',
-    path = '',
-    ...varargs
+    path = ''
 ) {
     if ( name === '' ) { return; }
 
@@ -312,7 +308,7 @@ export function trustedSetCookie(
         value,
         expires,
         path,
-        safe.parseVarargs(varargs)
+        safeSelf().getExtraArgs(Array.from(arguments), 4)
     );
 
     if ( done ) {
@@ -361,13 +357,12 @@ registerScriptlet(trustedSetCookieReload, {
  * */
 
 export function removeCookie(
-    needle = '',
-    ...varargs
+    needle = ''
 ) {
     if ( typeof needle !== 'string' ) { return; }
     const safe = safeSelf();
     const reName = safe.patternToRegex(needle);
-    const extraArgs = safe.parseVarargs(varargs);
+    const extraArgs = safe.getExtraArgs(Array.from(arguments), 1);
     const throttle = (fn, ms = 500) => {
         if ( throttle.timer !== undefined ) { return; }
         throttle.timer = setTimeout(( ) => {

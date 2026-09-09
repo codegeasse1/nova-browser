@@ -2,8 +2,8 @@
 #
 # For more information about this list, see: https://pgl.yoyo.org/adservers/
 # ----
-# last updated:   Sun, 23 Aug 2026 09:50:58 GMT
-# entries:        3517
+# last updated:   Tue, 04 Aug 2026 09:30:35 GMT
+# entries:        3518
 # format:         hosts (hosts -- in hosts file format)
 # credits:        Peter Lowe - pgl@yoyo.org - https://pgl.yoyo.org/ - https://twitter.com/pgl
 # this URL:       https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=1&mimetype=plaintext
@@ -69,6 +69,7 @@
 127.0.0.1 ablink.news.emails-puregym.com
 127.0.0.1 ablinks.mail.hinge.co
 127.0.0.1 aboardlevel.com
+127.0.0.1 absolutering.com
 127.0.0.1 absorbingband.com
 127.0.0.1 abstractedauthority.com
 127.0.0.1 abtasty.com
@@ -112,6 +113,7 @@
 127.0.0.1 ad.bondage.com
 127.0.0.1 ad.centrum.cz
 127.0.0.1 ad.cgi.cz
+127.0.0.1 ad.choiceradio.com
 127.0.0.1 ad.cooks.com
 127.0.0.1 ad.digitallook.com
 127.0.0.1 ad.dnoticias.pt
@@ -329,6 +331,7 @@
 127.0.0.1 adrotate.de
 127.0.0.1 adrotic.girlonthenet.com
 127.0.0.1 adrta.com
+127.0.0.1 ads-backend.chaincliq.com
 127.0.0.1 ads-bilek.com
 127.0.0.1 ads-dev.pinterest.com
 127.0.0.1 ads-game-187f4.firebaseapp.com
@@ -596,6 +599,7 @@
 127.0.0.1 ads1.msn.com
 127.0.0.1 ads1.virtual-nights.com
 127.0.0.1 ads10.speedbit.com
+127.0.0.1 ads180.com
 127.0.0.1 ads2.contentabc.com
 127.0.0.1 ads2.femmefab.nl
 127.0.0.1 ads2.gamecity.net
@@ -771,7 +775,6 @@
 127.0.0.1 advert.dyna.ultraweb.hu
 127.0.0.1 adverticum.com
 127.0.0.1 adverticum.net
-127.0.0.1 advertipros.com
 127.0.0.1 advertise.com
 127.0.0.1 advertiseireland.com
 127.0.0.1 advertiserurl.com
@@ -852,9 +855,9 @@
 127.0.0.1 als-svc.nytimes.com
 127.0.0.1 amazingcounters.com
 127.0.0.1 amazon-adsystem.com
+127.0.0.1 amcnreil.pro
 127.0.0.1 americash.com
 127.0.0.1 amidsttruly.com
-127.0.0.1 ampscamp.net
 127.0.0.1 amung.us
 127.0.0.1 analytics-fe.digital-cloud-prem.medallia.eu
 127.0.0.1 analytics-production.hapyak.com
@@ -1030,6 +1033,7 @@
 127.0.0.1 basebanner.com
 127.0.0.1 basketballbelieve.com
 127.0.0.1 baskettexture.com
+127.0.0.1 bastingart.com
 127.0.0.1 bat.bing.com
 127.0.0.1 bbelements.com
 127.0.0.1 bbn.img.com.ua
@@ -1068,6 +1072,7 @@
 127.0.0.1 bigclicks.com
 127.0.0.1 bigfishapparel.com
 127.0.0.1 bigreal.org
+127.0.0.1 bigworldfashion.com
 127.0.0.1 billboard.cz
 127.0.0.1 billtable.com
 127.0.0.1 birthdaybelief.com
@@ -1177,7 +1182,6 @@
 127.0.0.1 casinopays.com
 127.0.0.1 casinorewards.com
 127.0.0.1 casinotraffic.com
-127.0.0.1 catfront.dianping.com
 127.0.0.1 cattlecommittee.com
 127.0.0.1 causecherry.com
 127.0.0.1 cautiouscredit.com
@@ -1282,7 +1286,6 @@
 127.0.0.1 clickonometrics.pl
 127.0.0.1 clickrtrckr.com
 127.0.0.1 clicks.checkatrade.com
-127.0.0.1 clicks.couchsurfing.com
 127.0.0.1 clicks.deliveroo.co.uk
 127.0.0.1 clicks.equantum.com
 127.0.0.1 clicks.eventbrite.com
@@ -1445,7 +1448,6 @@
 127.0.0.1 damageddistance.com
 127.0.0.1 damdoor.com
 127.0.0.1 dapper.net
-127.0.0.1 data.hailuo.ai
 127.0.0.1 datapickles.com
 127.0.0.1 datenow.link
 127.0.0.1 daybreaklights.com
@@ -1648,7 +1650,6 @@
 127.0.0.1 fastly-insights.com
 127.0.0.1 faultycanvas.com
 127.0.0.1 fave.co
-127.0.0.1 faxcoupons.com
 127.0.0.1 fc.webmasterpro.de
 127.0.0.1 feedbackresearch.com
 127.0.0.1 feedjit.com
@@ -1926,7 +1927,6 @@
 127.0.0.1 infinityads.com
 127.0.0.1 infoevent.startappservice.com
 127.0.0.1 infolinks.com
-127.0.0.1 ingest.in.signoz.cloud
 127.0.0.1 inmobi.com
 127.0.0.1 inner-active.com
 127.0.0.1 inner-active.mobi
@@ -1970,6 +1970,7 @@
 127.0.0.1 jamexport.com
 127.0.0.1 jcount.com
 127.0.0.1 jdoqocy.com
+127.0.0.1 jewelrysprings.com
 127.0.0.1 jinkads.de
 127.0.0.1 joetec.net
 127.0.0.1 joyoussurprise.com
@@ -1994,6 +1995,7 @@
 127.0.0.1 kameleoon.eu
 127.0.0.1 kanoodle.com
 127.0.0.1 kargo.com
+127.0.0.1 kernellife.com
 127.0.0.1 kickoffo.site
 127.0.0.1 kindads.com
 127.0.0.1 kindlereunion.com
@@ -2066,6 +2068,7 @@
 127.0.0.1 lightstep.medium.systems
 127.0.0.1 lijit.com
 127.0.0.1 limecodesign.com
+127.0.0.1 link-booster.de
 127.0.0.1 link.axios.com
 127.0.0.1 link.beelivery.com
 127.0.0.1 link.email.davidlloydclubs.co.uk
@@ -2432,6 +2435,7 @@
 127.0.0.1 optimallimit.com
 127.0.0.1 optimizely.com
 127.0.0.1 optimost.com
+127.0.0.1 optionsnomad.com
 127.0.0.1 optmd.com
 127.0.0.1 optmnstr.com
 127.0.0.1 optmstr.com
@@ -2454,6 +2458,7 @@
 127.0.0.1 owneriq.net
 127.0.0.1 oxado.com
 127.0.0.1 oxcash.com
+127.0.0.1 oxen.hillcountrytexas.com
 127.0.0.1 p-n.io
 127.0.0.1 p7cloud.net
 127.0.0.1 paa-reporting-advertising.amazon
@@ -2476,6 +2481,7 @@
 127.0.0.1 partnerad.l.google.com
 127.0.0.1 partnerads.ysm.yahoo.com
 127.0.0.1 partnercash.de
+127.0.0.1 partnerhut.com
 127.0.0.1 partnerlinks.io
 127.0.0.1 partners.priceline.com
 127.0.0.1 partplanes.com
@@ -2599,7 +2605,6 @@
 127.0.0.1 protraffic.com
 127.0.0.1 provenpixel.com
 127.0.0.1 prpops.com
-127.0.0.1 prsitecheck.com
 127.0.0.1 prufenzo.xyz
 127.0.0.1 pstmrk.it
 127.0.0.1 pub.chez.com
@@ -2608,7 +2613,6 @@
 127.0.0.1 pub.network
 127.0.0.1 pub.realmedia.fr
 127.0.0.1 pubdirecte.com
-127.0.0.1 pubfuture-ssp.com
 127.0.0.1 publicidad.elmundo.es
 127.0.0.1 publicidees.com
 127.0.0.1 publicsofa.com
@@ -2618,7 +2622,6 @@
 127.0.0.1 puffypaste.com
 127.0.0.1 puffypull.com
 127.0.0.1 puffypurpose.com
-127.0.0.1 pulse.genki.world
 127.0.0.1 pureclarity.net
 127.0.0.1 pushengage.com
 127.0.0.1 pushno.com
@@ -2695,6 +2698,7 @@
 127.0.0.1 recapture.io
 127.0.0.1 receptivereaction.com
 127.0.0.1 recoco.it
+127.0.0.1 reconditerake.com
 127.0.0.1 record.bonniergaming.com
 127.0.0.1 record.mrwin.com
 127.0.0.1 redirectingat.com
@@ -2751,6 +2755,7 @@
 127.0.0.1 rle.ru
 127.0.0.1 rmads.msn.com
 127.0.0.1 rmedia.boston.com
+127.0.0.1 roaddynamics.com
 127.0.0.1 roar.com
 127.0.0.1 robotrefinery.com
 127.0.0.1 robotreplay.com
@@ -2781,8 +2786,6 @@
 127.0.0.1 rubiconproject.com
 127.0.0.1 rum-http-intake.logs.datadoghq.com
 127.0.0.1 rum-http-intake.logs.datadoghq.eu
-127.0.0.1 rum-openway.guance.com
-127.0.0.1 rum.aliyuncs.com
 127.0.0.1 runads.com
 127.0.0.1 rundsp.com
 127.0.0.1 ruralrobin.com
@@ -2791,7 +2794,6 @@
 127.0.0.1 s20dh7e9dh.com
 127.0.0.1 s2d6.com
 127.0.0.1 sabio.us
-127.0.0.1 sadloaf.com
 127.0.0.1 safeoffers.pro
 127.0.0.1 sail-horizon.com
 127.0.0.1 samplesamba.com
@@ -3071,7 +3073,6 @@
 127.0.0.1 t.insigit.com
 127.0.0.1 t.irtyd.com
 127.0.0.1 t.leady.com
-127.0.0.1 t.marketing.goindigo.in
 127.0.0.1 t.mmtrkr.com
 127.0.0.1 t.news.browns-restaurants.co.uk
 127.0.0.1 t.notif-colissimo-laposte.info
@@ -3309,7 +3310,6 @@
 127.0.0.1 turboadv.com
 127.0.0.1 turn.com
 127.0.0.1 twelvedawn.com
-127.0.0.1 twisty.net
 127.0.0.1 twittad.com
 127.0.0.1 twyn.com
 127.0.0.1 tynt.com
@@ -3460,6 +3460,7 @@
 127.0.0.1 worldwide-cash.net
 127.0.0.1 worriednumber.com
 127.0.0.1 wowfunnow.com
+127.0.0.1 writerhubs.com
 127.0.0.1 wt-eu02.net
 127.0.0.1 wt.bankmillennium.pl
 127.0.0.1 www-banner.chat.ru

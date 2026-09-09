@@ -5,7 +5,6 @@
 package org.mozilla.fenix
 
 import android.app.ActivityManager
-import android.app.ActivityManager
 import android.app.assist.AssistContent
 import android.content.ComponentName
 import android.content.Context
@@ -46,12 +45,10 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -174,10 +171,6 @@ import org.mozilla.fenix.perf.StartupPathProvider
 import org.mozilla.fenix.perf.StartupTimeline
 import org.mozilla.fenix.perf.StartupTypeTelemetry
 import org.mozilla.fenix.session.PrivateNotificationService
-import org.mozilla.fenix.components.NovaCloseCleanup
-import org.mozilla.fenix.components.NovaDebugLog
-import org.mozilla.fenix.components.NovaKeepAlive
-import org.mozilla.fenix.components.NovaNotifications
 import org.mozilla.fenix.components.NovaCloseCleanup
 import org.mozilla.fenix.components.NovaDebugLog
 import org.mozilla.fenix.components.NovaKeepAlive
@@ -449,8 +442,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
 
         // Checks if Activity is currently in PiP mode if launched from external intents, then exits it
         checkAndExitPiP()
-        consumeNovaClearTabsOnExit()
-        NovaNotifications.ensureNotificationPermission(this)
         consumeNovaClearTabsOnExit()
         NovaNotifications.ensureNotificationPermission(this)
 
@@ -913,121 +904,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         NovaCloseCleanup.run(this, components)
     }
 
-    private var novaScheduledCheck: Job? = null
-
-    /**
-     * "Close tabs when the app is closed": every time the app goes to the
-     * background the current task id is remembered and a short timer is started.
-     * If the task is later removed from the app switcher the user really closed
-     * the app, so the cleanup runs right away. If the process was killed before
-     * the timer fired, the decision happens at the next launch (task id
-     * comparison), where the session snapshot is dropped before it is restored
-     * (the same point where the stock "Close tabs after X" option drops tabs).
-     * Not for the external-app browser activity (custom tabs), which is a
-     * separate task and must not close the user's tabs when it is dismissed.
-     */
-    private fun armNovaClearOnExitCheck() {
-        if (this is ExternalAppBrowserActivity) return
-        // Nova: using the browser in a mini/floating, split or PiP window is not
-        // "closing" it - don't arm the close-detection there (mini/freeform
-        // windows make the task look like it vanished, which used to wipe tabs).
-        if (isInMultiWindowMode || isInPictureInPictureMode) return
-        val settings = components.settings
-        if (!settings.closeTabsOnExit && !settings.shouldDeleteBrowsingDataOnQuit) return
-        settings.closeTabsOnExitLastTask = taskId
-        settings.closeTabsOnExitArmed = true
-        NovaDebugLog.log(this, "arm: armed=true task=$taskId")
-    }
-
-    @Suppress("DEPRECATION")
-    private fun scheduleNovaClearOnCloseCheck() {
-        // Called on every stop, AFTER the app has fully backgrounded. A short
-        // while later, if the app's task is no longer in the recents list, the
-        // user really closed it (removed it from the app switcher / pressed
-        // "Clear all"), so the cleanup runs right away. A plain background keeps
-        // the task, so nothing is cleared then. If the process is killed before
-        // this check runs, consumeNovaClearTabsOnExit handles it at the next
-        // launch by comparing the task id.
-        if (this is ExternalAppBrowserActivity) return
-        val settings = components.settings
-        if (!settings.closeTabsOnExit && !settings.shouldDeleteBrowsingDataOnQuit) return
-        if (!settings.closeTabsOnExitArmed) return
-        val appContext = applicationContext
-        val myTaskId = taskId
-        novaScheduledCheck?.cancel()
-        novaScheduledCheck = CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-            delay(5_000L)
-            try {
-                val am = appContext.getSystemService(ActivityManager::class.java)
-                    ?: return@launch
-                if (am.appTasks.any { it.taskInfo?.id == myTaskId }) {
-                    NovaDebugLog.log(appContext, "delayed check: task still present - kept")
-                    return@launch
-                }
-                val s = appContext.components.settings
-                if (!s.closeTabsOnExitArmed) return@launch
-                s.closeTabsOnExitArmed = false
-                NovaDebugLog.log(appContext, "task removed from background - closing tabs")
-                NovaCloseCleanup.run(appContext, appContext.components)
-            } catch (_: Exception) {
-            }
-        }
-    }
-
-    private fun consumeNovaClearTabsOnExit() {
-        // Runs at the start of every HomeActivity launch. Same task id as when the
-        // app last stopped -> the app was only backgrounded, keep the tabs. A
-        // different task id -> the app was really closed (removed from the app
-        // switcher / Quit), so the tabs must not come back: the session snapshot
-        // is deleted before it is restored, and the tabs are closed.
-        if (this is ExternalAppBrowserActivity) return
-        val settings = components.settings
-        if (!settings.closeTabsOnExit && !settings.shouldDeleteBrowsingDataOnQuit) return
-        if (!settings.closeTabsOnExitArmed) return
-        // Nova: launching straight into a mini/floating or split window means the
-        // user is actively using the browser, not "returning after it was closed".
-        // Drop the armed flag (or it would fire on the next real launch) and keep tabs.
-        if (isInMultiWindowMode || isInPictureInPictureMode) {
-            settings.closeTabsOnExitArmed = false
-            FenixApplication.novaPendingCleanStart = false
-            NovaDebugLog.log(this, "consume: launched into mini window - kept tabs")
-            return
-        }
-        val lastTaskId = settings.closeTabsOnExitLastTask
-        if (lastTaskId == 0 || taskId == lastTaskId) {
-            FenixApplication.novaPendingCleanStart = false
-            settings.closeTabsOnExitArmed = false
-            NovaDebugLog.log(this, "consume: same task ($taskId) - kept tabs")
-            return
-        }
-        FenixApplication.novaPendingCleanStart = true
-        if (!FenixApplication.initialSessionRestoreCompleted) {
-            // The restore runs on the main thread shortly after this onCreate, so
-            // wait for it before running the full cleanup (the snapshot deletion is
-            // handled by restoreBrowserState).
-            CoroutineScope(Dispatchers.Main + SupervisorJob()).launch {
-                var waited = 0L
-                while (!FenixApplication.initialSessionRestoreCompleted && waited < 15000) {
-                    delay(100)
-                    waited += 100
-                }
-                if (FenixApplication.initialSessionRestoreCompleted) {
-                    consumeNovaClearTabsOnExitInternal()
-                }
-            }
-            return
-        }
-        consumeNovaClearTabsOnExitInternal()
-    }
-
-    private fun consumeNovaClearTabsOnExitInternal() {
-        val settings = components.settings
-        settings.closeTabsOnExitArmed = false
-        FenixApplication.novaPendingCleanStart = false
-        NovaDebugLog.log(this, "consume: new task - closing tabs")
-        NovaCloseCleanup.run(this, components)
-    }
-
     final override fun onStart() {
         // DO NOT MOVE ANYTHING ABOVE THIS getProfilerTime CALL.
         val startProfilerTime = components.core.engine.profiler?.getProfilerTime()
@@ -1035,8 +911,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         components.termsOfUseManager.onStart()
 
         super.onStart()
-        novaScheduledCheck?.cancel()
-        NovaKeepAlive.onAppForeground(this)
         novaScheduledCheck?.cancel()
         NovaKeepAlive.onAppForeground(this)
 
@@ -1067,9 +941,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         val startTimeProfiler = components.core.engine.profiler?.getProfilerTime()
 
         super.onStop()
-        armNovaClearOnExitCheck()
-        scheduleNovaClearOnCloseCheck()
-        NovaKeepAlive.onAppBackground(this, components)
         armNovaClearOnExitCheck()
         scheduleNovaClearOnCloseCheck()
         NovaKeepAlive.onAppBackground(this, components)

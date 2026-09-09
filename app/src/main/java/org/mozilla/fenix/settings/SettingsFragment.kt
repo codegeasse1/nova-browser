@@ -493,27 +493,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFragment 
                 null
             }
 
-            resources.getString(R.string.pref_key_nova_adblock) -> {
-                // Nova: open the Nova Ad Block options page (block list / allow list).
-                // Falls back to the Add-ons screen if the extension is not ready yet.
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val url = try {
-                        components.addonManager
-                            .getAddonByID("nova-shield@nova.browser")?.installedState?.optionsPageUrl
-                    } catch (_: Exception) {
-                        null
-                    }
-                    if (url.isNullOrEmpty()) {
-                        findNavController().navigate(
-                            SettingsFragmentDirections.actionSettingsFragmentToAddonsFragment(),
-                        )
-                    } else {
-                        openInNewTab(url)
-                    }
-                }
-                null
-            }
-
             // Only displayed when secret settings are enabled
             resources.getString(R.string.pref_key_install_local_addon) -> {
                 addonFilePicker.launch()

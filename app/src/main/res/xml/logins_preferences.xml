@@ -35,12 +35,4 @@
         android:key="@string/pref_key_nova_export_passwords"
         android:title="@string/nova_passwords_export_title"
         android:summary="@string/nova_passwords_export_summary" />
-    <androidx.preference.Preference
-        android:key="@string/pref_key_nova_import_passwords"
-        android:title="@string/nova_passwords_import_title"
-        android:summary="@string/nova_passwords_import_summary" />
-    <androidx.preference.Preference
-        android:key="@string/pref_key_nova_export_passwords"
-        android:title="@string/nova_passwords_export_title"
-        android:summary="@string/nova_passwords_export_summary" />
 </PreferenceScreen>

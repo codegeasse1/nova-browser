@@ -477,11 +477,6 @@ class Core(
             // foreground, before the app can hit the Android 12+ restriction on
             // starting a foreground service from the background).
             NovaPlaybackKeeper.start(context.applicationContext)
-            // Nova: keep tabs playing when switching tabs, and keep an enabled
-            // site visible + its background service running (started from the
-            // foreground, before the app can hit the Android 12+ restriction on
-            // starting a foreground service from the background).
-            NovaPlaybackKeeper.start(context.applicationContext)
         }
     }
 

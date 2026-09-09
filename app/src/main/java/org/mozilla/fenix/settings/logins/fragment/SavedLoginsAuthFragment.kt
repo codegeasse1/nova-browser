@@ -6,7 +6,6 @@ package org.mozilla.fenix.settings.logins.fragment
 
 import android.os.Bundle
 import android.widget.Toast
-import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
@@ -25,9 +24,6 @@ import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.navigateWithBreadcrumb
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.showToolbar
-import mozilla.components.feature.password.importer.PasswordsImporterResult
-import org.mozilla.fenix.components.NovaPasswordExport
-import org.mozilla.fenix.settings.logins.ImportPasswordsDialogFragment
 import mozilla.components.feature.password.importer.PasswordsImporterResult
 import org.mozilla.fenix.components.NovaPasswordExport
 import org.mozilla.fenix.settings.logins.ImportPasswordsDialogFragment
@@ -95,35 +91,6 @@ class SavedLoginsAuthFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFr
 
         requirePreference<Preference>(R.string.pref_key_saved_logins).setOnPreferenceClickListener {
             navigateToSavedLoginsFragment()
-            true
-        }
-
-        parentFragmentManager.setFragmentResultListener(
-            ImportPasswordsDialogFragment.REQUEST_KEY,
-            viewLifecycleOwner,
-        ) { _, bundle ->
-            when (val result = ImportPasswordsDialogFragment.decodeResult(bundle)) {
-                is PasswordsImporterResult.Success -> Toast.makeText(
-                    requireContext(),
-                    getString(R.string.nova_passwords_import_success, result.importCount),
-                    Toast.LENGTH_LONG,
-                ).show()
-                is PasswordsImporterResult.Failure -> Toast.makeText(
-                    requireContext(),
-                    R.string.nova_passwords_import_failure,
-                    Toast.LENGTH_LONG,
-                ).show()
-                else -> {}
-            }
-        }
-
-        requirePreference<Preference>(R.string.pref_key_nova_import_passwords).setOnPreferenceClickListener {
-            ImportPasswordsDialogFragment().show(parentFragmentManager, ImportPasswordsDialogFragment.TAG)
-            true
-        }
-
-        requirePreference<Preference>(R.string.pref_key_nova_export_passwords).setOnPreferenceClickListener {
-            NovaPasswordExport.export(requireContext(), requireComponents.core.passwordsStorage, requireActivity())
             true
         }
 

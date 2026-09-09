@@ -31,7 +31,6 @@ class TabsSettingsFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFragm
     private lateinit var radioOneWeek: RadioButtonPreference
     private lateinit var radioOneMonth: RadioButtonPreference
     private lateinit var radioOnExit: RadioButtonPreference
-    private lateinit var radioOnExit: RadioButtonPreference
     private lateinit var inactiveTabsCategory: PreferenceCategory
     private lateinit var inactiveTabs: SwitchPreferenceCompat
     private lateinit var privacyReport: SwitchPreferenceCompat
@@ -70,7 +69,6 @@ class TabsSettingsFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFragm
         radioOneWeek = requirePreference(R.string.pref_key_close_tabs_after_one_week)
         radioOneDay = requirePreference(R.string.pref_key_close_tabs_after_one_day)
         radioOnExit = requirePreference(R.string.pref_key_close_tabs_on_exit)
-        radioOnExit = requirePreference(R.string.pref_key_close_tabs_on_exit)
 
         inactiveTabs = requirePreference<SwitchPreferenceCompat>(R.string.pref_key_inactive_tabs).also {
             it.isChecked = requireComponents.settings.inactiveTabsAreEnabled
@@ -99,7 +97,6 @@ class TabsSettingsFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFragm
         radioOneDay.onClickListener(::disableInactiveTabsSetting)
         radioOneWeek.onClickListener(::disableInactiveTabsSetting)
         radioOneMonth.onClickListener(::enableInactiveTabsSetting)
-        radioOnExit.onClickListener(::disableInactiveTabsSetting)
         radioOnExit.onClickListener(::disableInactiveTabsSetting)
 
         setupRadioGroups()

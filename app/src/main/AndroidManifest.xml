@@ -45,9 +45,6 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <!-- Needed for uploading media files on devices with Android 13 and later. -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
@@ -896,17 +893,6 @@
             <action android:name="org.mozilla.fenix.TRIGGER_MESSAGE_WORKER" />
           </intent-filter>
         </receiver>
-        <service
-            android:name="org.mozilla.fenix.components.NovaBackgroundService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Keeps a user-enabled website running while Nova Browser is backgrounded and the screen is locked." />
-        </service>
-        <service
-            android:name="org.mozilla.fenix.components.NovaUpdateActionService"
-            android:exported="false" />
         <service
             android:name="org.mozilla.fenix.components.NovaBackgroundService"
             android:exported="false"

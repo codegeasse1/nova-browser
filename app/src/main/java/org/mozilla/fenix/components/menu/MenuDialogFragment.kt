@@ -668,41 +668,7 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                             selectTab = true,
                                         )
                                     }
-                                }
-
-
-
-
-                                val novaCurrentHost = selectedTab?.content?.url
-                                    ?.let { org.mozilla.fenix.components.NovaBackgroundSites.hostOf(it) }
-                                    .orEmpty()
-                                var novaAllowBackgroundEnabled by remember(novaCurrentHost) {
-                                    mutableStateOf(
-                                        novaCurrentHost.isNotEmpty() &&
-                                            org.mozilla.fenix.components.NovaBackgroundSites.isEnabled(
-                                                requireContext(),
-                                                novaCurrentHost,
-                                            ),
-                                    )
-                                }
-                                val onNovaAllowBackgroundToggle = {
-                                    if (novaCurrentHost.isNotEmpty()) {
-                                        org.mozilla.fenix.components.NovaBackgroundSites.toggle(
-                                            requireContext(),
-                                            novaCurrentHost,
-                                        )
-                                        novaAllowBackgroundEnabled = !novaAllowBackgroundEnabled
-                                    }
-                                }
-
-                                val novaCurrentUrl = selectedTab?.content?.url.orEmpty()
-                                val onNovaViewSource = {
-                                    if (novaCurrentUrl.isNotEmpty()) {
-                                        requireComponents.useCases.tabsUseCases.addTab(
-                                            url = "view-source:$novaCurrentUrl",
-                                            selectTab = true,
-                                        )
-                                    }
+                                    Unit
                                 }
 
                                 // Nova: open the built-in Gecko DevTools page. This shows
@@ -713,6 +679,7 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                         url = "about:debugging#/runtime/this-firefox",
                                         selectTab = true,
                                     )
+                                    Unit
                                 }
 
                                 // Nova: open about:config — advanced Gecko preferences.
@@ -721,6 +688,7 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                         url = "about:config",
                                         selectTab = true,
                                     )
+                                    Unit
                                 }
 
                                 // Nova: open the browser console — opens the Nova debug
@@ -739,6 +707,7 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                         url = url,
                                         selectTab = true,
                                     )
+                                    Unit
                                 }
 
 
@@ -792,10 +761,6 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                     showBanner = shouldShowMenuBanner && !defaultBrowser,
                                     isDownloadHighlighted = isDownloadHighlighted,
                                     webExtensionMenuCount = webExtensionsCount,
-                                    novaAllowBackgroundVisible = novaCurrentHost.isNotEmpty(),
-                                    novaAllowBackgroundEnabled = novaAllowBackgroundEnabled,
-                                    onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,
-                                    onNovaViewSource = onNovaViewSource,
                                     novaAllowBackgroundVisible = novaCurrentHost.isNotEmpty(),
                                     novaAllowBackgroundEnabled = novaAllowBackgroundEnabled,
                                     onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,

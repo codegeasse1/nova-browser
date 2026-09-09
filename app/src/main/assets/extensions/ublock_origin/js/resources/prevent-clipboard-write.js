@@ -47,11 +47,11 @@ import { safeSelf } from './safe-self.js';
  * 
  * */
 
-function preventClipboardWrite(matches = '', ...varargs) {
+function preventClipboardWrite(matches = '') {
     const safe = safeSelf();
     const logPrefix = safe.makeLogPrefix('prevent-clipboard-write');
     const pattern = safe.initPattern(matches);
-    const extraArgs = safe.parseVarargs(varargs);
+    const extraArgs = safe.getExtraArgs(Array.from(arguments), 1);
     const excludePattern = extraArgs.excludeMatches &&
         safe.initPattern(extraArgs.excludeMatches);
     const domAlert = clipboardText => {
@@ -59,23 +59,11 @@ function preventClipboardWrite(matches = '', ...varargs) {
         const div = doc.createElement('div');
         const span = doc.createElement('span');
         span.style = 'flex-grow:1;padding:0.5em 0 0.5em 0.5em;';
-        const domAlert = extraArgs.domAlert.replace(/\\n/g, '\n');
+        const { domAlert } = extraArgs;
         const placeholder = /\$\{text\}/.exec(domAlert);
         if ( placeholder ) {
             const code = doc.createElement('code');
-            const styles = [
-                'background-color: #ddc',
-                'display: inline-block',
-                'font-family: monospace',
-                'max-height: 8em',
-                'overflow: auto',
-                'padding: 0.25em',
-                'word-break: break-all'
-            ];
-            if ( Boolean(extraArgs.selectable ?? true) === false ) {
-                styles.push('user-select: none');
-            }
-            code.style = styles.join(';');
+            code.style = 'background-color:#ddc;font-family:monospace;padding:0.25em;user-select:none;word-break:break-all';
             code.textContent = clipboardText;
             span.append(
                 domAlert.slice(0, placeholder.index),
@@ -86,7 +74,7 @@ function preventClipboardWrite(matches = '', ...varargs) {
             span.append(domAlert);
         }
         const button = doc.createElement('button');
-        button.style = 'font-size:32px;padding:0.5em';
+        button.style = 'padding:1em';
         button.textContent = '×';
         button.addEventListener('click', ( ) => {
             if ( currentAlert === null ) { return; }
@@ -94,7 +82,7 @@ function preventClipboardWrite(matches = '', ...varargs) {
             currentAlert = null;
         });
         div.append(span, button);
-        div.style = 'background-color:beige;color:black;border:1px solid black;display:flex;font-family:sans-serif;font-size:medium;position:fixed;top:0;white-space:pre-wrap;width:100%;z-index:2147483647';
+        div.style = 'background-color:beige;color:black;border:1px solid black;display:flex;font-size:medium;position:fixed;text-align:center;top:0;width:100%;z-index:2147483647';
         doc.documentElement.append(div);
         if ( currentAlert ) {
             currentAlert.remove();
@@ -125,7 +113,7 @@ function preventClipboardWrite(matches = '', ...varargs) {
             const { callArgs } = context;
             if ( callArgs[0] === 'copy' || callArgs[0] === 'cut' ) {
                 const text = document.getSelection()?.toString();
-                if ( prevent(text) ) { return true; }
+                if ( text && prevent(text) ) { return false; }
             }
             return context.reflect();
         }, { skipToString: true });

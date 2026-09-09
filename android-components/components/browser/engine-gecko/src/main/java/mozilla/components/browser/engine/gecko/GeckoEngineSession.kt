@@ -627,21 +627,6 @@ class GeckoEngineSession(
     }
 
     /**
-     * Nova: re-activate this session so the page is reported as visible while the
-     * app is in the background. GeckoView marks a session inactive (page hidden)
-     * when its surface is destroyed, e.g. when the app is backgrounded, which
-     * makes sites like YouTube pause their playback. Re-activating it keeps the
-     * page running - Brave-style forced background playback.
-     */
-    // Nova: only setActive. Calling setFocused(true) while the screen is
-    // locked keeps the session claiming input focus even though the real IME
-    // connection is dead, which desyncs the keyboard on return (backspace
-    // needs several presses to delete one character).
-    fun keepVisibleInBackground() {
-        geckoSession.setActive(true)
-    }
-
-    /**
      * See [EngineSession.updateSessionPriority].
      */
     override fun updateSessionPriority(priority: SessionPriority) {

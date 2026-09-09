@@ -163,8 +163,7 @@ function trustedPruneInboundObject(
     entryPoint = '',
     argPos = '',
     rawPrunePaths = '',
-    rawNeedlePaths = '',
-    ...varargs
+    rawNeedlePaths = ''
 ) {
     if ( entryPoint === '' ) { return; }
     let context = globalThis;
@@ -181,7 +180,7 @@ function trustedPruneInboundObject(
     if ( isNaN(argIndex) ) { return; }
     if ( argIndex < 1 ) { return; }
     const safe = safeSelf();
-    const extraArgs = safe.parseVarargs(varargs);
+    const extraArgs = safe.getExtraArgs(Array.from(arguments), 4);
     const needlePaths = [];
     if ( rawPrunePaths !== '' ) {
         needlePaths.push(...safe.String_split.call(rawPrunePaths, / +/));
@@ -242,12 +241,11 @@ registerScriptlet(trustedPruneInboundObject, {
 function trustedPruneOutboundObject(
     propChain = '',
     rawPrunePaths = '',
-    rawNeedlePaths = '',
-    ...varargs
+    rawNeedlePaths = ''
 ) {
     if ( propChain === '' ) { return; }
     const safe = safeSelf();
-    const extraArgs = safe.parseVarargs(varargs);
+    const extraArgs = safe.getExtraArgs(Array.from(arguments), 3);
     proxyApplyFn(propChain, function(context) {
         const objBefore = context.reflect();
         if ( objBefore instanceof Object === false ) { return objBefore; }

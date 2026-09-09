@@ -43,8 +43,6 @@ internal val GENERAL_SEARCH_ENGINE_IDS = setOf(
     GOOGLE_ID,
     "brave",
     "startpage",
-    "brave",
-    "startpage",
     "ddg",
     "bing",
     "baidu",

@@ -191,9 +191,9 @@ registerScriptlet(removeCacheStorageItem, {
  * 
  **/
 
-export function setLocalStorageItem(key = '', value = '', ...varargs) {
+export function setLocalStorageItem(key = '', value = '') {
     const safe = safeSelf();
-    const options = safe.parseVarargs(varargs)
+    const options = safe.getExtraArgs(Array.from(arguments), 2)
     setLocalStorageItemFn('local', false, key, value, options);
 }
 registerScriptlet(setLocalStorageItem, {
@@ -205,9 +205,9 @@ registerScriptlet(setLocalStorageItem, {
     ],
 });
 
-export function setSessionStorageItem(key = '', value = '', ...varargs) {
+export function setSessionStorageItem(key = '', value = '') {
     const safe = safeSelf();
-    const options = safe.parseVarargs(varargs)
+    const options = safe.getExtraArgs(Array.from(arguments), 2)
     setLocalStorageItemFn('session', false, key, value, options);
 }
 registerScriptlet(setSessionStorageItem, {
@@ -230,9 +230,9 @@ registerScriptlet(setSessionStorageItem, {
  * 
  **/
 
-export function trustedSetLocalStorageItem(key = '', value = '', ...varargs) {
+export function trustedSetLocalStorageItem(key = '', value = '') {
     const safe = safeSelf();
-    const options = safe.parseVarargs(varargs)
+    const options = safe.getExtraArgs(Array.from(arguments), 2)
     setLocalStorageItemFn('local', true, key, value, options);
 }
 registerScriptlet(trustedSetLocalStorageItem, {
@@ -245,9 +245,9 @@ registerScriptlet(trustedSetLocalStorageItem, {
     ],
 });
 
-export function trustedSetSessionStorageItem(key = '', value = '', ...varargs) {
+export function trustedSetSessionStorageItem(key = '', value = '') {
     const safe = safeSelf();
-    const options = safe.parseVarargs(varargs)
+    const options = safe.getExtraArgs(Array.from(arguments), 2)
     setLocalStorageItemFn('session', true, key, value, options);
 }
 registerScriptlet(trustedSetSessionStorageItem, {

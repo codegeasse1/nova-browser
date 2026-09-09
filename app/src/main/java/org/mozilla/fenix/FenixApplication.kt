@@ -174,28 +174,6 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
         private const val NOVA_UBLOCK_ADDON_ID = "uBlock0@raymondhill.net"
     }
 
-    companion object {
-        /**
-         * Becomes true once the initial session restore has finished, so an in-process
-         * relaunch knows the "close tabs on exit" armed flag can be consumed safely.
-         */
-        var initialSessionRestoreCompleted = false
-            private set
-
-        /**
-         * Set by HomeActivity when the "close tabs on exit" armed flag is consumed at
-         * launch and the session restore has not run yet: the saved session snapshot
-         * is then deleted right before the restore (the same point where the stock
-         * "Close tabs after X" option drops stale tabs).
-         */
-        var novaPendingCleanStart = false
-
-        // Nova: ids of the bundled ad-blocking add-ons (installed as built-in
-        // WebExtensions, see installNovaBundledExtensions).
-        private const val NOVA_SHIELD_ADDON_ID = "nova-shield@nova.browser"
-        private const val NOVA_UBLOCK_ADDON_ID = "uBlock0@raymondhill.net"
-    }
-
     init {
         // [TIMER] Record startup timestamp as early as reasonable with some degree of consistency.
         //
@@ -474,24 +452,7 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
             org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "restore: dropping saved tabs (pending clean start)")
             sessionStorage.clear()
         }
-        // Nova: if "close tabs when the app is closed" was armed and HomeActivity saw
-        // a fresh task at this launch, delete the saved session snapshot BEFORE it is
-        // restored so the tabs cannot come back. This is the same point where the
-        // stock "Close tabs after X" option drops stale tabs. (If the restore already
-        // ran before HomeActivity.onCreate on some Android versions, the flag stays
-        // set and the HomeActivity cleanup handles it instead.)
-        if (novaPendingCleanStart) {
-            novaPendingCleanStart = false
-            org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "restore: dropping saved tabs (pending clean start)")
-            sessionStorage.clear()
-        }
         components.useCases.tabsUseCases.restore(sessionStorage, components.settings.getTabTimeout())
-
-        // Nova: HomeActivity decides whether this relaunch should start fresh by
-        // comparing the current task id against the one saved when the app last
-        // stopped (see consumeNovaClearTabsOnExit in HomeActivity.kt). We only mark
-        // that the initial restore has finished here.
-        initialSessionRestoreCompleted = true
 
         // Nova: HomeActivity decides whether this relaunch should start fresh by
         // comparing the current task id against the one saved when the app last
@@ -946,8 +907,6 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
                 },
                 onUpdatePermissionRequest = components.addonUpdater::onUpdatePermissionRequest,
             )
-
-            installNovaBundledExtensions()
 
             installNovaBundledExtensions()
         } catch (e: UnsupportedOperationException) {

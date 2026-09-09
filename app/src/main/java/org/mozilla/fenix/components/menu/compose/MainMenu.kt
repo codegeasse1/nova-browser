@@ -372,43 +372,8 @@ fun MainMenu(
             }
         }
 
-        if (accessPoint == MenuAccessPoint.Browser && novaAllowBackgroundVisible) {
-            MenuGroup {
-                MenuItem(
-                    label = stringResource(id = R.string.browser_menu_allow_background_playback),
-                    description = stringResource(
-                        id = if (novaAllowBackgroundEnabled) {
-                            R.string.browser_menu_allow_background_playback_on
-                        } else {
-                            R.string.browser_menu_allow_background_playback_off
-                        },
-                    ),
-                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_autoplay_24),
-                    onClick = onNovaAllowBackgroundToggle,
-                    afterContent = {
-                        androidx.compose.material3.Switch(
-                            checked = novaAllowBackgroundEnabled,
-                            onCheckedChange = { onNovaAllowBackgroundToggle() },
-                        )
-                    },
-                )
-            }
-        }
-
-        if (accessPoint == MenuAccessPoint.Browser) {
-            MenuGroup {
-                MenuItem(
-                    label = stringResource(id = R.string.browser_menu_view_page_source),
-                    description = stringResource(id = R.string.browser_menu_view_page_source_hint),
-                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
-                    onClick = onNovaViewSource,
-                )
-            }
-        }
-
         LibraryMenuGroup(
             isDownloadHighlighted = isDownloadHighlighted,
-
 
             onBookmarksMenuClick = onBookmarksMenuClick,
             onHistoryMenuClick = onHistoryMenuClick,

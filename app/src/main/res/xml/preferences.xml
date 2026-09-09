@@ -188,12 +188,6 @@
             android:summary="@string/preferences_nova_adblock_summary" />
 
         <androidx.preference.Preference
-            android:key="@string/pref_key_nova_adblock"
-            app:iconSpaceReserved="false"
-            android:title="@string/preferences_nova_adblock"
-            android:summary="@string/preferences_nova_adblock_summary" />
-
-        <androidx.preference.Preference
             android:key="@string/pref_key_install_local_addon"
             app:iconSpaceReserved="false"
             android:title="@string/preferences_install_local_extension" />

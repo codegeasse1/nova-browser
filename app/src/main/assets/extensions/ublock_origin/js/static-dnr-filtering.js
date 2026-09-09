@@ -107,25 +107,28 @@ function addExtendedToDNR(context, parser) {
             context.scriptletFilters = new Map();
         }
         const exception = parser.isException();
-        const args = parser.getScriptletArgs() || [];
+        const args = parser.getScriptletArgs();
         const argsToken = JSON.stringify(args);
         for ( const { hn, not, bad } of parser.getExtFilterDomainIterator() ) {
             if ( bad ) { continue; }
-            if ( exception && not ) { continue; }
-            const details = context.scriptletFilters.get(argsToken) ?? {};
-            if ( details.args === undefined ) {
-                context.scriptletFilters.set(argsToken, details);
-                details.args = args;
+            if ( exception ) { continue; }
+            let details = context.scriptletFilters.get(argsToken);
+            if ( details === undefined ) {
+                context.scriptletFilters.set(argsToken, details = { args });
                 if ( context.trustedSource ) {
                     details.trustedSource = true;
                 }
             }
-            if ( exception || not ) {
-                details.excludeMatches ??= [];
+            if ( not ) {
+                if ( details.excludeMatches === undefined ) {
+                    details.excludeMatches = [];
+                }
                 details.excludeMatches.push(hn);
                 continue;
             }
-            details.matches ??= [];
+            if ( details.matches === undefined ) {
+                details.matches = [];
+            }
             if ( details.matches.includes('*') ) { continue; }
             if ( hn === '*' ) {
                 details.matches = [ '*' ];

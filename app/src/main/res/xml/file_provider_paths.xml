@@ -10,7 +10,4 @@
     <cache-path
         name="nova_exports"
         path="nova_exports/" />
-    <cache-path
-        name="nova_exports"
-        path="nova_exports/" />
 </paths>

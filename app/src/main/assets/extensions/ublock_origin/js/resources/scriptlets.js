@@ -83,14 +83,13 @@ builtinScriptlets.push({
 function replaceNodeTextFn(
     nodeName = '',
     pattern = '',
-    replacement = '',
-    ...varargs
+    replacement = ''
 ) {
     const safe = safeSelf();
     const logPrefix = safe.makeLogPrefix('replace-node-text.fn', ...Array.from(arguments));
     const reNodeName = safe.patternToRegex(nodeName, 'i', true);
     const rePattern = safe.patternToRegex(pattern, 'gms');
-    const extraArgs = safe.parseVarargs(varargs);
+    const extraArgs = safe.getExtraArgs(Array.from(arguments), 3);
     const reIncludes = extraArgs.includes || extraArgs.condition
         ? safe.patternToRegex(extraArgs.includes || extraArgs.condition, 'ms')
         : null;
@@ -123,14 +122,14 @@ function replaceNodeTextFn(
         const before = node.textContent;
         if ( reIncludes ) {
             reIncludes.lastIndex = 0;
-            if ( safe.RegExp_test(reIncludes, before) === false ) { return true; }
+            if ( safe.RegExp_test.call(reIncludes, before) === false ) { return true; }
         }
         if ( reExcludes ) {
             reExcludes.lastIndex = 0;
-            if ( safe.RegExp_test(reExcludes, before) ) { return true; }
+            if ( safe.RegExp_test.call(reExcludes, before) ) { return true; }
         }
         rePattern.lastIndex = 0;
-        if ( safe.RegExp_test(rePattern, before) === false ) { return true; }
+        if ( safe.RegExp_test.call(rePattern, before) === false ) { return true; }
         rePattern.lastIndex = 0;
         const after = pattern !== ''
             ? before.replace(rePattern, replacement)
@@ -199,8 +198,7 @@ function replaceFetchResponseFn(
     trusted = false,
     pattern = '',
     replacement = '',
-    propsToMatch = '',
-    ...varargs
+    propsToMatch = ''
 ) {
     if ( trusted !== true ) { return; }
     const safe = safeSelf();
@@ -208,7 +206,7 @@ function replaceFetchResponseFn(
     if ( pattern === '*' ) { pattern = '.*'; }
     const rePattern = safe.patternToRegex(pattern);
     const propNeedles = parsePropertiesToMatchFn(propsToMatch, 'url');
-    const extraArgs = safe.parseVarargs(varargs);
+    const extraArgs = safe.getExtraArgs(Array.from(arguments), 4);
     const reIncludes = extraArgs.includes ? safe.patternToRegex(extraArgs.includes) : null;
     self.fetch = new Proxy(self.fetch, {
         apply: function(target, thisArg, args) {
@@ -990,15 +988,14 @@ builtinScriptlets.push({
 function xmlPrune(
     selector = '',
     selectorCheck = '',
-    urlPattern = '',
-    ...varargs
+    urlPattern = ''
 ) {
     if ( typeof selector !== 'string' ) { return; }
     if ( selector === '' ) { return; }
     const safe = safeSelf();
     const logPrefix = safe.makeLogPrefix('xml-prune', selector, selectorCheck, urlPattern);
     const reUrl = safe.patternToRegex(urlPattern);
-    const extraArgs = safe.parseVarargs(varargs);
+    const extraArgs = safe.getExtraArgs(Array.from(arguments), 3);
     const queryAll = (xmlDoc, selector) => {
         const isXpath = /^xpath\(.+\)$/.test(selector);
         if ( isXpath === false ) {
@@ -1586,8 +1583,7 @@ builtinScriptlets.push({
 function trustedReplaceXhrResponse(
     pattern = '',
     replacement = '',
-    propsToMatch = '',
-    ...varargs
+    propsToMatch = ''
 ) {
     const safe = safeSelf();
     const logPrefix = safe.makeLogPrefix('trusted-replace-xhr-response', pattern, replacement, propsToMatch);
@@ -1595,7 +1591,7 @@ function trustedReplaceXhrResponse(
     if ( pattern === '*' ) { pattern = '.*'; }
     const rePattern = safe.patternToRegex(pattern);
     const propNeedles = parsePropertiesToMatchFn(propsToMatch, 'url');
-    const extraArgs = safe.parseVarargs(varargs);
+    const extraArgs = safe.getExtraArgs(Array.from(arguments), 3);
     const reIncludes = extraArgs.includes ? safe.patternToRegex(extraArgs.includes) : null;
     self.XMLHttpRequest = class extends self.XMLHttpRequest {
         open(method, url, ...args) {
@@ -1826,16 +1822,16 @@ function trustedReplaceOutboundText(
     propChain = '',
     rawPattern = '',
     rawReplacement = '',
-    ...varargs
+    ...args
 ) {
     if ( propChain === '' ) { return; }
     const safe = safeSelf();
-    const logPrefix = safe.makeLogPrefix('trusted-replace-outbound-text', propChain, rawPattern, rawReplacement, ...varargs);
+    const logPrefix = safe.makeLogPrefix('trusted-replace-outbound-text', propChain, rawPattern, rawReplacement, ...args);
     const rePattern = safe.patternToRegex(rawPattern);
     const replacement = rawReplacement.startsWith('json:')
         ? safe.JSON_parse(rawReplacement.slice(5))
         : rawReplacement;
-    const extraArgs = safe.parseVarargs(varargs);
+    const extraArgs = safe.getExtraArgs(args);
     const reCondition = safe.patternToRegex(extraArgs.condition || '');
     proxyApplyFn(propChain, function(context) {
         const encodedTextBefore = context.reflect();
@@ -1935,7 +1931,7 @@ function trustedSuppressNativeMethod(
                 }
             }
             if ( signatureArg.type === 'pattern' ) {
-                if ( safe.RegExp_test(signatureArg.re, targetArg) === false ) {
+                if ( safe.RegExp_test.call(signatureArg.re, targetArg) === false ) {
                     return context.reflect();
                 }
             }
@@ -2077,13 +2073,12 @@ builtinScriptlets.push({
 function trustedOverrideElementMethod(
     methodPath = '',
     selector = '',
-    disposition = '',
-    ...varargs
+    disposition = ''
 ) {
     if ( methodPath === '' ) { return; }
     const safe = safeSelf();
     const logPrefix = safe.makeLogPrefix('trusted-override-element-method', methodPath, selector, disposition);
-    const extraArgs = safe.parseVarargs(varargs);
+    const extraArgs = safe.getExtraArgs(Array.from(arguments), 3);
     proxyApplyFn(methodPath, function(context) {
         let override = selector === '';
         if ( override === false ) {

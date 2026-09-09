@@ -668,8 +668,4 @@
     <string name="pref_key_nova_adblock" translatable="false">pref_key_nova_adblock</string>
     <string name="pref_key_nova_developer_mode" translatable="false">pref_key_nova_developer_mode</string>
     <string name="pref_key_nova_remote_debugging" translatable="false">pref_key_nova_remote_debugging</string>
-    <string name="pref_key_close_tabs_on_exit" translatable="false">pref_key_close_tabs_on_exit</string>
-    <string name="pref_key_close_tabs_on_exit_armed" translatable="false">pref_key_close_tabs_on_exit_armed</string>
-    <string name="pref_key_close_tabs_on_exit_last_task" translatable="false">pref_key_close_tabs_on_exit_last_task</string>
-    <string name="pref_key_nova_adblock" translatable="false">pref_key_nova_adblock</string>
 </resources>
