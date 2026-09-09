@@ -671,45 +671,6 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                     Unit
                                 }
 
-                                // Nova: open the built-in Gecko DevTools page. This shows
-                                // all open tabs and lets you inspect each one — DOM inspector,
-                                // console, network monitor, style editor.
-                                val onNovaDevTools = {
-                                    requireComponents.useCases.tabsUseCases.addTab(
-                                        url = "about:debugging#/runtime/this-firefox",
-                                        selectTab = true,
-                                    )
-                                    Unit
-                                }
-
-                                // Nova: open about:config — advanced Gecko preferences.
-                                val onNovaAboutConfig = {
-                                    requireComponents.useCases.tabsUseCases.addTab(
-                                        url = "about:config",
-                                        selectTab = true,
-                                    )
-                                    Unit
-                                }
-
-                                // Nova: open the browser console — opens the Nova debug
-                                // log (nova-debug.log) as a readable text tab.
-                                val onNovaBrowserConsole = {
-                                    val logFile = requireContext().getExternalFilesDir(null)
-                                        ?.resolve("nova-debug.log")
-                                    val url = if (logFile?.exists() == true) {
-                                        "file://" + logFile.absolutePath
-                                    } else {
-                                        "data:text/plain,No debug log yet. Nova writes here " +
-                                        "when something goes wrong (crashes, cleanup, " +
-                                        "background playback)."
-                                    }
-                                    requireComponents.useCases.tabsUseCases.addTab(
-                                        url = url,
-                                        selectTab = true,
-                                    )
-                                    Unit
-                                }
-
 
 
 
@@ -765,9 +726,6 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                     novaAllowBackgroundEnabled = novaAllowBackgroundEnabled,
                                     onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,
                                     onNovaViewSource = onNovaViewSource,
-                                    onNovaDevTools = onNovaDevTools,
-                                    onNovaAboutConfig = onNovaAboutConfig,
-                                    onNovaBrowserConsole = onNovaBrowserConsole,
                                     isAllWebExtensionsDisabled = isAllWebExtensionsDisabled,
                                     showIPProtection = components.ipProtection.store.state.isEligible,
                                     ipProtectionMenuState = ipProtectionMenuState,

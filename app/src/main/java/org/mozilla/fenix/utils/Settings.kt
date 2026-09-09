@@ -1442,19 +1442,6 @@ class Settings(
         default = 0,
     )
 
-    // Nova: developer mode — when on, enables GeckoView remote debugging so the
-    // built-in DevTools (inspect element, console, network) can inspect the
-    // current tab via about:debugging.
-    var novaDeveloperMode by booleanPreference(
-        appContext.getPreferenceKey(R.string.pref_key_nova_developer_mode),
-        default = false,
-    )
-
-    // Nova: remote debugging toggle — flips GeckoRuntime remote debugging on/off.
-    var novaRemoteDebugging by booleanPreference(
-        appContext.getPreferenceKey(R.string.pref_key_nova_remote_debugging),
-        default = false,
-    )
 
     var deleteOpenTabs by booleanPreference(
         appContext.getPreferenceKey(R.string.pref_key_delete_open_tabs_now),

@@ -148,9 +148,6 @@ fun MainMenu(
     novaAllowBackgroundEnabled: Boolean = false,
     onNovaAllowBackgroundToggle: () -> Unit = {},
     onNovaViewSource: () -> Unit = {},
-    onNovaDevTools: () -> Unit = {},
-    onNovaAboutConfig: () -> Unit = {},
-    onNovaBrowserConsole: () -> Unit = {},
     canGoBack: Boolean,
     canGoForward: Boolean,
     scrollState: ScrollState,
@@ -350,24 +347,6 @@ fun MainMenu(
                     description = stringResource(id = R.string.browser_menu_view_page_source_hint),
                     beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
                     onClick = onNovaViewSource,
-                )
-                MenuItem(
-                    label = stringResource(id = R.string.browser_menu_dev_tools),
-                    description = stringResource(id = R.string.browser_menu_dev_tools_hint),
-                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
-                    onClick = onNovaDevTools,
-                )
-                MenuItem(
-                    label = stringResource(id = R.string.browser_menu_about_config),
-                    description = stringResource(id = R.string.browser_menu_about_config_hint),
-                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
-                    onClick = onNovaAboutConfig,
-                )
-                MenuItem(
-                    label = stringResource(id = R.string.browser_menu_java_console),
-                    description = stringResource(id = R.string.browser_menu_java_console_hint),
-                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
-                    onClick = onNovaBrowserConsole,
                 )
             }
         }

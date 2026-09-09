@@ -171,7 +171,7 @@ class Core(
     val engine: Engine by lazyMonitored {
         val defaultSettings = DefaultSettings(
             requestInterceptor = requestInterceptor,
-            remoteDebuggingEnabled = context.components.settings.novaDeveloperMode || context.components.settings.isRemoteDebuggingEnabled,
+            remoteDebuggingEnabled = context.components.settings.isRemoteDebuggingEnabled,
             testingModeEnabled = false,
             trackingProtectionPolicy = trackingProtectionPolicyFactory.createTrackingProtectionPolicy(),
             historyTrackingDelegate = HistoryDelegate(lazyHistoryStorage),
