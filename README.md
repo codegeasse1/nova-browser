@@ -7,12 +7,24 @@ This repository contains the complete, self-contained source: Firefox for Androi
 - App name, icon, colors and package (`com.nova.browser`)
 - **uBlock Origin** ad blocker bundled out of the box
 - **Nova Ad Block** (built-in filter list)
+- **Ad-free YouTube** — video ads on YouTube are blocked out of the box
+- **Background playback support** — keep audio/video playing when you switch apps or lock the screen
 - **Nova options** (Settings → Nova Browser):
   - **Clear tabs on close** — close all tabs when Nova Browser is removed from the app switcher; this also runs the built-in "Delete browsing data on quit" cleanup, so you get the same wipe as "Quit Nova Browser" without tapping Quit
 
+## Screenshots
+
+![Nova Browser home](screenshots/home.jpg)
+
+![Nova Browser menu](screenshots/menu.jpg)
+
+![Nova Browser settings](screenshots/settings.jpg)
+
+![Nova Browser search](screenshots/search.jpg)
+
 ## Download
 
-[Download Nova Browser 1.4.4 (APK)](https://github.com/codegeasse1/nova-browser/releases/download/v3.0/Nova.Browser.1.4.4.apk)
+[Download the latest Nova Browser APK](https://github.com/codegeasse1/nova-browser/releases/latest)
 
 This is a new app (package `com.nova.browser`). If you had an older Nova build installed, uninstall it first, then install this APK.
 
@@ -24,9 +36,3 @@ This is a new app (package `com.nova.browser`). If you had an older Nova build i
 ```
 
 The signed APK (arm64-v8a) is produced from `app-arm64-v8a-forkRelease-unsigned.apk` using the release keystore configured via repo secrets.
-
-## Rebuild via GitHub Actions
-
-Run **Actions → "Build Nova Browser APK" → Run workflow** (enter the version name), or push to `main`. The workflow builds, signs and uploads the APK to the [v3.0 release](https://github.com/codegeasse1/nova-browser/releases/tag/v3.0).
-
-The first build takes a long time (SDK/NDK/Gradle download + full Fenix compile).
