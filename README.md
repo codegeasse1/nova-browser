@@ -8,8 +8,6 @@ This repository contains the complete, self-contained source: Firefox for Androi
 - **uBlock Origin** ad blocker bundled out of the box
 - **Nova Ad Block** (built-in filter list)
 - **Nova options** (Settings → Nova Browser):
-  - **Pause history** — stop saving browsing history while it's on
-  - **Study mode** — keep a study list of visited sites instead of normal history; the History screen shows that study list (works even while Pause history is on, and deletions from the History screen also clean the study list)
   - **Clear tabs on close** — close all tabs when Nova Browser is removed from the app switcher; this also runs the built-in "Delete browsing data on quit" cleanup, so you get the same wipe as "Quit Nova Browser" without tapping Quit
 
 ## Download
