@@ -9,6 +9,10 @@ on:
         default: '1.4.4'
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'screenshots/**'
+      - 'docs/**'
 
 permissions:
   contents: write
