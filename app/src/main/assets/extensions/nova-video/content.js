@@ -11,8 +11,24 @@
  */
 
 (function () {
-  if (window.__novaVideoInjected) return;
-  window.__novaVideoInjected = true;
+  const HEARTBEAT_STALE_MS = 5000;
+  const prevInstance = window.__novaVideo;
+  if (prevInstance && prevInstance.beat && Date.now() - prevInstance.beat < HEARTBEAT_STALE_MS) {
+    return;
+  }
+  try {
+    const stale = document.querySelectorAll("#nova-video-host");
+    for (const el of stale) {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }
+  } catch (e) {
+    /* ignore */
+  }
+  const instance = { beat: Date.now() };
+  window.__novaVideo = instance;
+  function heartbeat() {
+    instance.beat = Date.now();
+  }
 
   const IS_TOP = (() => {
     try {
@@ -112,6 +128,7 @@
 
   function teardown() {
     contextDead = true;
+    instance.beat = 0;
     clearInterval(reportTimer);
     clearInterval(pollTimer);
     clearTimeout(idleTimer);
@@ -126,6 +143,7 @@
   const CSS = `
     :host { all: initial; }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     .nv-btn {
       position: fixed; width: 38px; height: 38px; border-radius: 12px;
       background: rgba(30,32,40,.92);
@@ -140,7 +158,7 @@
     .nv-btn svg { width: 20px; height: 20px; fill: #7f9dff; pointer-events: none; }
     .nv-panel {
       position: fixed; width: 300px; max-width: calc(100vw - 20px);
-      max-height: min(45vh, 380px);
+      max-height: min(40vh, 340px);
       background: #1b1c21; color: #e9e9ef;
       border: 1px solid #34363f; border-radius: 13px; overflow: hidden;
       box-shadow: 0 12px 34px rgba(0,0,0,.6);
@@ -205,6 +223,11 @@
       font: 12px/1.4 -apple-system, system-ui, sans-serif;
       box-shadow: 0 8px 24px rgba(0,0,0,.5);
     }
+    @keyframes nova-keepalive {
+      0%, 91% { visibility: visible; }
+      100% { visibility: hidden; }
+    }
+    .nv-btn, .nv-panel, .nv-toast { animation: nova-keepalive 2.6s linear forwards; }
   `;
 
   function applyStyles(root) {
@@ -216,6 +239,23 @@
       const style = document.createElement("style");
       style.textContent = CSS;
       root.appendChild(style);
+    }
+  }
+
+  /*
+   * The chrome is kept visible only while this script is alive. If the add-on
+   * is switched off (or its context dies) the script stops calling keepAlive()
+   * and the CSS keep-alive animation hides anything it already injected into
+   * the page - injected DOM is NOT removed when a content script is unloaded,
+   * so this is the only way to guarantee the icon disappears without a reload.
+   */
+  function keepAlive() {
+    const els = [btnEl, panelEl, shadow && shadow.querySelector(".nv-toast")];
+    for (const el of els) {
+      if (!el) continue;
+      el.style.animation = "none";
+      void el.offsetWidth;
+      el.style.animation = "";
     }
   }
 
@@ -267,6 +307,7 @@
     document.addEventListener("fullscreenchange", onFullscreenChange, true);
     window.addEventListener("resize", positionPanel);
     positionButton();
+    keepAlive();
   }
 
   function onDocumentPointerDown(e) {
@@ -396,6 +437,7 @@
     if (!panelEl) return;
     panelOpen = true;
     panelEl.hidden = false;
+    keepAlive();
     btnEl.classList.remove("nv-idle");
     clearTimeout(idleTimer);
     renderList();
@@ -445,6 +487,7 @@
 
   function checkVisibility() {
     if (!host || !btnEl) return;
+    keepAlive();
     if (!entries.length) {
       btnEl.hidden = true;
       closePanel();
@@ -915,6 +958,7 @@
 
   function refreshEntries(force) {
     if (!host || contextDead) return;
+    heartbeat();
     send("novaVideo:get").then(function (res) {
       if (!host) return;
       const next = (res && res.ok && Array.isArray(res.entries)) ? res.entries : [];
@@ -933,7 +977,7 @@
   function boot() {
     buildUi();
     refreshEntries(true);
-    pollTimer = setInterval(refreshEntries, 3000);
+    pollTimer = setInterval(refreshEntries, 1200);
   }
 
   if (document.readyState === "loading") {
