@@ -172,6 +172,7 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
         // WebExtensions, see installNovaBundledExtensions).
         private const val NOVA_SHIELD_ADDON_ID = "nova-shield@nova.browser"
         private const val NOVA_UBLOCK_ADDON_ID = "uBlock0@raymondhill.net"
+        private const val NOVA_VIDEO_ADDON_ID = "nova-video@nova.browser"
     }
 
     init {
@@ -915,10 +916,11 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
     }
 
     /**
-     * Nova: installs the two bundled ad-blocking WebExtensions (Nova Ad Block and
-     * uBlock Origin) as built-in add-ons. ensureBuiltInWebExtension is idempotent,
-     * so it is safe to call on every launch; a failed install (e.g. while the engine
-     * is still warming up) simply logs to NovaDebug and is retried next launch.
+     * Nova: installs the bundled WebExtensions (Nova Ad Block, uBlock Origin and
+     * the Nova Video Downloader) as built-in add-ons. installBuiltInWebExtension
+     * is idempotent, so it is safe to call on every launch; a failed install
+     * (e.g. while the engine is still warming up) simply logs to NovaDebug and is
+     * retried next launch.
      */
     private fun installNovaBundledExtensions() {
         val engine = components.core.engine
@@ -933,6 +935,12 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
             url = "resource://android/assets/extensions/ublock_origin/",
             onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "uBlock Origin installed: ${it.id}") },
             onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "uBlock Origin install error: ${it.message}") },
+        )
+        engine.installBuiltInWebExtension(
+            id = NOVA_VIDEO_ADDON_ID,
+            url = "resource://android/assets/extensions/nova-video/",
+            onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Video Downloader installed: ${it.id}") },
+            onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Video Downloader install error: ${it.message}") },
         )
     }
 

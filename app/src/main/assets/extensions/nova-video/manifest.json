@@ -1,0 +1,30 @@
+{
+  "manifest_version": 2,
+  "name": "Nova Video Downloader",
+  "version": "1.0.0",
+  "description": "Detects videos and audio in the page you are viewing and lets you download them. Handles direct media files plus HLS (.m3u8) and DASH (.mpd) streams.",
+  "permissions": [
+    "webRequest",
+    "storage",
+    "tabs",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "applications": {
+    "gecko": {
+      "id": "nova-video@nova.browser",
+      "strict_min_version": "115.0"
+    }
+  }
+}
