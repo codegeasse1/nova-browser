@@ -15,13 +15,17 @@ A third bundled WebExtension (`nova-video@nova.browser`) that:
   has a downloadable video/audio. There is no other on-screen chrome: no floating
   panel, no "Rescan" button, no "Hide here" dialog. The icon is draggable and hides
   itself while a video is fullscreen;
-- tapping the icon opens a compact picker (at most 45% of the screen height) listing
+- tapping the icon opens a compact picker (at most 40% of the screen height) listing
   the detected items, with a 32px `X` to close it and tap-outside-to-close;
 - for HLS it reads the master playlist and offers every quality;
 - for DASH it lists the video/audio representations;
 - downloads by assembling the bytes in the page and handing them to the normal
   Fenix download flow (blob download), so the standard download notification and
-  Downloads list are used.
+  Downloads list are used;
+- on sites whose media cannot be reached as a plain URL (YouTube, Vimeo,
+  Dailymotion, Facebook, Instagram, X, TikTok) it offers a **site entry** that
+  hands the page URL to a **bundled `yt-dlp`** running natively, which extracts
+  the video itself. An "Audio only" option extracts just the audio (MP3).
 
 It also reports `<video>`/`<audio>` elements found in the page (including frames).
 
@@ -45,10 +49,13 @@ The whole feature can be switched off without uninstalling anything:
 
 | File | Change |
 | --- | --- |
-| `app/src/main/assets/extensions/nova-video/manifest.json` | new — MV2 manifest of the bundled extension |
-| `app/src/main/assets/extensions/nova-video/background.js` | new — network sniffing, playlist/manifest parsing, binary fetch fallback |
-| `app/src/main/assets/extensions/nova-video/content.js` | new — icon-only UI + downloader picker (shadow DOM) |
+| `app/src/main/assets/extensions/nova-video/manifest.json` | new — MV2 manifest of the bundled extension (has the `nativeMessaging` permission) |
+| `app/src/main/assets/extensions/nova-video/background.js` | new — network sniffing, playlist/manifest parsing, binary fetch fallback, yt-dlp bridge |
+| `app/src/main/assets/extensions/nova-video/content.js` | new — icon-only UI + downloader picker (shadow DOM), incl. the yt-dlp site entry |
 | `app/src/main/java/org/mozilla/fenix/components/NovaVideoDownloader.kt` | new — preference + engine enable/disable helper |
+| `app/src/main/java/org/mozilla/fenix/components/NovaYtDlp.kt` | new — native yt-dlp bridge (init, downloads, progress, MediaStore publish) |
+| `app/build.gradle` | adds the `youtubedl-android` `library` + `ffmpeg` dependencies |
+| `app/proguard-rules.pro` | keep/dontwarn rules for youtubedl-android, Jackson and commons-io |
 | `app/src/main/java/org/mozilla/fenix/FenixApplication.kt` | `NOVA_VIDEO_ADDON_ID` constant + `installBuiltInWebExtension(...)` call + re-applies the stored on/off preference |
 | `app/src/main/java/org/mozilla/fenix/components/menu/compose/MainMenu.kt` | new "Video Downloader" menu item with a switch |
 | `app/src/main/java/org/mozilla/fenix/components/menu/MenuDialogFragment.kt` | wires the switch state + toggles the extension |
@@ -72,8 +79,10 @@ Download the artifact from the Actions run page and sideload it to test.
 1. Delete the branch (this deletes every file listed above, including the
    workflow, so no build runs anymore), **or**
 2. Revert the commit and remove the `nova-video` assets, the `NovaVideoDownloader`
-   helper, the `NOVA_VIDEO_ADDON_ID` constant + `installBuiltInWebExtension` call,
-   the menu item / strings, and the workflow file. No other code depends on them.
+   and `NovaYtDlp` helpers, the `NOVA_VIDEO_ADDON_ID` constant +
+   `installBuiltInWebExtension` call, the menu item / strings, the workflow file,
+   and the `youtubedl-android` dependencies in `app/build.gradle` plus their
+   Proguard rules. No other code depends on them.
 
 ## Notes / limitations
 
@@ -84,14 +93,31 @@ Download the artifact from the Actions run page and sideload it to test.
   not available; the picker labels these clearly.
 - If a cross-origin fetch is blocked in the page, the download falls back to a
   background-script fetch.
-- YouTube is not covered yet (see the yt-dlp note below).
+- On the yt-dlp sites the download happens in the app process (not the page), so
+  it keeps going if you navigate away. Progress is shown both in the picker row
+  and in a low-priority "Downloads" notification.
+- The bundled yt-dlp refreshes itself from the official yt-dlp release feed about
+  once a week, because that is the part that breaks when a site changes.
 
-## Roadmap: yt-dlp for YouTube
+## yt-dlp (YouTube and similar sites)
 
-`yt-dlp` integration is planned as a separate step on this same branch. The
-approach is to bundle the open-source `youtubedl-android` library, initialise it
-in `FenixApplication`, and add a native ↔ extension bridge (a-c
-`WebExtension.registerBackgroundMessageHandler` / GeckoView message delegate with
-`browser.runtime.sendNativeMessage`) so the extension can hand a page URL to
-yt-dlp, which extracts and writes the file into Downloads. This is a sideload-only
-build, so Play Store policy does not apply.
+The `youtubedl-android` library (Seal's fork,
+`io.github.junkfood02.youtubedl-android`, Maven Central) bundles `yt-dlp`,
+CPython and ffmpeg. `NovaYtDlp`:
+
+- initialises `YoutubeDL` **and** `FFmpeg` on a background thread at startup
+  (both extract their binaries from `nativeLibraryDir` on first run) and refreshes
+  yt-dlp weekly;
+- registers a GeckoView background message handler under the name
+  **`novaVideoYtdlp`** (via `WebExtension.registerBackgroundMessageHandler`), so
+  the extension's background script can call
+  `browser.runtime.sendNativeMessage("novaVideoYtdlp", …)`;
+- supports `action`s `ping` / `start` / `status` / `cancel`. `start` returns a job
+  id immediately and runs the download on a worker thread; the content script
+  polls `status` for progress;
+- merges video+audio into MP4 with ffmpeg (or extracts MP3 with the "Audio only"
+  option) and then publishes the finished file into the public **Downloads**
+  collection via MediaStore (on API < 29 it copies to the public Downloads dir
+  and runs a media scan).
+
+This is a sideload-only build, so Play Store policy does not apply.

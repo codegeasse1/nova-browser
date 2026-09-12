@@ -122,6 +122,7 @@
   let rowRefs = new Map();
   let hlsInfo = new Map();
   let dashInfo = new Map();
+  let ytdlpJobs = new Map();
   let idleTimer = null;
   let pollTimer = null;
   let pos = null;
@@ -138,6 +139,7 @@
     btnEl = null;
     panelEl = null;
     listEl = null;
+    ytdlpJobs.clear();
   }
 
   const CSS = `
@@ -187,6 +189,7 @@
     }
     .nv-kind.nv-audio { background: #2f3a33; color: #8fe0a8; }
     .nv-kind.nv-hls, .nv-kind.nv-dash { background: #3c3231; color: #ffb184; }
+    .nv-kind.nv-ytdlp { background: #432b3a; color: #f7a8d8; }
     .nv-name {
       flex: 1; min-width: 0; white-space: nowrap; overflow: hidden;
       text-overflow: ellipsis; font-size: 12.5px;
@@ -209,12 +212,18 @@
       background: #2c2e37; color: #cfd0d8; font-size: 12px;
     }
     .nv-copy:hover { background: #3a3c47; }
+    .nv-cancel { background: #3a2b31; color: #ffb1c1; }
+    .nv-cancel:hover { background: #4a353d; }
+    .nv-check {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 12px; color: #cfd0d8; cursor: pointer;
+    }
+    .nv-check input { margin: 0; }
     .nv-select {
       background: #2c2e37; color: #e9e9ef; border: 1px solid #3a3c47;
       border-radius: 8px; padding: 6px 8px; font-size: 12px; max-width: 150px;
     }
-    .nv-status { font-size: 11.5px; color: #8d8fa0; margin-top: 6px; }
-    .nv-status.nv-err { color: #ff8f9f; }
+    .nv-status { font-size: 11.5px; color: #8d8fa0; margin-top: 6px; }    .nv-status.nv-err { color: #ff8f9f; }
     .nv-prog { height: 4px; border-radius: 2px; background: #2c2e37; margin-top: 7px; overflow: hidden; }
     .nv-prog > i { display: block; height: 100%; width: 0; background: #5847f5; transition: width .15s; }
     .nv-toast {
@@ -556,6 +565,7 @@
     if (kind === "hls") return "HLS";
     if (kind === "dash") return "DASH";
     if (kind === "audio") return "Audio";
+    if (kind === "ytdlp") return "yt-dlp";
     return "Video";
   }
 
@@ -586,7 +596,7 @@
 
     const kind = document.createElement("span");
     kind.className = "nv-kind nv-" + entry.kind;
-    kind.textContent = kindLabel(entry.kind);
+    kind.textContent = entry.kind === "ytdlp" ? (entry.site || "yt-dlp") : kindLabel(entry.kind);
     top.appendChild(kind);
 
     const name = document.createElement("span");
@@ -618,9 +628,32 @@
     go.type = "button";
     go.textContent = "Download";
     go.addEventListener("click", function () {
-      startDownload(entry);
+      if (entry.kind === "ytdlp") startYtDlp(entry, audioBox && audioBox.checked);
+      else startDownload(entry);
     });
     actions.appendChild(go);
+
+    let cancelBtn = null;
+    let audioBox = null;
+    if (entry.kind === "ytdlp") {
+      cancelBtn = document.createElement("button");
+      cancelBtn.className = "nv-copy nv-cancel";
+      cancelBtn.type = "button";
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.hidden = true;
+      cancelBtn.addEventListener("click", function () {
+        cancelYtDlp(entry);
+      });
+      actions.appendChild(cancelBtn);
+
+      const audioLabel = document.createElement("label");
+      audioLabel.className = "nv-check";
+      audioBox = document.createElement("input");
+      audioBox.type = "checkbox";
+      audioLabel.appendChild(audioBox);
+      audioLabel.appendChild(document.createTextNode("Audio only"));
+      actions.appendChild(audioLabel);
+    }
 
     const copy = document.createElement("button");
     copy.className = "nv-copy";
@@ -650,8 +683,13 @@
     prog.appendChild(bar);
     row.appendChild(prog);
 
-    rowRefs.set(entry.url, { row: row, status: status, prog: prog, bar: bar, go: go, select: select });
+    rowRefs.set(entry.url, { row: row, status: status, prog: prog, bar: bar, go: go, select: select, cancel: cancelBtn });
 
+    if (entry.kind === "ytdlp" && ytdlpJobs.has(entry.url)) {
+      go.disabled = true;
+      if (cancelBtn) cancelBtn.hidden = false;
+      status.textContent = "Downloading\u2026";
+    }
     if (entry.kind === "hls") scheduleHlsInfo(entry);
     if (entry.kind === "dash") scheduleDashInfo(entry);
 
@@ -954,12 +992,84 @@
     await downloadSegments(rep.segments, guessName(entry, ext), mime, entry.url);
   }
 
+  /* -------------------------- yt-dlp (native) --------------------- */
+
+  async function startYtDlp(entry, audioOnly) {
+    const ref = rowRefs.get(entry.url);
+    setBusy(entry.url, true);
+    setProgress(entry.url, null);
+    setStatus(entry.url, "Starting yt-dlp\u2026");
+    if (ref && ref.cancel) ref.cancel.hidden = false;
+    const res = await send("novaVideo:ytdlp", {
+      action: "start",
+      url: entry.url,
+      audioOnly: !!audioOnly,
+    });
+    if (!res || !res.ok || !res.id) {
+      setBusy(entry.url, false);
+      if (ref && ref.cancel) ref.cancel.hidden = true;
+      setStatus(entry.url, (res && res.error) || "yt-dlp is not available on this device.", true);
+      return;
+    }
+    ytdlpJobs.set(entry.url, res.id);
+    pollYtDlp(entry);
+  }
+
+  function pollYtDlp(entry) {
+    const id = ytdlpJobs.get(entry.url);
+    if (!id || !host || contextDead) return;
+    send("novaVideo:ytdlp", { action: "status", id: id }).then(function (res) {
+      if (ytdlpJobs.get(entry.url) !== id) return;
+      if (!res || !res.ok) {
+        setStatus(entry.url, "yt-dlp error: " + ((res && res.error) || "lost track of the download"), true);
+        finishYtDlp(entry);
+        return;
+      }
+      if (res.state === "running") {
+        if (typeof res.progress === "number" && res.progress > 0) setProgress(entry.url, res.progress);
+        setStatus(entry.url, res.message || "Downloading\u2026");
+        setTimeout(function () { pollYtDlp(entry); }, 1200);
+        return;
+      }
+      if (res.state === "done") {
+        setProgress(entry.url, 1);
+        setStatus(entry.url, res.message || ("Saved " + (res.filename || "")));
+        toast("Download complete: " + (res.filename || ""));
+        finishYtDlp(entry);
+        return;
+      }
+      if (res.state === "canceled") {
+        setProgress(entry.url, null);
+        setStatus(entry.url, "Canceled");
+        finishYtDlp(entry);
+        return;
+      }
+      setStatus(entry.url, "yt-dlp error: " + (res.error || "download failed"), true);
+      finishYtDlp(entry);
+    });
+  }
+
+  function finishYtDlp(entry) {
+    ytdlpJobs.delete(entry.url);
+    const ref = rowRefs.get(entry.url);
+    if (!ref) return;
+    ref.go.disabled = false;
+    if (ref.cancel) ref.cancel.hidden = true;
+  }
+
+  function cancelYtDlp(entry) {
+    const id = ytdlpJobs.get(entry.url);
+    if (!id) return;
+    setStatus(entry.url, "Canceling\u2026");
+    send("novaVideo:ytdlp", { action: "cancel", id: id });
+  }
+
   /* -------------------------- entry polling ----------------------- */
 
   function refreshEntries(force) {
     if (!host || contextDead) return;
     heartbeat();
-    send("novaVideo:get").then(function (res) {
+    send("novaVideo:get", { pageUrl: location.href, pageTitle: document.title || "" }).then(function (res) {
       if (!host) return;
       const next = (res && res.ok && Array.isArray(res.entries)) ? res.entries : [];
       const changed = next.length !== entries.length ||

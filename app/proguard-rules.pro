@@ -28,3 +28,20 @@
 
 # Keep code generated from Glean Metrics
 -keep class org.mozilla.fenix.GleanMetrics.** {  *; }
+
+####################################################################################################
+# Nova Video Downloader: bundled yt-dlp (youtubedl-android)
+####################################################################################################
+
+-keep class com.yausername.youtubedl_android.** { *; }
+-keep class com.yausername.youtubedl_common.** { *; }
+-keep class com.yausername.ffmpeg.** { *; }
+-keep class com.yausername.aria2c.** { *; }
+-dontwarn com.yausername.**
+
+# youtubedl-android deserializes yt-dlp's JSON with Jackson via reflection.
+-keep class com.fasterxml.jackson.** { *; }
+-dontwarn com.fasterxml.jackson.**
+
+-keep class org.apache.commons.io.** { *; }
+-dontwarn org.apache.commons.io.**

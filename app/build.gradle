@@ -652,6 +652,11 @@ dependencies {
     implementation libs.androidx.documentfile
     implementation libs.zxing
 
+    // Nova: bundled yt-dlp (plus its ffmpeg) so the video downloader can also
+    // handle sites like YouTube that do not expose a plain media URL.
+    implementation "io.github.junkfood02.youtubedl-android:library:0.18.1"
+    implementation "io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1"
+
     implementation libs.androidx.room.runtime
     ksp libs.androidx.room.compiler
 

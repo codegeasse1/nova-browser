@@ -23,6 +23,56 @@ const DASH_EXT = new Set(["mpd"]);
 
 const MAX_ENTRIES_PER_TAB = 80;
 
+/** Name of the native (Kotlin) bridge that runs the bundled yt-dlp. */
+const NATIVE_APP = "novaVideoYtdlp";
+
+/*
+ * Sites whose media is not reachable as a plain file/manifest, but which the
+ * bundled yt-dlp can still extract. When the page matches, a synthetic entry is
+ * offered that hands the page URL to the native bridge.
+ */
+const YTDLP_SITES = [
+  { host: /^(.+\.)?(youtube\.com|youtube-nocookie\.com)$/i, path: /^\/(watch|shorts\/|live\/|embed\/)/i },
+  { host: /^youtu\.be$/i, path: /^\/.+/ },
+  { host: /^(.+\.)?vimeo\.com$/i, path: /^\/\d+/ },
+  { host: /^(.+\.)?dailymotion\.com$/i, path: /^\/video\//i },
+  { host: /^(.+\.)?facebook\.com$/i, path: /^\/(watch|reel|videos?)\//i },
+  { host: /^fb\.watch$/i, path: /^\/.+/ },
+  { host: /^(.+\.)?instagram\.com$/i, path: /^\/(reel|reels|p|tv)\//i },
+  { host: /^(.+\.)?(twitter|x)\.com$/i, path: /\/status\//i },
+  { host: /^(.+\.)?tiktok\.com$/i, path: /^\/(@|video\/)/i },
+];
+
+function isYtdlpPage(url) {
+  if (!url) return false;
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    for (const site of YTDLP_SITES) {
+      if (site.host.test(host) && site.path.test(u.pathname)) return true;
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
+function ytdlpLabel(url) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+    if (host.endsWith("youtube.com") || host === "youtu.be") return "YouTube";
+    if (host.endsWith("vimeo.com")) return "Vimeo";
+    if (host.endsWith("dailymotion.com")) return "Dailymotion";
+    if (host.endsWith("facebook.com") || host === "fb.watch") return "Facebook";
+    if (host.endsWith("instagram.com")) return "Instagram";
+    if (host === "x.com" || host.endsWith("twitter.com")) return "X";
+    if (host.endsWith("tiktok.com")) return "TikTok";
+    return "Site";
+  } catch (e) {
+    return "Site";
+  }
+}
+
 /** tabId -> Map(url -> entry) */
 const tabMedia = new Map();
 /** tabId -> Map(frameUrl -> { title, elements: [...] }) */
@@ -77,7 +127,7 @@ function kindFromContentType(ct) {
   return null;
 }
 
-const KIND_RANK = { hls: 4, dash: 4, video: 3, audio: 2 };
+const KIND_RANK = { ytdlp: 6, hls: 4, dash: 4, video: 3, audio: 2 };
 
 function addEntry(tabId, patch) {
   if (!patch || !patch.url) return;
@@ -531,8 +581,18 @@ function tabIdOf(sender) {
   return sender && sender.tab && typeof sender.tab.id === "number" ? sender.tab.id : -1;
 }
 
-function collectEntries(tabId) {
+function collectEntries(tabId, pageUrl, pageTitle) {
   const out = [];
+  if (isYtdlpPage(pageUrl)) {
+    out.push({
+      url: pageUrl,
+      kind: "ytdlp",
+      ytdlp: true,
+      site: ytdlpLabel(pageUrl),
+      title: pageTitle || ytdlpLabel(pageUrl),
+      contentLength: 0,
+    });
+  }
   const map = tabMedia.get(tabId);
   if (map) {
     for (const entry of map.values()) out.push(entry);
@@ -564,13 +624,39 @@ function collectEntries(tabId) {
   return out;
 }
 
+function callNativeYtdlp(message) {
+  const payload = {
+    action: message.action || "start",
+    url: message.url || "",
+    audioOnly: !!message.audioOnly,
+  };
+  if (message.id) payload.id = message.id;
+  if (!browser.runtime || typeof browser.runtime.sendNativeMessage !== "function") {
+    return Promise.resolve({ ok: false, error: "This build has no yt-dlp bridge." });
+  }
+  return browser.runtime
+    .sendNativeMessage(NATIVE_APP, payload)
+    .then(function (res) {
+      return res || { ok: false, error: "no response" };
+    })
+    .catch(function (e) {
+      return { ok: false, error: String((e && e.message) || e) };
+    });
+}
+
 browser.runtime.onMessage.addListener(function (message, sender) {
   if (!message || typeof message.type !== "string") return;
   const tabId = tabIdOf(sender);
 
   switch (message.type) {
     case "novaVideo:get": {
-      return Promise.resolve({ ok: true, entries: collectEntries(tabId) });
+      return Promise.resolve({
+        ok: true,
+        entries: collectEntries(tabId, message.pageUrl, message.pageTitle),
+      });
+    }
+    case "novaVideo:ytdlp": {
+      return callNativeYtdlp(message);
     }
     case "novaVideo:resolveHls": {
       return resolveHls(message.url);
