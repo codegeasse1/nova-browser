@@ -939,7 +939,16 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
         engine.installBuiltInWebExtension(
             id = NOVA_VIDEO_ADDON_ID,
             url = "resource://android/assets/extensions/nova-video/",
-            onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Video Downloader installed: ${it.id}") },
+            onSuccess = { extension ->
+                org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Video Downloader installed: ${extension.id}")
+                if (!org.mozilla.fenix.components.NovaVideoDownloader.isEnabled(applicationContext)) {
+                    engine.disableWebExtension(
+                        extension = extension,
+                        onSuccess = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Video Downloader disabled by preference") },
+                        onError = { e -> org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Video Downloader disable error: ${e.message}") },
+                    )
+                }
+            },
             onError = { org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Video Downloader install error: ${it.message}") },
         )
     }

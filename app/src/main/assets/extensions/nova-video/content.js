@@ -4,8 +4,10 @@
  * Nova Video Downloader - content script.
  *
  * Every frame reports the <video>/<audio> elements it can see to the
- * background script. The top frame additionally renders a small floating
- * button (only when media is detected) that opens the download picker.
+ * background script. The top frame additionally shows a single small download
+ * button - and only while the page actually has a downloadable video/audio.
+ * Tapping it opens a compact picker. There is no other chrome: to turn the
+ * whole feature off use the "Video Downloader" switch in the browser menu.
  */
 
 (function () {
@@ -20,11 +22,22 @@
     }
   })();
 
+  let contextDead = false;
+
   function send(type, extra) {
+    if (contextDead) return Promise.resolve({ ok: false, error: "context dead" });
     return browser.runtime
       .sendMessage(Object.assign({ type: type }, extra || {}))
+      .then(function (res) {
+        return res || { ok: false, error: "no response" };
+      })
       .catch(function (e) {
-        return { ok: false, error: String((e && e.message) || e) };
+        const message = String((e && e.message) || e);
+        if (/context invalidated|Extension context|receiving end does not exist/i.test(message)) {
+          contextDead = true;
+          teardown();
+        }
+        return { ok: false, error: message };
       });
   }
 
@@ -60,6 +73,7 @@
   }
 
   function reportElements() {
+    if (contextDead) return;
     let elements;
     try {
       elements = collectElements();
@@ -70,8 +84,8 @@
     send("novaVideo:reportElements", { elements: elements, title: document.title || "" });
   }
 
+  const reportTimer = setInterval(reportElements, 4000);
   reportElements();
-  setInterval(reportElements, 4000);
   document.addEventListener("loadedmetadata", reportElements, true);
   document.addEventListener("play", reportElements, true);
   document.addEventListener("loadeddata", reportElements, true);
@@ -82,10 +96,6 @@
   /* Top frame: UI                                                     */
   /* ---------------------------------------------------------------- */
 
-  const PREFS_KEY = "novaVideoPrefs";
-  const POS_KEY = "novaVideoBtnPos";
-
-  let prefs = { floatEnabled: true, hiddenHosts: [] };
   let entries = [];
   let panelOpen = false;
   let host = null;
@@ -93,58 +103,64 @@
   let btnEl = null;
   let panelEl = null;
   let listEl = null;
-  let toastEl = null;
   let rowRefs = new Map();
   let hlsInfo = new Map();
   let dashInfo = new Map();
-  let busy = new Set();
   let idleTimer = null;
+  let pollTimer = null;
+  let pos = null;
+
+  function teardown() {
+    contextDead = true;
+    clearInterval(reportTimer);
+    clearInterval(pollTimer);
+    clearTimeout(idleTimer);
+    if (host && host.parentNode) host.parentNode.removeChild(host);
+    host = null;
+    shadow = null;
+    btnEl = null;
+    panelEl = null;
+    listEl = null;
+  }
 
   const CSS = `
     :host { all: initial; }
     * { box-sizing: border-box; }
     .nv-btn {
-      position: fixed; width: 46px; height: 46px; border-radius: 50%;
-      background: linear-gradient(145deg, #6d5efc, #4b3df0);
-      box-shadow: 0 4px 14px rgba(0,0,0,.45);
+      position: fixed; width: 38px; height: 38px; border-radius: 12px;
+      background: rgba(30,32,40,.92);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 3px 12px rgba(0,0,0,.45);
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer; touch-action: none; z-index: 2147483647;
-      transition: opacity .25s ease, transform .15s ease;
-      opacity: 1;
+      cursor: pointer; touch-action: none;
+      transition: opacity .3s ease;
+      opacity: .92;
     }
-    .nv-btn.nv-idle { opacity: .32; }
-    .nv-btn:active { transform: scale(.94); }
-    .nv-btn svg { width: 22px; height: 22px; fill: #fff; pointer-events: none; }
-    .nv-badge {
-      position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px;
-      padding: 0 4px; border-radius: 9px; background: #ff4d6d; color: #fff;
-      font: 600 11px/18px -apple-system, system-ui, sans-serif; text-align: center;
-      pointer-events: none;
-    }
+    .nv-btn.nv-idle { opacity: .35; }
+    .nv-btn svg { width: 20px; height: 20px; fill: #7f9dff; pointer-events: none; }
     .nv-panel {
-      position: fixed; width: 330px; max-width: calc(100vw - 20px);
-      max-height: 62vh; background: #1b1c21; color: #e9e9ef;
-      border: 1px solid #34363f; border-radius: 14px; overflow: hidden;
-      box-shadow: 0 12px 40px rgba(0,0,0,.55);
+      position: fixed; width: 300px; max-width: calc(100vw - 20px);
+      max-height: min(45vh, 380px);
+      background: #1b1c21; color: #e9e9ef;
+      border: 1px solid #34363f; border-radius: 13px; overflow: hidden;
+      box-shadow: 0 12px 34px rgba(0,0,0,.6);
       font: 13px/1.45 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
-      z-index: 2147483647; display: flex; flex-direction: column;
+      display: flex; flex-direction: column;
     }
     .nv-head {
-      display: flex; align-items: center; gap: 8px;
-      padding: 11px 12px; border-bottom: 1px solid #2b2d35;
-      background: #202127;
+      display: flex; align-items: center; gap: 8px; flex: none;
+      padding: 8px 8px 8px 12px; border-bottom: 1px solid #2b2d35; background: #202127;
     }
-    .nv-head .nv-title { flex: 1; font-weight: 600; font-size: 13.5px; }
+    .nv-head .nv-title { flex: 1; font-weight: 600; font-size: 13px; }
     .nv-x {
-      width: 26px; height: 26px; border: 0; border-radius: 8px; cursor: pointer;
-      background: #2c2e37; color: #cfd0d8; font-size: 16px; line-height: 1;
+      width: 32px; height: 32px; border: 0; border-radius: 9px; cursor: pointer;
+      background: #2c2e37; color: #d5d6de; font-size: 18px; line-height: 1;
     }
     .nv-x:hover { background: #3a3c47; }
-    .nv-list { overflow-y: auto; padding: 6px; flex: 1; }
-    .nv-empty { padding: 18px 12px; color: #9a9cab; text-align: center; }
+    .nv-list { min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 6px; flex: 1; }
+    .nv-empty { padding: 16px 12px; color: #9a9cab; text-align: center; }
     .nv-row { padding: 9px 10px; border-radius: 10px; }
     .nv-row + .nv-row { margin-top: 4px; }
-    .nv-row:hover { background: #23242b; }
     .nv-row-top { display: flex; align-items: center; gap: 7px; }
     .nv-kind {
       flex: none; font-size: 10px; font-weight: 700; letter-spacing: .04em;
@@ -158,44 +174,35 @@
       text-overflow: ellipsis; font-size: 12.5px;
     }
     .nv-size { flex: none; color: #8d8fa0; font-size: 11.5px; }
-    .nv-meta { color: #8d8fa0; font-size: 11.5px; margin-top: 3px; word-break: break-all; }
+    .nv-meta {
+      color: #83859a; font-size: 11px; margin-top: 3px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden; word-break: break-all;
+    }
     .nv-actions { display: flex; align-items: center; gap: 6px; margin-top: 7px; flex-wrap: wrap; }
     .nv-go {
-      border: 0; border-radius: 8px; padding: 6px 12px; cursor: pointer;
+      border: 0; border-radius: 8px; padding: 7px 14px; cursor: pointer;
       background: #5847f5; color: #fff; font-size: 12px; font-weight: 600;
     }
     .nv-go:hover { background: #6a5bff; }
     .nv-go[disabled] { opacity: .5; cursor: default; }
     .nv-copy {
-      border: 0; border-radius: 8px; padding: 6px 10px; cursor: pointer;
+      border: 0; border-radius: 8px; padding: 7px 11px; cursor: pointer;
       background: #2c2e37; color: #cfd0d8; font-size: 12px;
     }
     .nv-copy:hover { background: #3a3c47; }
     .nv-select {
       background: #2c2e37; color: #e9e9ef; border: 1px solid #3a3c47;
-      border-radius: 8px; padding: 5px 7px; font-size: 12px; max-width: 160px;
+      border-radius: 8px; padding: 6px 8px; font-size: 12px; max-width: 150px;
     }
     .nv-status { font-size: 11.5px; color: #8d8fa0; margin-top: 6px; }
     .nv-status.nv-err { color: #ff8f9f; }
-    .nv-prog {
-      height: 4px; border-radius: 2px; background: #2c2e37; margin-top: 7px; overflow: hidden;
-    }
+    .nv-prog { height: 4px; border-radius: 2px; background: #2c2e37; margin-top: 7px; overflow: hidden; }
     .nv-prog > i { display: block; height: 100%; width: 0; background: #5847f5; transition: width .15s; }
-    .nv-foot {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      padding: 9px 11px; border-top: 1px solid #2b2d35; background: #202127;
-      font-size: 11.5px; color: #b7b9c6;
-    }
-    .nv-foot button {
-      border: 0; border-radius: 8px; padding: 5px 9px; cursor: pointer;
-      background: #2c2e37; color: #cfd0d8; font-size: 11.5px;
-    }
-    .nv-foot button:hover { background: #3a3c47; }
-    .nv-foot label { display: flex; align-items: center; gap: 4px; margin-left: auto; }
     .nv-toast {
-      position: fixed; max-width: 300px; background: #26272e; color: #e9e9ef;
+      position: fixed; max-width: 280px; background: #26272e; color: #e9e9ef;
       border: 1px solid #3a3c47; border-radius: 10px; padding: 9px 12px;
-      font: 12px/1.4 -apple-system, system-ui, sans-serif; z-index: 2147483647;
+      font: 12px/1.4 -apple-system, system-ui, sans-serif;
       box-shadow: 0 8px 24px rgba(0,0,0,.5);
     }
   `;
@@ -218,64 +225,55 @@
   function buildUi() {
     host = document.createElement("div");
     host.id = "nova-video-host";
-    host.style.cssText = "all:initial;position:fixed;top:0;left:0;width:0;height:0;z-index:2147483647;";
+    host.style.cssText =
+      "all:initial;position:fixed;top:0;left:0;width:0;height:0;z-index:2147483647;";
     shadow = host.attachShadow({ mode: "open" });
     applyStyles(shadow);
 
     btnEl = document.createElement("div");
     btnEl.className = "nv-btn";
     btnEl.title = "Download video";
-    btnEl.innerHTML = ICON + '<span class="nv-badge" hidden></span>';
+    btnEl.innerHTML = ICON;
     btnEl.hidden = true;
 
     panelEl = document.createElement("div");
     panelEl.className = "nv-panel";
     panelEl.hidden = true;
     panelEl.innerHTML =
-      '<div class="nv-head"><span class="nv-title">Video Downloader</span>' +
-      '<button class="nv-x" title="Close">\u00d7</button></div>' +
-      '<div class="nv-list"></div>' +
-      '<div class="nv-foot"><button class="nv-rescan">Rescan</button>' +
-      '<label><input type="checkbox" class="nv-float"> Floating button</label>' +
-      '<button class="nv-hide">Hide here</button></div>';
-
-    toastEl = document.createElement("div");
-    toastEl.className = "nv-toast";
-    toastEl.hidden = true;
+      '<div class="nv-head"><span class="nv-title">Download video</span>' +
+      '<button class="nv-x" type="button" title="Close" aria-label="Close">\u00d7</button></div>' +
+      '<div class="nv-list"></div>';
 
     shadow.appendChild(btnEl);
     shadow.appendChild(panelEl);
-    shadow.appendChild(toastEl);
     listEl = panelEl.querySelector(".nv-list");
 
-    const floatCheck = panelEl.querySelector(".nv-float");
-    floatCheck.checked = prefs.floatEnabled;
-    floatCheck.addEventListener("change", function () {
-      prefs.floatEnabled = floatCheck.checked;
-      savePrefs();
-      checkVisibility();
-    });
-    panelEl.querySelector(".nv-x").addEventListener("click", closePanel);
-    panelEl.querySelector(".nv-hide").addEventListener("click", function () {
-      const hostName = location.hostname;
-      if (hostName && prefs.hiddenHosts.indexOf(hostName) < 0) {
-        prefs.hiddenHosts.push(hostName);
-        savePrefs();
+    const closeBtn = panelEl.querySelector(".nv-x");
+    const doClose = function (e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
       }
       closePanel();
-      checkVisibility();
-      toast("Hidden on " + hostName + ". Use the extension to re-enable.");
-    });
-    panelEl.querySelector(".nv-rescan").addEventListener("click", function () {
-      hlsInfo = new Map();
-      dashInfo = new Map();
-      refreshEntries(true);
-    });
+    };
+    closeBtn.addEventListener("click", doClose);
+    closeBtn.addEventListener("touchend", doClose);
+    closeBtn.addEventListener("pointerup", doClose);
+
+    document.addEventListener("pointerdown", onDocumentPointerDown, true);
 
     (document.body || document.documentElement).appendChild(host);
     setupDrag();
     document.addEventListener("fullscreenchange", onFullscreenChange, true);
     window.addEventListener("resize", positionPanel);
+    positionButton();
+  }
+
+  function onDocumentPointerDown(e) {
+    if (!panelOpen) return;
+    const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+    if (path.indexOf(panelEl) > -1 || path.indexOf(btnEl) > -1) return;
+    closePanel();
   }
 
   /* -------------------------- drag -------------------------------- */
@@ -302,20 +300,19 @@
         /* ignore */
       }
       e.preventDefault();
+      e.stopPropagation();
     });
 
     btnEl.addEventListener("pointermove", function (e) {
       if (!dragging) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-      if (!moved && Math.abs(dx) + Math.abs(dy) < 6) return;
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 8) return;
       moved = true;
-      const left = Math.min(Math.max(4, originLeft + dx), window.innerWidth - 50);
-      const top = Math.min(Math.max(4, originTop + dy), window.innerHeight - 50);
-      btnEl.style.left = left + "px";
-      btnEl.style.top = top + "px";
-      btnEl.style.right = "auto";
-      btnEl.style.bottom = "auto";
+      const left = Math.min(Math.max(4, originLeft + dx), window.innerWidth - 46);
+      const top = Math.min(Math.max(4, originTop + dy), window.innerHeight - 46);
+      pos = { left: left, top: top };
+      applyPos();
       positionPanel();
     });
 
@@ -327,6 +324,8 @@
       } catch (err) {
         /* ignore */
       }
+      e.preventDefault();
+      e.stopPropagation();
       if (!moved) {
         togglePanel();
         return;
@@ -347,92 +346,43 @@
     });
   }
 
+  function applyPos() {
+    if (!pos) return;
+    btnEl.style.left = pos.left + "px";
+    btnEl.style.top = pos.top + "px";
+    btnEl.style.right = "auto";
+    btnEl.style.bottom = "auto";
+  }
+
+  function positionButton() {
+    if (!btnEl) return;
+    if (!pos) {
+      pos = {
+        left: Math.max(10, window.innerWidth - 48),
+        top: Math.max(10, window.innerHeight - 150),
+      };
+    }
+    pos.left = Math.min(Math.max(4, pos.left), Math.max(4, window.innerWidth - 46));
+    pos.top = Math.min(Math.max(4, pos.top), Math.max(4, window.innerHeight - 46));
+    applyPos();
+  }
+
   function snapToEdge() {
     const rect = btnEl.getBoundingClientRect();
-    const margin = 12;
+    const margin = 10;
     const toLeft = rect.left + rect.width / 2 < window.innerWidth / 2;
     const top = Math.min(Math.max(margin, rect.top), window.innerHeight - rect.height - margin);
     const left = toLeft ? margin : window.innerWidth - rect.width - margin;
-    btnEl.style.left = left + "px";
-    btnEl.style.top = top + "px";
-    btnEl.style.right = "auto";
-    btnEl.style.bottom = "auto";
-    savePos(left, top);
+    pos = { left: left, top: top };
+    applyPos();
     positionPanel();
   }
 
   function scheduleIdle() {
     clearTimeout(idleTimer);
     idleTimer = setTimeout(function () {
-      if (!panelOpen) btnEl.classList.add("nv-idle");
-    }, 3200);
-  }
-
-  function applySavedPos() {
-    browser.storage.local.get(POS_KEY).then(function (res) {
-      const pos = res && res[POS_KEY];
-      if (pos && typeof pos.left === "number") {
-        const left = Math.min(Math.max(4, pos.left), window.innerWidth - 50);
-        const top = Math.min(Math.max(4, pos.top), window.innerHeight - 50);
-        btnEl.style.left = left + "px";
-        btnEl.style.top = top + "px";
-        btnEl.style.right = "auto";
-        btnEl.style.bottom = "auto";
-      } else {
-        btnEl.style.right = "14px";
-        btnEl.style.bottom = "110px";
-      }
-      positionPanel();
-    });
-  }
-
-  function savePos(left, top) {
-    browser.storage.local.set({ [POS_KEY]: { left: left, top: top } }).catch(function () {});
-  }
-
-  function positionPanel() {
-    if (!panelEl || panelEl.hidden) return;
-    const margin = 10;
-    const rect = btnEl.getBoundingClientRect();
-    const panelRect = panelEl.getBoundingClientRect();
-    const width = panelRect.width || 330;
-    const height = panelRect.height || 300;
-    let left = rect.left + rect.width / 2 < window.innerWidth / 2
-      ? margin
-      : window.innerWidth - width - margin;
-    let top = rect.top - height - 10;
-    if (top < margin) top = rect.bottom + 10;
-    if (top + height > window.innerHeight - margin) {
-      top = Math.max(margin, window.innerHeight - height - margin);
-    }
-    left = Math.min(Math.max(margin, left), window.innerWidth - width - margin);
-    panelEl.style.left = left + "px";
-    panelEl.style.top = top + "px";
-    panelEl.style.right = "auto";
-    panelEl.style.bottom = "auto";
-  }
-
-  /* -------------------------- prefs ------------------------------- */
-
-  function savePrefs() {
-    browser.storage.local.set({ [PREFS_KEY]: prefs }).catch(function () {});
-  }
-
-  function loadPrefs() {
-    return browser.storage.local
-      .get(PREFS_KEY)
-      .then(function (res) {
-        const saved = res && res[PREFS_KEY];
-        if (saved && typeof saved === "object") {
-          prefs.floatEnabled = saved.floatEnabled !== false;
-          prefs.hiddenHosts = Array.isArray(saved.hiddenHosts) ? saved.hiddenHosts : [];
-        }
-      })
-      .catch(function () {});
-  }
-
-  function hiddenHere() {
-    return prefs.hiddenHosts.indexOf(location.hostname) > -1;
+      if (!panelOpen && btnEl) btnEl.classList.add("nv-idle");
+    }, 3500);
   }
 
   /* -------------------------- panel ------------------------------- */
@@ -443,19 +393,43 @@
   }
 
   function openPanel() {
+    if (!panelEl) return;
     panelOpen = true;
     panelEl.hidden = false;
     btnEl.classList.remove("nv-idle");
     clearTimeout(idleTimer);
     renderList();
     positionPanel();
+    requestAnimationFrame(positionPanel);
     refreshEntries(true);
   }
 
   function closePanel() {
     panelOpen = false;
-    panelEl.hidden = true;
+    if (panelEl) panelEl.hidden = true;
     scheduleIdle();
+  }
+
+  function positionPanel() {
+    if (!panelEl || panelEl.hidden) return;
+    const margin = 10;
+    const rect = btnEl.getBoundingClientRect();
+    const panelRect = panelEl.getBoundingClientRect();
+    const width = panelRect.width || 300;
+    const height = panelRect.height || 260;
+    let left = rect.left + rect.width / 2 < window.innerWidth / 2
+      ? margin
+      : window.innerWidth - width - margin;
+    let top = rect.top - height - 8;
+    if (top < margin) top = rect.bottom + 8;
+    if (top + height > window.innerHeight - margin) {
+      top = Math.max(margin, window.innerHeight - height - margin);
+    }
+    left = Math.min(Math.max(margin, left), Math.max(margin, window.innerWidth - width - margin));
+    panelEl.style.left = left + "px";
+    panelEl.style.top = top + "px";
+    panelEl.style.right = "auto";
+    panelEl.style.bottom = "auto";
   }
 
   function onFullscreenChange() {
@@ -464,34 +438,43 @@
       host.style.display = "none";
     } else {
       host.style.display = "";
+      positionButton();
       positionPanel();
     }
   }
 
   function checkVisibility() {
-    if (!host) return;
-    if (!entries.length || !prefs.floatEnabled || hiddenHere()) {
+    if (!host || !btnEl) return;
+    if (!entries.length) {
       btnEl.hidden = true;
-      if (!entries.length) closePanel();
-    } else {
-      btnEl.hidden = false;
-      applySavedPos();
-      scheduleIdle();
+      closePanel();
+      return;
     }
+    positionButton();
+    btnEl.hidden = false;
+    scheduleIdle();
   }
 
   function toast(message) {
-    if (!toastEl) return;
-    toastEl.textContent = message;
-    toastEl.hidden = false;
-    toastEl.style.left = "50%";
-    toastEl.style.bottom = "24px";
-    toastEl.style.transform = "translateX(-50%)";
-    clearTimeout(toastEl.__timer);
-    toastEl.__timer = setTimeout(function () {
-      toastEl.hidden = true;
-    }, 3400);
+    if (!shadow) return;
+    let el = shadow.querySelector(".nv-toast");
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "nv-toast";
+      shadow.appendChild(el);
+    }
+    el.textContent = message;
+    el.hidden = false;
+    el.style.left = "50%";
+    el.style.bottom = "26px";
+    el.style.transform = "translateX(-50%)";
+    clearTimeout(el.__timer);
+    el.__timer = setTimeout(function () {
+      el.hidden = true;
+    }, 3200);
   }
+
+  /* -------------------------- formatting -------------------------- */
 
   function fmtBytes(n) {
     if (!n || n < 0) return "";
@@ -533,6 +516,8 @@
     return "Video";
   }
 
+  /* -------------------------- list -------------------------------- */
+
   function renderList() {
     if (!listEl) return;
     rowRefs = new Map();
@@ -540,7 +525,7 @@
     if (!entries.length) {
       const empty = document.createElement("div");
       empty.className = "nv-empty";
-      empty.textContent = "No videos found on this page yet. Press play, then Rescan.";
+      empty.textContent = "No videos found yet. Press play, then tap the button again.";
       listEl.appendChild(empty);
       return;
     }
@@ -571,17 +556,15 @@
     size.className = "nv-size";
     size.textContent = entry.contentLength ? fmtBytes(entry.contentLength) : "";
     top.appendChild(size);
-
     row.appendChild(top);
 
     const meta = document.createElement("div");
     meta.className = "nv-meta";
-    const metaBits = [];
-    if (entry.width && entry.height) metaBits.push(entry.width + "\u00d7" + entry.height);
-    if (entry.duration) metaBits.push(fmtDuration(entry.duration));
-    if (entry.kind === "hls" || entry.kind === "dash") metaBits.push("stream");
-    metaBits.push(entry.url.length > 90 ? entry.url.slice(0, 90) + "\u2026" : entry.url);
-    meta.textContent = metaBits.join("  \u00b7  ");
+    const bits = [];
+    if (entry.width && entry.height) bits.push(entry.width + "\u00d7" + entry.height);
+    if (entry.duration) bits.push(fmtDuration(entry.duration));
+    bits.push(entry.url);
+    meta.textContent = bits.join("  \u00b7  ");
     row.appendChild(meta);
 
     const actions = document.createElement("div");
@@ -589,6 +572,7 @@
 
     const go = document.createElement("button");
     go.className = "nv-go";
+    go.type = "button";
     go.textContent = "Download";
     go.addEventListener("click", function () {
       startDownload(entry);
@@ -597,6 +581,7 @@
 
     const copy = document.createElement("button");
     copy.className = "nv-copy";
+    copy.type = "button";
     copy.textContent = "Copy link";
     copy.addEventListener("click", function () {
       copyText(entry.url);
@@ -609,7 +594,6 @@
       select.className = "nv-select";
       actions.appendChild(select);
     }
-
     row.appendChild(actions);
 
     const status = document.createElement("div");
@@ -623,7 +607,7 @@
     prog.appendChild(bar);
     row.appendChild(prog);
 
-    rowRefs.set(entry.url, { row, status, prog, bar, go, select });
+    rowRefs.set(entry.url, { row: row, status: status, prog: prog, bar: bar, go: go, select: select });
 
     if (entry.kind === "hls") scheduleHlsInfo(entry);
     if (entry.kind === "dash") scheduleDashInfo(entry);
@@ -651,14 +635,7 @@
 
   function setBusy(url, isBusy) {
     const ref = rowRefs.get(url);
-    if (!ref) return;
-    ref.go.disabled = isBusy;
-    if (isBusy) {
-      if (busy.size === 0) { /* noop */ }
-      busy.add(url);
-    } else {
-      busy.delete(url);
-    }
+    if (ref) ref.go.disabled = isBusy;
   }
 
   /* -------------------------- HLS / DASH info --------------------- */
@@ -673,6 +650,13 @@
       hlsInfo.set(entry.url, res);
       applyHlsInfo(entry);
     });
+  }
+
+  function optionValue(value, label) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+    return opt;
   }
 
   function applyHlsInfo(entry) {
@@ -700,13 +684,6 @@
       if (res.encrypted) bits.push("encrypted");
       setStatus(entry.url, bits.join(" \u00b7 "));
     }
-  }
-
-  function optionValue(value, label) {
-    const opt = document.createElement("option");
-    opt.value = value;
-    opt.textContent = label;
-    return opt;
   }
 
   function scheduleDashInfo(entry) {
@@ -741,7 +718,7 @@
       ref.select.appendChild(opt);
     });
     const hasVideo = res.reps.some(function (r) { return r.type === "video"; });
-    setStatus(entry.url, hasVideo ? "Video + audio are separate tracks" : "Audio only");
+    setStatus(entry.url, hasVideo ? "Video and audio are separate tracks" : "Audio only");
   }
 
   /* -------------------------- fetching ---------------------------- */
@@ -886,7 +863,9 @@
     setStatus(entry.url, "Fetching file\u2026");
     const bytes = await fetchBytes(entry.url);
     const ext = entry.kind === "audio" ? "m4a" : "mp4";
-    const blob = new Blob([bytes], { type: entry.contentType || (entry.kind === "audio" ? "audio/mpeg" : "video/mp4") });
+    const blob = new Blob([bytes], {
+      type: entry.contentType || (entry.kind === "audio" ? "audio/mpeg" : "video/mp4"),
+    });
     saveBlob(blob, guessName(entry, ext));
   }
 
@@ -917,12 +896,13 @@
     dashInfo.set(entry.url, res);
     const rep = res.reps[index] || res.reps[0];
     if (!rep) throw new Error("No representation found");
-    if (rep.incomplete) {
-      throw new Error("Unsupported DASH layout - use Copy link");
-    }
+    if (rep.incomplete) throw new Error("Unsupported DASH layout - use Copy link");
     if (rep.single) {
       const bytes = await fetchBytes(rep.segments[0]);
-      saveBlob(new Blob([bytes], { type: rep.mime || "video/mp4" }), guessName(entry, rep.type === "audio" ? "m4a" : "mp4"));
+      saveBlob(
+        new Blob([bytes], { type: rep.mime || "video/mp4" }),
+        guessName(entry, rep.type === "audio" ? "m4a" : "mp4"),
+      );
       return;
     }
     const ext = rep.type === "audio" ? "m4a" : "mp4";
@@ -934,19 +914,15 @@
   /* -------------------------- entry polling ----------------------- */
 
   function refreshEntries(force) {
-    if (!host) return;
+    if (!host || contextDead) return;
     send("novaVideo:get").then(function (res) {
+      if (!host) return;
       const next = (res && res.ok && Array.isArray(res.entries)) ? res.entries : [];
       const changed = next.length !== entries.length ||
         next.some(function (entry, i) {
           return !entries[i] || entries[i].url !== entry.url;
         });
       entries = next;
-      const badge = btnEl.querySelector(".nv-badge");
-      if (badge) {
-        badge.hidden = entries.length < 2;
-        badge.textContent = String(entries.length);
-      }
       checkVisibility();
       if (panelOpen && (changed || force)) renderList();
     });
@@ -956,11 +932,8 @@
 
   function boot() {
     buildUi();
-    loadPrefs().then(function () {
-      checkVisibility();
-      refreshEntries(true);
-      setInterval(refreshEntries, 3000);
-    });
+    refreshEntries(true);
+    pollTimer = setInterval(refreshEntries, 3000);
   }
 
   if (document.readyState === "loading") {

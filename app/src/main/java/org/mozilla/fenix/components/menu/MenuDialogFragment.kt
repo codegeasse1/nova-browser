@@ -671,6 +671,25 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                     Unit
                                 }
 
+                                var novaVideoDownloaderEnabled by remember {
+                                    mutableStateOf(
+                                        org.mozilla.fenix.components.NovaVideoDownloader.isEnabled(requireContext()),
+                                    )
+                                }
+                                val onNovaVideoDownloaderToggle = {
+                                    val nextEnabled = !novaVideoDownloaderEnabled
+                                    org.mozilla.fenix.components.NovaVideoDownloader.setEnabled(
+                                        requireContext(),
+                                        nextEnabled,
+                                    )
+                                    novaVideoDownloaderEnabled = nextEnabled
+                                    org.mozilla.fenix.components.NovaVideoDownloader.apply(
+                                        requireComponents.core.engine,
+                                        nextEnabled,
+                                    )
+                                    Unit
+                                }
+
 
 
 
@@ -726,6 +745,8 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                     novaAllowBackgroundEnabled = novaAllowBackgroundEnabled,
                                     onNovaAllowBackgroundToggle = onNovaAllowBackgroundToggle,
                                     onNovaViewSource = onNovaViewSource,
+                                    novaVideoDownloaderEnabled = novaVideoDownloaderEnabled,
+                                    onNovaVideoDownloaderToggle = onNovaVideoDownloaderToggle,
                                     isAllWebExtensionsDisabled = isAllWebExtensionsDisabled,
                                     showIPProtection = components.ipProtection.store.state.isEligible,
                                     ipProtectionMenuState = ipProtectionMenuState,

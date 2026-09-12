@@ -148,6 +148,8 @@ fun MainMenu(
     novaAllowBackgroundEnabled: Boolean = false,
     onNovaAllowBackgroundToggle: () -> Unit = {},
     onNovaViewSource: () -> Unit = {},
+    novaVideoDownloaderEnabled: Boolean = true,
+    onNovaVideoDownloaderToggle: () -> Unit = {},
     canGoBack: Boolean,
     canGoForward: Boolean,
     scrollState: ScrollState,
@@ -342,6 +344,25 @@ fun MainMenu(
 
         if (accessPoint == MenuAccessPoint.Browser) {
             MenuGroup {
+                MenuItem(
+                    label = stringResource(id = R.string.browser_menu_video_downloader),
+                    description = stringResource(
+                        id = if (novaVideoDownloaderEnabled) {
+                            R.string.browser_menu_video_downloader_on
+                        } else {
+                            R.string.browser_menu_video_downloader_off
+                        },
+                    ),
+                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_download_24),
+                    onClick = onNovaVideoDownloaderToggle,
+                    afterContent = {
+                        androidx.compose.material3.Switch(
+                            checked = novaVideoDownloaderEnabled,
+                            onCheckedChange = { onNovaVideoDownloaderToggle() },
+                        )
+                    },
+                )
+
                 MenuItem(
                     label = stringResource(id = R.string.browser_menu_view_page_source),
                     description = stringResource(id = R.string.browser_menu_view_page_source_hint),
