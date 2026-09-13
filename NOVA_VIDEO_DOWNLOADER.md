@@ -2,13 +2,13 @@
 
 This branch (`feature/video-downloader`) adds a built-in **video/audio downloader**
 to Nova Browser. It is intentionally self-contained so it can be removed by simply
-deleting this branch — nothing on `main` or in the release workflow is touched.
+deleting this branch â nothing on `main` or in the release workflow is touched.
 
 ## What it does
 
 A third bundled WebExtension (`nova-video@nova.browser`) that:
 
-- watches network traffic and detects media the page loads — direct files
+- watches network traffic and detects media the page loads â direct files
   (`Content-Type: video/*` / `audio/*`, or a known extension) and streaming
   manifests (HLS `.m3u8`, DASH `.mpd`);
 - shows **one small (38px) download-arrow icon**, and only while the page actually
@@ -16,7 +16,10 @@ A third bundled WebExtension (`nova-video@nova.browser`) that:
   panel, no "Rescan" button, no "Hide here" dialog. The icon is draggable and hides
   itself while a video is fullscreen;
 - tapping the icon opens a compact picker (at most 40% of the screen height) listing
-  the detected items, with a 32px `X` to close it and tap-outside-to-close;
+  the detected items, with a 32px `X` to close it and tap-outside-to-close.
+  Closing the picker never cancels a download: a yt-dlp download keeps running in
+  the background (tracked natively, with a progress notification), and only the
+  row's **Cancel** button stops it;
 - for HLS it reads the master playlist and offers every quality;
 - for DASH it lists the video/audio representations;
 - downloads by assembling the bytes in the page and handing them to the normal
@@ -49,19 +52,19 @@ The whole feature can be switched off without uninstalling anything:
 
 | File | Change |
 | --- | --- |
-| `app/src/main/assets/extensions/nova-video/manifest.json` | new — MV2 manifest of the bundled extension (has the `nativeMessaging` permission) |
-| `app/src/main/assets/extensions/nova-video/background.js` | new — network sniffing, playlist/manifest parsing, binary fetch fallback, yt-dlp bridge |
-| `app/src/main/assets/extensions/nova-video/content.js` | new — icon-only UI + downloader picker (shadow DOM), incl. the yt-dlp site entry |
-| `app/src/main/java/org/mozilla/fenix/components/NovaVideoDownloader.kt` | new — preference + engine enable/disable helper |
-| `app/src/main/java/org/mozilla/fenix/components/NovaYtDlp.kt` | new — native yt-dlp bridge (init, downloads, progress, MediaStore publish) |
+| `app/src/main/assets/extensions/nova-video/manifest.json` | new â MV2 manifest of the bundled extension (has the `nativeMessaging` **and** `geckoViewAddons` permissions) |
+| `app/src/main/assets/extensions/nova-video/background.js` | new â network sniffing, playlist/manifest parsing, binary fetch fallback, yt-dlp bridge |
+| `app/src/main/assets/extensions/nova-video/content.js` | new â icon-only UI + downloader picker (shadow DOM), incl. the yt-dlp site entry |
+| `app/src/main/java/org/mozilla/fenix/components/NovaVideoDownloader.kt` | new â preference + engine enable/disable helper |
+| `app/src/main/java/org/mozilla/fenix/components/NovaYtDlp.kt` | new â native yt-dlp bridge (init, downloads, progress, MediaStore publish) |
 | `app/build.gradle` | adds the `youtubedl-android` `library` + `ffmpeg` dependencies |
 | `app/proguard-rules.pro` | keep/dontwarn rules for youtubedl-android, Jackson and commons-io |
 | `app/src/main/java/org/mozilla/fenix/FenixApplication.kt` | `NOVA_VIDEO_ADDON_ID` constant + `installBuiltInWebExtension(...)` call + re-applies the stored on/off preference |
 | `app/src/main/java/org/mozilla/fenix/components/menu/compose/MainMenu.kt` | new "Video Downloader" menu item with a switch |
 | `app/src/main/java/org/mozilla/fenix/components/menu/MenuDialogFragment.kt` | wires the switch state + toggles the extension |
 | `app/src/main/res/values/strings.xml` | `browser_menu_video_downloader` (+ `_on` / `_off`) strings |
-| `.github/workflows/build-video-downloader.yml` | new — builds and signs the APK and uploads it as a **workflow artifact only** (no GitHub Release) |
-| `NOVA_VIDEO_DOWNLOADER.md` | new — this file |
+| `.github/workflows/build-video-downloader.yml` | new â builds and signs the APK and uploads it as a **workflow artifact only** (no GitHub Release) |
+| `NOVA_VIDEO_DOWNLOADER.md` | new â this file |
 
 ## How to build / test
 
@@ -111,13 +114,39 @@ CPython and ffmpeg. `NovaYtDlp`:
 - registers a GeckoView background message handler under the name
   **`novaVideoYtdlp`** (via `WebExtension.registerBackgroundMessageHandler`), so
   the extension's background script can call
-  `browser.runtime.sendNativeMessage("novaVideoYtdlp", …)`;
-- supports `action`s `ping` / `start` / `status` / `cancel`. `start` returns a job
-  id immediately and runs the download on a worker thread; the content script
-  polls `status` for progress;
+  `browser.runtime.sendNativeMessage("novaVideoYtdlp", â¦)`;
+- supports `action`s `ping` / `start` / `status` / `cancel` / `list`. `start`
+  returns a job id immediately and runs the download on a worker thread; the
+  content script polls `status` for progress and uses `list` to re-attach to a
+  running download after a page reload or after the picker was closed;
 - merges video+audio into MP4 with ffmpeg (or extracts MP3 with the "Audio only"
   option) and then publishes the finished file into the public **Downloads**
   collection via MediaStore (on API < 29 it copies to the public Downloads dir
-  and runs a media scan).
+  and runs a media scan). For video it prefers **H.264 + AAC in an MP4**:
+  `-f bv*[vcodec^=avc1]+ba[acodec^=mp4a]/b[vcodec^=avc1][acodec^=mp4a]/b[ext=mp4]/b`,
+  `-S vcodec:h264,acodec:aac,res:1080`, `--merge-output-format mp4` and
+  `--postprocessor-args Merger:-movflags +faststart`. This matters because
+  Android's own gallery / `MediaExtractor` cannot decode VP9/AV1-with-Opus MP4s:
+  those files play fine in VLC / MX Player (which bundle their own codecs) but
+  show up as "broken"/audio-only in the stock gallery.
 
 This is a sideload-only build, so Play Store policy does not apply.
+
+## Gotchas (why the code looks the way it does)
+
+- **`geckoViewAddons` is mandatory.** `manifest.json` must list it alongside
+  `nativeMessaging`, otherwise GeckoView's `ExtensionParent.openNative` takes the
+  desktop native-messaging path and `sendNativeMessage` fails with a generic
+  "An unexpected error occurred".
+- **Register the bridge on the main thread.** `WebExtension.registerBackgroundMessageHandler`
+  ends up in `setMessageDelegate`, which is `@UiThread`. If it throws, the
+  exception is swallowed and the extension's `sendNativeMessage` promise never
+  settles (the controller queues messages for a name with no delegate). `NovaYtDlp`
+  therefore posts registration to the main `Looper` and retries.
+- **Never let the UI depend on one native reply.** The content script races every
+  native call against a timeout and falls back to the native `list` action, so a
+  slow/hung bridge can't leave a row stuck on "Starting yt-dlp...".
+- **Closing the UI never cancels.** Download state lives natively; the content
+  script polls it on its own timer (`pumpYtDlp`) which runs whether or not the
+  picker is open, and re-attaches via `list` after a reload. Only the row's Cancel
+  button calls the native `cancel` action.

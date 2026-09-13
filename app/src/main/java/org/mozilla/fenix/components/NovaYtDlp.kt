@@ -13,6 +13,8 @@ import android.content.Context
 import android.media.MediaScannerConnection
 import android.os.Build
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -55,6 +57,13 @@ object NovaYtDlp {
     private const val PREFERENCES_NAME = "NovaVideoDownloader"
     private const val KEY_LAST_UPDATE = "novaYtDlpLastUpdate"
     private const val UPDATE_INTERVAL_MS = 7L * 24L * 60L * 60L * 1000L
+    private const val JOB_TTL_MS = 10L * 60L * 1000L
+
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    /** Matches the size + speed chunk of a yt-dlp progress line. */
+    private val sizeSpeed = Regex("""of\s+~?\s*([\d.]+\s*[KMGT]?i?B)(?:\s+at\s+([^\s]+/s))?""")
+    private val etaPattern = Regex("""ETA\s+(\d+(?::\d+)+|\d+)""")
 
     private val worker = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "nova-ytdlp")
@@ -72,7 +81,7 @@ object NovaYtDlp {
     @Volatile
     private var lastError: String? = null
 
-    private class DownloadJob(val notificationId: Int) {
+    private class DownloadJob(val id: String, val notificationId: Int) {
         @Volatile var state: String = "running"
         @Volatile var progress: Float = 0f
         @Volatile var message: String = ""
@@ -96,15 +105,31 @@ object NovaYtDlp {
     /**
      * Hooks the bridge up to the installed extension. Idempotent - the engine
      * only allows one handler per name, and install is re-run on every launch.
+     *
+     * `setMessageDelegate` has to run on the UI thread and the engine may still
+     * be warming up while the install callback fires. If registration silently
+     * failed, the extension's `runtime.sendNativeMessage` promise would never
+     * settle (the engine just queues messages for a name with no delegate), so
+     * retry on the main thread instead of giving up on the first failure.
      */
     fun registerHandler(extension: WebExtension) {
         if (!registered.compareAndSet(false, true)) return
-        try {
-            extension.registerBackgroundMessageHandler(NATIVE_APP, handler)
-            appContext?.let { NovaDebugLog.log(it, "Nova yt-dlp bridge registered") }
-        } catch (e: Throwable) {
-            registered.set(false)
-            appContext?.let { NovaDebugLog.log(it, "Nova yt-dlp bridge registration failed: ${e.message}") }
+        registerOnMain(extension, 0)
+    }
+
+    private fun registerOnMain(extension: WebExtension, attempt: Int) {
+        mainHandler.post {
+            try {
+                extension.registerBackgroundMessageHandler(NATIVE_APP, handler)
+                appContext?.let { NovaDebugLog.log(it, "Nova yt-dlp bridge registered") }
+            } catch (e: Throwable) {
+                if (attempt < 8) {
+                    mainHandler.postDelayed({ registerOnMain(extension, attempt + 1) }, 400L * (attempt + 1))
+                } else {
+                    registered.set(false)
+                    appContext?.let { NovaDebugLog.log(it, "Nova yt-dlp bridge registration failed: ${e.message}") }
+                }
+            }
         }
     }
 
@@ -150,6 +175,7 @@ object NovaYtDlp {
                     "start" -> start(json)
                     "status" -> status(json)
                     "cancel" -> cancel(json)
+                    "list" -> list()
                     else -> error("Unknown action")
                 }
             } catch (e: Throwable) {
@@ -183,7 +209,7 @@ object NovaYtDlp {
         val ctx = appContext ?: return error("Not ready")
         val audioOnly = json.optBoolean("audioOnly", false)
         val id = UUID.randomUUID().toString()
-        val job = DownloadJob(notificationIds.incrementAndGet())
+        val job = DownloadJob(id, notificationIds.incrementAndGet())
         job.message = "Starting\u2026"
         jobs[id] = job
         worker.execute { runJob(ctx, id, job, url, audioOnly) }
@@ -216,10 +242,36 @@ object NovaYtDlp {
         return JSONObject().put("ok", true)
     }
 
+    /**
+     * Every job the bridge currently knows about. The extension uses this to
+     * re-attach to downloads after its UI was closed/reopened (the WebExtension
+     * context can be torn down while a native download keeps running).
+     */
+    private fun list(): JSONObject {
+        val array = org.json.JSONArray()
+        for (job in jobs.values) {
+            val item = JSONObject()
+                .put("id", job.id)
+                .put("state", job.state)
+                .put("progress", job.progress.toDouble())
+                .put("message", job.message)
+            if (job.filename.isNotEmpty()) item.put("filename", job.filename)
+            job.error?.let { item.put("error", it) }
+            array.put(item)
+        }
+        return JSONObject().put("ok", true).put("jobs", array)
+    }
+
+    /** Drops a finished job after a grace period so `status`/`list` stay bounded. */
+    private fun scheduleCleanup(job: DownloadJob) {
+        mainHandler.postDelayed({ jobs.remove(job.id) }, JOB_TTL_MS)
+    }
+
     private fun runJob(ctx: Context, id: String, job: DownloadJob, url: String, audioOnly: Boolean) {
         if (!ready) {
             job.state = "error"
             job.error = lastError ?: "The downloader is still starting up. Please try again in a moment."
+            scheduleCleanup(job)
             return
         }
         val baseDir = ctx.getExternalFilesDir(null) ?: ctx.filesDir
@@ -235,19 +287,30 @@ object NovaYtDlp {
             request.addOption("--newline")
             request.addOption("--restrict-filenames")
             if (audioOnly) {
-                request.addOption("-f", "bestaudio/best")
+                request.addOption("-f", "bestaudio[ext=m4a]/bestaudio/best")
                 request.addOption("-x")
                 request.addOption("--audio-format", "mp3")
                 request.addOption("--audio-quality", "0")
             } else {
-                request.addOption("-f", "bestvideo*+bestaudio/best")
+                /* Prefer H.264 + AAC inside an MP4 container. Android's own
+                 * gallery/player (MediaExtractor) can't decode VP9/AV1-with-Opus
+                 * MP4s, which is why those files look "broken"/audio-only there
+                 * while VLC and MX Player (which bundle their own codecs) play
+                 * them fine. The fallback chain still finds *something* for
+                 * sites that only offer other codecs. */
+                request.addOption(
+                    "-f",
+                    "bv*[vcodec^=avc1]+ba[acodec^=mp4a]/b[vcodec^=avc1][acodec^=mp4a]/b[ext=mp4]/b",
+                )
+                request.addOption("-S", "vcodec:h264,acodec:aac,res:1080")
                 request.addOption("--merge-output-format", "mp4")
+                request.addOption("--postprocessor-args", "Merger:-movflags +faststart")
             }
             request.addOption("-o", File(outDir, "%(title).120B [%(id)s].%(ext)s").absolutePath)
 
             val processId = "nova-ytdlp-$id"
             job.processId = processId
-            YoutubeDL.getInstance().execute(request, processId) { progress, eta, _ ->
+            YoutubeDL.getInstance().execute(request, processId) { progress, eta, line ->
                 if (job.canceled) return@execute
                 val ratio = when {
                     progress < 0f -> 0f
@@ -255,12 +318,7 @@ object NovaYtDlp {
                     else -> progress
                 }
                 job.progress = ratio
-                val percent = (ratio * 100).toInt()
-                job.message = if (eta > 0) {
-                    "Downloading $percent% \u00b7 ${eta}s left"
-                } else {
-                    "Downloading $percent%"
-                }
+                job.message = describeProgress(ratio, eta, line) ?: job.message
                 publishProgress(ctx, job, job.message)
             }
             job.processId = null
@@ -270,6 +328,7 @@ object NovaYtDlp {
                 job.message = "Canceled"
                 cancelNotification(ctx, job)
                 cleanup(outDir)
+                scheduleCleanup(job)
                 return
             }
 
@@ -281,6 +340,7 @@ object NovaYtDlp {
                 job.error = "The download finished but produced no file."
                 cancelNotification(ctx, job)
                 cleanup(outDir)
+                scheduleCleanup(job)
                 return
             }
 
@@ -297,6 +357,7 @@ object NovaYtDlp {
             }
             finishNotification(ctx, job)
             cleanup(outDir)
+            scheduleCleanup(job)
         } catch (e: Throwable) {
             job.processId = null
             if (job.canceled) {
@@ -309,7 +370,57 @@ object NovaYtDlp {
                 NovaDebugLog.log(ctx, "Nova yt-dlp download failed: ${e.message}")
             }
             cleanup(outDir)
+            scheduleCleanup(job)
         }
+    }
+
+    /**
+     * Turns a yt-dlp progress line into a human message.
+     */
+    private fun describeProgress(ratio: Float, eta: Long, line: String): String? {
+        val trimmed = line.trim()
+        if (trimmed.isEmpty()) {
+            return if (ratio > 0f) "Downloading ${(ratio * 100).toInt()}%" else null
+        }
+        if (ratio <= 0f && !trimmed.startsWith("[download]")) {
+            /* Post-processing / merge / extract-audio / remux lines. */
+            val tag = trimmed.substringAfter('[', "").substringBefore(']')
+            return when {
+                tag.startsWith("Merger") -> "Merging video and audio\u2026"
+                tag.startsWith("ExtractAudio") -> "Extracting audio\u2026"
+                tag.startsWith("VideoConvertor") || tag.startsWith("VideoRemuxer") -> "Converting\u2026"
+                tag.startsWith("Metadata") -> "Writing metadata\u2026"
+                tag.startsWith("Fixup") -> "Finalising\u2026"
+                else -> null
+            }
+        }
+        val parts = mutableListOf("Downloading ${(ratio * 100).toInt()}%")
+        sizeSpeed.find(trimmed)?.let { match ->
+            match.groupValues[1].takeIf { it.isNotEmpty() }?.let { parts.add(it.trim()) }
+            match.groupValues[2].takeIf { it.isNotEmpty() }?.let { parts.add(it.trim()) }
+        }
+        val seconds = if (eta > 0) {
+            eta
+        } else {
+            etaPattern.find(trimmed)?.groupValues?.get(1)?.let { parseEta(it) } ?: 0L
+        }
+        if (seconds > 0) parts.add("ETA ${formatEta(seconds)}")
+        return parts.joinToString(" \u00b7 ")
+    }
+
+    private fun parseEta(value: String): Long {
+        val bits = value.split(":").mapNotNull { it.trim().toLongOrNull() }
+        if (bits.isEmpty()) return 0L
+        var seconds = 0L
+        for (bit in bits) seconds = seconds * 60 + bit
+        return seconds
+    }
+
+    private fun formatEta(seconds: Long): String {
+        if (seconds < 60) return "${seconds}s"
+        val minutes = seconds / 60
+        val rest = seconds % 60
+        return if (minutes < 60) "${minutes}m ${rest}s" else "${minutes / 60}h ${minutes % 60}m"
     }
 
     private fun friendly(e: Throwable): String {

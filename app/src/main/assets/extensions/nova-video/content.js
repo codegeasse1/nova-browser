@@ -139,6 +139,8 @@
     btnEl = null;
     panelEl = null;
     listEl = null;
+    if (ytdlpPump) clearInterval(ytdlpPump);
+    ytdlpPump = null;
     ytdlpJobs.clear();
   }
 
@@ -453,8 +455,15 @@
     positionPanel();
     requestAnimationFrame(positionPanel);
     refreshEntries(true);
+    restoreYtdlpJobs();
   }
 
+  /*
+   * Closing the picker only hides the UI. It deliberately does NOT touch
+   * ytdlpJobs or the native bridge: a download keeps running in the
+   * background and keeps being tracked by the pump. Only the row's "Cancel"
+   * button (cancelYtDlp) stops a download.
+   */
   function closePanel() {
     panelOpen = false;
     if (panelEl) panelEl.hidden = true;
@@ -685,10 +694,16 @@
 
     rowRefs.set(entry.url, { row: row, status: status, prog: prog, bar: bar, go: go, select: select, cancel: cancelBtn });
 
-    if (entry.kind === "ytdlp" && ytdlpJobs.has(entry.url)) {
+    const activeJob = entry.kind === "ytdlp" ? ytdlpJobs.get(entry.url) : null;
+    if (activeJob) {
       go.disabled = true;
       if (cancelBtn) cancelBtn.hidden = false;
-      status.textContent = "Downloading\u2026";
+      status.textContent = activeJob.message || "Downloading\u2026";
+      if (activeJob.state === "error") status.className = "nv-status nv-err";
+      if (typeof activeJob.progress === "number" && activeJob.progress > 0) {
+        prog.hidden = false;
+        bar.style.width = Math.max(0, Math.min(100, Math.round(activeJob.progress * 100))) + "%";
+      }
     }
     if (entry.kind === "hls") scheduleHlsInfo(entry);
     if (entry.kind === "dash") scheduleDashInfo(entry);
@@ -994,74 +1009,239 @@
 
   /* -------------------------- yt-dlp (native) --------------------- */
 
+  const NATIVE_TIMEOUT_MS = 6000;
+  let ytdlpPump = null;
+
+  /*
+   * `send` never resolves if the native bridge hangs (e.g. the Kotlin side is
+   * still registering). Race every yt-dlp call against a timeout so the row can
+   * never sit on "Starting yt-dlp..." forever.
+   */
+  function sendYtDlp(extra) {
+    return Promise.race([
+      send("novaVideo:ytdlp", extra),
+      new Promise(function (resolve) {
+        setTimeout(function () {
+          resolve({ ok: false, timeout: true, error: "The downloader took too long to respond." });
+        }, NATIVE_TIMEOUT_MS);
+      }),
+    ]).then(function (res) {
+      return res || { ok: false, error: "no response" };
+    });
+  }
+
+  function activeYtdlpJobs() {
+    const out = [];
+    ytdlpJobs.forEach(function (job) {
+      if (job && job.id) out.push(job);
+    });
+    return out;
+  }
+
+  function applyJobToRow(url, job) {
+    const ref = rowRefs.get(url);
+    if (!ref) return;
+    ref.go.disabled = true;
+    if (ref.cancel) ref.cancel.hidden = false;
+    if (typeof job.progress === "number" && job.progress > 0) setProgress(url, job.progress);
+    setStatus(url, job.message || "Downloading\u2026", job.state === "error");
+  }
+
+  function finishYtDlp(url) {
+    ytdlpJobs.delete(url);
+    const ref = rowRefs.get(url);
+    if (ref) {
+      ref.go.disabled = false;
+      if (ref.cancel) ref.cancel.hidden = true;
+    }
+    stopPumpIfIdle();
+  }
+
+  function startPump() {
+    if (ytdlpPump) return;
+    ytdlpPump = setInterval(pumpYtDlp, 1000);
+    pumpYtDlp();
+  }
+
+  function stopPumpIfIdle() {
+    if (ytdlpPump && ytdlpJobs.size === 0) {
+      clearInterval(ytdlpPump);
+      ytdlpPump = null;
+    }
+  }
+
+  /*
+   * Polls the native bridge on its own timer - NOT tied to the panel being
+   * open. Closing the picker (or the whole tab) must not cancel anything, and
+   * this is also what keeps the progress text updating while it is open.
+   */
+  function pumpYtDlp() {
+    if (contextDead) {
+      stopPumpIfIdle();
+      return;
+    }
+    const jobs = activeYtdlpJobs();
+    if (!jobs.length) {
+      stopPumpIfIdle();
+      return;
+    }
+    for (const job of jobs) {
+      send("novaVideo:ytdlp", { action: "status", id: job.id }).then(function (res) {
+        const current = ytdlpJobs.get(job.url);
+        if (!current || current.id !== job.id) return;
+        if (!res) return;
+        if (!res.ok) {
+          current.state = "error";
+          current.message = res.error || "Lost track of the download";
+          applyJobToRow(job.url, current);
+          finishYtDlp(job.url);
+          return;
+        }
+        current.state = res.state || "running";
+        if (typeof res.progress === "number") current.progress = res.progress;
+        if (res.message) current.message = res.message;
+        if (res.filename) current.filename = res.filename;
+        if (res.error) current.error = res.error;
+        if (current.state === "running") {
+          applyJobToRow(job.url, current);
+          return;
+        }
+        if (current.state === "done") {
+          setProgress(job.url, 1);
+          current.message = res.message || ("Saved " + (res.filename || ""));
+          applyJobToRow(job.url, current);
+          toast("Download complete: " + (res.filename || ""));
+          finishYtDlp(job.url);
+          return;
+        }
+        if (current.state === "canceled") {
+          setProgress(job.url, null);
+          current.message = "Canceled";
+          applyJobToRow(job.url, current);
+          finishYtDlp(job.url);
+          return;
+        }
+        current.message = res.error || current.message || "Download failed";
+        applyJobToRow(job.url, current);
+        finishYtDlp(job.url);
+      });
+    }
+  }
+
+  /*
+   * Re-attach to downloads the native bridge is still running. Needed after a
+   * page reload, and when the picker is reopened: the job lives in Kotlin, not
+   * in this frame.
+   */
+  function restoreYtdlpJobs() {
+    if (contextDead) return;
+    sendYtDlp({ action: "list" }).then(function (res) {
+      if (!res || !res.ok || !Array.isArray(res.jobs)) return;
+      let added = false;
+      for (const job of res.jobs) {
+        if (!job || !job.id || !job.url || ytdlpJobs.has(job.url)) continue;
+        ytdlpJobs.set(job.url, {
+          id: job.id,
+          url: job.url,
+          state: job.state || "running",
+          progress: typeof job.progress === "number" ? job.progress : 0,
+          message: job.message || "Downloading\u2026",
+          filename: job.filename || "",
+          error: job.error || null,
+          cancelRequested: false,
+        });
+        added = true;
+      }
+      if (added) {
+        startPump();
+        if (panelOpen) renderList();
+      }
+    });
+  }
+
   async function startYtDlp(entry, audioOnly) {
     const ref = rowRefs.get(entry.url);
     setBusy(entry.url, true);
     setProgress(entry.url, null);
     setStatus(entry.url, "Starting yt-dlp\u2026");
     if (ref && ref.cancel) ref.cancel.hidden = false;
-    const res = await send("novaVideo:ytdlp", {
-      action: "start",
+    const job = {
+      id: null,
       url: entry.url,
-      audioOnly: !!audioOnly,
-    });
-    if (!res || !res.ok || !res.id) {
-      setBusy(entry.url, false);
-      if (ref && ref.cancel) ref.cancel.hidden = true;
-      setStatus(entry.url, (res && res.error) || "yt-dlp is not available on this device.", true);
+      state: "starting",
+      progress: 0,
+      message: "Starting yt-dlp\u2026",
+      filename: "",
+      error: null,
+      cancelRequested: false,
+    };
+    ytdlpJobs.set(entry.url, job);
+    startPump();
+
+    const res = await sendYtDlp({ action: "start", url: entry.url, audioOnly: !!audioOnly });
+    if (res && res.ok && res.id) {
+      job.id = res.id;
+      job.state = res.state || "running";
+      if (typeof res.progress === "number") job.progress = res.progress;
+      if (res.message) job.message = res.message;
+      applyJobToRow(entry.url, job);
+      if (job.cancelRequested) send("novaVideo:ytdlp", { action: "cancel", id: job.id });
       return;
     }
-    ytdlpJobs.set(entry.url, res.id);
-    pollYtDlp(entry);
-  }
 
-  function pollYtDlp(entry) {
-    const id = ytdlpJobs.get(entry.url);
-    if (!id || !host || contextDead) return;
-    send("novaVideo:ytdlp", { action: "status", id: id }).then(function (res) {
-      if (ytdlpJobs.get(entry.url) !== id) return;
-      if (!res || !res.ok) {
-        setStatus(entry.url, "yt-dlp error: " + ((res && res.error) || "lost track of the download"), true);
-        finishYtDlp(entry);
-        return;
+    if (res && res.timeout) {
+      /* The bridge may have started the job anyway - the "start" reply can be
+       * slow on the very first use (yt-dlp is being extracted). */
+      setStatus(entry.url, "Waiting for the downloader\u2026");
+      for (let attempt = 0; attempt < 4; attempt++) {
+        await new Promise(function (resolve) { setTimeout(resolve, 1500); });
+        const recovered = await recoverYtdlpJob(entry.url);
+        if (recovered) return;
       }
-      if (res.state === "running") {
-        if (typeof res.progress === "number" && res.progress > 0) setProgress(entry.url, res.progress);
-        setStatus(entry.url, res.message || "Downloading\u2026");
-        setTimeout(function () { pollYtDlp(entry); }, 1200);
-        return;
-      }
-      if (res.state === "done") {
-        setProgress(entry.url, 1);
-        setStatus(entry.url, res.message || ("Saved " + (res.filename || "")));
-        toast("Download complete: " + (res.filename || ""));
-        finishYtDlp(entry);
-        return;
-      }
-      if (res.state === "canceled") {
-        setProgress(entry.url, null);
-        setStatus(entry.url, "Canceled");
-        finishYtDlp(entry);
-        return;
-      }
-      setStatus(entry.url, "yt-dlp error: " + (res.error || "download failed"), true);
-      finishYtDlp(entry);
-    });
-  }
+      ytdlpJobs.delete(entry.url);
+      stopPumpIfIdle();
+      setBusy(entry.url, false);
+      if (ref && ref.cancel) ref.cancel.hidden = true;
+      setStatus(entry.url, res.error, true);
+      return;
+    }
 
-  function finishYtDlp(entry) {
     ytdlpJobs.delete(entry.url);
-    const ref = rowRefs.get(entry.url);
-    if (!ref) return;
-    ref.go.disabled = false;
-    if (ref.cancel) ref.cancel.hidden = true;
+    stopPumpIfIdle();
+    setBusy(entry.url, false);
+    if (ref && ref.cancel) ref.cancel.hidden = true;
+    setStatus(entry.url, (res && res.error) || "yt-dlp is not available on this device.", true);
+  }
+
+  async function recoverYtdlpJob(url) {
+    const res = await sendYtDlp({ action: "list" });
+    if (!res || !res.ok || !Array.isArray(res.jobs)) return false;
+    const match = res.jobs.find(function (job) { return job && job.url === url && job.id; });
+    if (!match) return false;
+    const job = ytdlpJobs.get(url) || {
+      url: url, state: "running", progress: 0, message: "Downloading\u2026",
+      filename: "", error: null, cancelRequested: false,
+    };
+    job.id = match.id;
+    job.state = match.state || "running";
+    if (typeof match.progress === "number") job.progress = match.progress;
+    if (match.message) job.message = match.message;
+    ytdlpJobs.set(url, job);
+    startPump();
+    applyJobToRow(url, job);
+    return true;
   }
 
   function cancelYtDlp(entry) {
-    const id = ytdlpJobs.get(entry.url);
-    if (!id) return;
+    const job = ytdlpJobs.get(entry.url);
+    if (!job) return;
     setStatus(entry.url, "Canceling\u2026");
-    send("novaVideo:ytdlp", { action: "cancel", id: id });
+    if (!job.id) {
+      job.cancelRequested = true;
+      return;
+    }
+    job.cancelRequested = true;
+    send("novaVideo:ytdlp", { action: "cancel", id: job.id });
   }
 
   /* -------------------------- entry polling ----------------------- */
@@ -1087,6 +1267,7 @@
   function boot() {
     buildUi();
     refreshEntries(true);
+    restoreYtdlpJobs();
     pollTimer = setInterval(refreshEntries, 1200);
   }
 

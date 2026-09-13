@@ -624,24 +624,79 @@ function collectEntries(tabId, pageUrl, pageTitle) {
   return out;
 }
 
-function callNativeYtdlp(message) {
+/*
+ * Native jobs are the only thing here that outlives the tab/panel: the bridge
+ * keeps downloading after the picker is closed. Remember which URL each job id
+ * belongs to so a fresh page load can re-attach to a download in progress.
+ */
+const ytdlpJobs = new Map();
+const YTDLP_JOB_TTL_MS = 6 * 60 * 60 * 1000;
+
+function pruneYtdlpJobs() {
+  const cutoff = Date.now() - YTDLP_JOB_TTL_MS;
+  ytdlpJobs.forEach(function (info, id) {
+    if (!info || info.startedAt < cutoff) ytdlpJobs.delete(id);
+  });
+}
+
+/* GeckoView may hand the reply back as an object or as a JSON string. */
+function normaliseNative(res) {
+  if (typeof res === "string") {
+    try {
+      return JSON.parse(res);
+    } catch (e) {
+      return { ok: false, error: res || "bad response" };
+    }
+  }
+  return res || { ok: false, error: "no response" };
+}
+
+async function callNativeYtdlp(message, tabId) {
+  const action = message.action || "start";
   const payload = {
-    action: message.action || "start",
+    action: action,
     url: message.url || "",
     audioOnly: !!message.audioOnly,
   };
   if (message.id) payload.id = message.id;
   if (!browser.runtime || typeof browser.runtime.sendNativeMessage !== "function") {
-    return Promise.resolve({ ok: false, error: "This build has no yt-dlp bridge." });
+    return { ok: false, error: "This build has no yt-dlp bridge." };
   }
-  return browser.runtime
-    .sendNativeMessage(NATIVE_APP, payload)
-    .then(function (res) {
-      return res || { ok: false, error: "no response" };
-    })
-    .catch(function (e) {
-      return { ok: false, error: String((e && e.message) || e) };
+  let res;
+  try {
+    res = normaliseNative(await browser.runtime.sendNativeMessage(NATIVE_APP, payload));
+  } catch (e) {
+    return { ok: false, error: String((e && e.message) || e) };
+  }
+  if (res.ok && action === "start" && res.id) {
+    pruneYtdlpJobs();
+    ytdlpJobs.set(res.id, {
+      url: payload.url,
+      tabId: typeof tabId === "number" ? tabId : -1,
+      audioOnly: payload.audioOnly,
+      startedAt: Date.now(),
     });
+  }
+  return res;
+}
+
+/* Native `list` + the URL/tab we recorded for each id. */
+async function listNativeYtdlp() {
+  const res = await callNativeYtdlp({ action: "list" });
+  if (res && res.ok && Array.isArray(res.jobs)) {
+    pruneYtdlpJobs();
+    res.jobs = res.jobs.map(function (job) {
+      const info = job && job.id ? ytdlpJobs.get(job.id) : null;
+      if (info) {
+        job.url = info.url;
+        job.tabId = info.tabId;
+        job.audioOnly = info.audioOnly;
+        job.startedAt = info.startedAt;
+      }
+      return job;
+    });
+  }
+  return res;
 }
 
 browser.runtime.onMessage.addListener(function (message, sender) {
@@ -656,7 +711,10 @@ browser.runtime.onMessage.addListener(function (message, sender) {
       });
     }
     case "novaVideo:ytdlp": {
-      return callNativeYtdlp(message);
+      if ((message.action || "start") === "list") {
+        return listNativeYtdlp();
+      }
+      return callNativeYtdlp(message, tabId);
     }
     case "novaVideo:resolveHls": {
       return resolveHls(message.url);
