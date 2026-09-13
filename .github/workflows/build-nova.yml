@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version_name:
-        description: 'Version name (e.g. 1.5.0)'
+        description: 'Version name (e.g. 1.4.5)'
         required: true
-        default: '1.4.4'
+        default: '1.4.5'
   push:
     branches: [ main ]
     paths-ignore:
@@ -43,10 +43,16 @@ jobs:
           cd "${{ github.workspace }}"
           ./automation/nova/install-sdk.sh || true
 
-      - name: Create version name
+      - name: Resolve version name
         run: |
-          VERSION_NAME="${{ github.event.inputs.version_name || '1.4.4' }}"
-          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          if [ -n "${{ github.event.inputs.version_name }}" ]; then
+            VERSION_NAME="${{ github.event.inputs.version_name }}"
+          elif [ -f VERSION ]; then
+            VERSION_NAME="$(tr -d '[:space:]' < VERSION)"
+          else
+            VERSION_NAME="1.4.5"
+          fi
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
           echo "Building $VERSION_NAME"
 
       - name: Build forkRelease variant
@@ -61,8 +67,7 @@ jobs:
       - name: Setup build tool version variable
         run: |
           BUILD_TOOL_VERSION=$(ls $HOME/android-sdk/android-sdk-linux/build-tools/ | tail -n 1)
-          echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
-          echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
+          echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> "$GITHUB_ENV"
 
       - name: Sign APK with release key (from repo secrets)
         env:
@@ -85,15 +90,45 @@ jobs:
           ls -alh nova-browser.apk
           $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/aapt dump badging nova-browser.apk | head -3
 
-      - name: Upload APK to release
+      - name: Publish release (one release per version; never deletes older releases)
         timeout-minutes: 20
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: codegeasse1/nova-browser
         run: |
-          cp nova-browser.apk "Nova Browser ${VERSION_NAME}.apk"
-          gh release edit v3.0 --title "Nova Browser ${VERSION_NAME}" --repo codegeasse1/nova-browser 2>/dev/null || true
-          gh release view v3.0 --json assets --jq '.assets[].name' --repo codegeasse1/nova-browser 2>/dev/null | while read a; do gh release delete-asset v3.0 "$a" --yes --repo codegeasse1/nova-browser 2>/dev/null; done
-          gh release upload v3.0 "Nova Browser ${VERSION_NAME}.apk" --clobber --repo codegeasse1/nova-browser
+          set -e
+          TAG="v${VERSION_NAME}"
+          ASSET="Nova.Browser.${VERSION_NAME}.apk"
+          cp nova-browser.apk "$ASSET"
+
+          NOTES="release-notes-${VERSION_NAME}.md"
+          : > "$NOTES"
+          if [ -f CHANGELOG.md ]; then
+            awk -v ver="$VERSION_NAME" '
+              $0 ~ "^##[[:space:]]+\\[?" ver "\\]?" {flag=1; next}
+              /^##[[:space:]]/ {flag=0}
+              flag {print}
+            ' CHANGELOG.md >> "$NOTES"
+          fi
+          if [ ! -s "$NOTES" ]; then
+            printf 'Nova Browser %s\n' "$VERSION_NAME" > "$NOTES"
+          fi
+
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Release $TAG already exists - updating its notes and its own asset only."
+            gh release edit "$TAG" --title "Nova Browser ${VERSION_NAME}" --notes-file "$NOTES" --repo "$REPO"
+            gh release upload "$TAG" "$ASSET" --clobber --repo "$REPO"
+          else
+            echo "Creating new release $TAG (older releases are left untouched)."
+            gh release create "$TAG" "$ASSET" \
+              --title "Nova Browser ${VERSION_NAME}" \
+              --target main \
+              --notes-file "$NOTES" \
+              --repo "$REPO"
+          fi
+
+          echo "Current releases:"
+          gh release list --repo "$REPO"
 
       - name: Upload APK as artifact (backup)
         uses: actions/upload-artifact@v4

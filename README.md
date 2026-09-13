@@ -9,6 +9,7 @@ This repository contains the complete, self-contained source: Firefox for Androi
 - **Nova Ad Block** (built-in filter list)
 - **Ad-free YouTube** — video ads on YouTube are blocked out of the box
 - **Background playback support** — keep audio/video playing when you switch apps or lock the screen
+- **Built-in video downloader** — save videos (YouTube and other supported sites) straight from the page, with live progress; downloads are saved as MP4 to your device's Downloads folder
 - **Nova options** (Settings → Nova Browser):
   - **Clear tabs on close** — close all tabs when Nova Browser is removed from the app switcher; this also runs the built-in "Delete browsing data on quit" cleanup, so you get the same wipe as "Quit Nova Browser" without tapping Quit
 
@@ -32,7 +33,7 @@ This is a new app (package `com.nova.browser`). If you had an older Nova build i
 
 ```bash
 ./automation/nova/install-sdk.sh          # one-time SDK/NDK setup
-./gradlew app:assembleForkRelease -PversionName=1.4.4
+./gradlew app:assembleForkRelease -PversionName=1.4.5
 ```
 
 The signed APK (arm64-v8a) is produced from `app-arm64-v8a-forkRelease-unsigned.apk` using the release keystore configured via repo secrets.
