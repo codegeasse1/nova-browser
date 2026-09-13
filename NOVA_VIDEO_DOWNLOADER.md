@@ -143,9 +143,14 @@ This is a sideload-only build, so Play Store policy does not apply.
   exception is swallowed and the extension's `sendNativeMessage` promise never
   settles (the controller queues messages for a name with no delegate). `NovaYtDlp`
   therefore posts registration to the main `Looper` and retries.
-- **Never let the UI depend on one native reply.** The content script races every
-  native call against a timeout and falls back to the native `list` action, so a
-  slow/hung bridge can't leave a row stuck on "Starting yt-dlp...".
+- **Never let the UI depend on one native reply.** The native `list`/`status`
+  replies carry the page `url`, and the content script builds the job row
+  *before* the bridge answers: a job without a native id yet is matched against
+  the native list by URL on a 1s pump (for up to two minutes). So a slow first
+  `start` reply shows "Waiting for the downloader..." for a moment and then
+  switches to real progress, instead of failing. Every native call is also raced
+  against a timeout, and the background warms the bridge with a `ping` at
+  extension load so the very first tap is fast.
 - **Closing the UI never cancels.** Download state lives natively; the content
   script polls it on its own timer (`pumpYtDlp`) which runs whether or not the
   picker is open, and re-attaches via `list` after a reload. Only the row's Cancel

@@ -141,6 +141,7 @@
     listEl = null;
     if (ytdlpPump) clearInterval(ytdlpPump);
     ytdlpPump = null;
+    ytdlpListBusy = false;
     ytdlpJobs.clear();
   }
 
@@ -1010,7 +1011,11 @@
   /* -------------------------- yt-dlp (native) --------------------- */
 
   const NATIVE_TIMEOUT_MS = 6000;
+  /* How long a job may sit unbound before we call the bridge unreachable. The
+   * first yt-dlp start can take a while (the binaries get extracted). */
+  const YTDLP_START_GRACE_MS = 120000;
   let ytdlpPump = null;
+  let ytdlpListBusy = false;
 
   /*
    * `send` never resolves if the native bridge hangs (e.g. the Kotlin side is
@@ -1070,62 +1075,125 @@
     }
   }
 
+  function bindNativeJob(job, nativeJob) {
+    if (!job || !nativeJob || !nativeJob.id) return;
+    job.id = nativeJob.id;
+    job.state = nativeJob.state || "running";
+    if (typeof nativeJob.progress === "number") job.progress = nativeJob.progress;
+    if (nativeJob.message) job.message = nativeJob.message;
+    if (nativeJob.filename) job.filename = nativeJob.filename;
+    if (nativeJob.error) job.error = nativeJob.error;
+    applyJobToRow(job.url, job);
+    if (job.cancelRequested) send("novaVideo:ytdlp", { action: "cancel", id: job.id });
+  }
+
   /*
    * Polls the native bridge on its own timer - NOT tied to the panel being
    * open. Closing the picker (or the whole tab) must not cancel anything, and
    * this is also what keeps the progress text updating while it is open.
+   *
+   * Jobs that have not been bound to a native id yet are matched against the
+   * native job list by page URL. That way a slow first "start" reply (the
+   * Kotlin bridge warming up / extracting yt-dlp) is recovered automatically
+   * instead of leaving the row stuck on "Waiting for the downloader".
    */
   function pumpYtDlp() {
     if (contextDead) {
       stopPumpIfIdle();
       return;
     }
-    const jobs = activeYtdlpJobs();
-    if (!jobs.length) {
+    if (!ytdlpJobs.size) {
       stopPumpIfIdle();
       return;
     }
-    for (const job of jobs) {
-      send("novaVideo:ytdlp", { action: "status", id: job.id }).then(function (res) {
-        const current = ytdlpJobs.get(job.url);
-        if (!current || current.id !== job.id) return;
-        if (!res) return;
-        if (!res.ok) {
-          current.state = "error";
-          current.message = res.error || "Lost track of the download";
-          applyJobToRow(job.url, current);
+
+    const pending = [];
+    ytdlpJobs.forEach(function (job) {
+      if (job && !job.id) pending.push(job);
+    });
+
+    if (!pending.length) {
+      pollActiveYtdlpJobs();
+      return;
+    }
+
+    if (ytdlpListBusy) return;
+    ytdlpListBusy = true;
+    sendYtDlp({ action: "list" }).then(function (res) {
+      ytdlpListBusy = false;
+      if (contextDead) return;
+      if (res && res.ok && Array.isArray(res.jobs)) {
+        for (const nativeJob of res.jobs) {
+          if (!nativeJob || !nativeJob.id || !nativeJob.url) continue;
+          const local = ytdlpJobs.get(nativeJob.url);
+          if (local && !local.id) bindNativeJob(local, nativeJob);
+        }
+      }
+      for (const job of pending) {
+        if (job.id) continue;
+        const age = Date.now() - (job.startedAt || 0);
+        if (age > YTDLP_START_GRACE_MS) {
+          job.state = "error";
+          job.message = job.cancelRequested
+            ? "Canceled"
+            : "The downloader is not responding. Try again.";
+          applyJobToRow(job.url, job);
           finishYtDlp(job.url);
-          return;
+        } else if (job.cancelRequested) {
+          setStatus(job.url, "Canceling\u2026");
+        } else {
+          job.message = "Waiting for the downloader\u2026";
+          setStatus(job.url, job.message);
         }
-        current.state = res.state || "running";
-        if (typeof res.progress === "number") current.progress = res.progress;
-        if (res.message) current.message = res.message;
-        if (res.filename) current.filename = res.filename;
-        if (res.error) current.error = res.error;
-        if (current.state === "running") {
-          applyJobToRow(job.url, current);
-          return;
-        }
-        if (current.state === "done") {
-          setProgress(job.url, 1);
-          current.message = res.message || ("Saved " + (res.filename || ""));
-          applyJobToRow(job.url, current);
-          toast("Download complete: " + (res.filename || ""));
-          finishYtDlp(job.url);
-          return;
-        }
-        if (current.state === "canceled") {
-          setProgress(job.url, null);
-          current.message = "Canceled";
-          applyJobToRow(job.url, current);
-          finishYtDlp(job.url);
-          return;
-        }
-        current.message = res.error || current.message || "Download failed";
+      }
+      pollActiveYtdlpJobs();
+    });
+  }
+
+  function pollActiveYtdlpJobs() {
+    activeYtdlpJobs().forEach(pollOneYtdlpJob);
+  }
+
+  function pollOneYtdlpJob(job) {
+    send("novaVideo:ytdlp", { action: "status", id: job.id }).then(function (res) {
+      const current = ytdlpJobs.get(job.url);
+      if (!current || current.id !== job.id) return;
+      if (!res) return;
+      if (!res.ok) {
+        current.state = "error";
+        current.message = res.error || "Lost track of the download";
         applyJobToRow(job.url, current);
         finishYtDlp(job.url);
-      });
-    }
+        return;
+      }
+      current.state = res.state || "running";
+      if (typeof res.progress === "number") current.progress = res.progress;
+      if (res.message) current.message = res.message;
+      if (res.filename) current.filename = res.filename;
+      if (res.error) current.error = res.error;
+      if (current.state === "running") {
+        applyJobToRow(job.url, current);
+        return;
+      }
+      if (current.state === "done") {
+        setProgress(job.url, 1);
+        current.message = res.message || ("Saved " + (res.filename || ""));
+        applyJobToRow(job.url, current);
+        toast("Download complete: " + (res.filename || ""));
+        finishYtDlp(job.url);
+        return;
+      }
+      if (current.state === "canceled") {
+        setProgress(job.url, null);
+        current.message = "Canceled";
+        applyJobToRow(job.url, current);
+        finishYtDlp(job.url);
+        return;
+      }
+      current.message = res.error || current.message || "Download failed";
+      applyJobToRow(job.url, current);
+      finishYtDlp(job.url);
+    });
   }
 
   /*
@@ -1138,109 +1206,96 @@
     sendYtDlp({ action: "list" }).then(function (res) {
       if (!res || !res.ok || !Array.isArray(res.jobs)) return;
       let added = false;
-      for (const job of res.jobs) {
-        if (!job || !job.id || !job.url || ytdlpJobs.has(job.url)) continue;
-        ytdlpJobs.set(job.url, {
-          id: job.id,
-          url: job.url,
-          state: job.state || "running",
-          progress: typeof job.progress === "number" ? job.progress : 0,
-          message: job.message || "Downloading\u2026",
-          filename: job.filename || "",
-          error: job.error || null,
+      for (const nativeJob of res.jobs) {
+        if (!nativeJob || !nativeJob.id || !nativeJob.url) continue;
+        const existing = ytdlpJobs.get(nativeJob.url);
+        if (existing) {
+          if (!existing.id) bindNativeJob(existing, nativeJob);
+          continue;
+        }
+        ytdlpJobs.set(nativeJob.url, {
+          id: nativeJob.id,
+          url: nativeJob.url,
+          state: nativeJob.state || "running",
+          progress: typeof nativeJob.progress === "number" ? nativeJob.progress : 0,
+          message: nativeJob.message || "Downloading\u2026",
+          filename: nativeJob.filename || "",
+          error: nativeJob.error || null,
+          startedAt: Date.now(),
           cancelRequested: false,
         });
         added = true;
       }
-      if (added) {
+      if (added || ytdlpJobs.size) {
         startPump();
         if (panelOpen) renderList();
       }
     });
   }
 
+  /*
+   * Start a download. The native bridge owns the job, so the row is created
+   * locally first and the pump binds it to the native id as soon as the bridge
+   * reports it - a slow first reply therefore shows "Waiting for the
+   * downloader..." briefly instead of failing, and then switches to real
+   * progress.
+   */
   async function startYtDlp(entry, audioOnly) {
     const ref = rowRefs.get(entry.url);
+    const existing = ytdlpJobs.get(entry.url);
+    if (existing && existing.id) return;
+
     setBusy(entry.url, true);
     setProgress(entry.url, null);
-    setStatus(entry.url, "Starting yt-dlp\u2026");
     if (ref && ref.cancel) ref.cancel.hidden = false;
-    const job = {
-      id: null,
-      url: entry.url,
-      state: "starting",
-      progress: 0,
-      message: "Starting yt-dlp\u2026",
-      filename: "",
-      error: null,
-      cancelRequested: false,
-    };
+
+    const job = existing || { id: null, url: entry.url };
+    job.state = "starting";
+    job.progress = 0;
+    job.message = "Starting yt-dlp\u2026";
+    job.filename = "";
+    job.error = null;
+    job.startedAt = Date.now();
+    job.cancelRequested = false;
     ytdlpJobs.set(entry.url, job);
+    setStatus(entry.url, job.message);
     startPump();
 
     const res = await sendYtDlp({ action: "start", url: entry.url, audioOnly: !!audioOnly });
     if (res && res.ok && res.id) {
-      job.id = res.id;
-      job.state = res.state || "running";
-      if (typeof res.progress === "number") job.progress = res.progress;
-      if (res.message) job.message = res.message;
-      applyJobToRow(entry.url, job);
-      if (job.cancelRequested) send("novaVideo:ytdlp", { action: "cancel", id: job.id });
+      bindNativeJob(job, res);
       return;
     }
-
-    if (res && res.timeout) {
-      /* The bridge may have started the job anyway - the "start" reply can be
-       * slow on the very first use (yt-dlp is being extracted). */
-      setStatus(entry.url, "Waiting for the downloader\u2026");
-      for (let attempt = 0; attempt < 4; attempt++) {
-        await new Promise(function (resolve) { setTimeout(resolve, 1500); });
-        const recovered = await recoverYtdlpJob(entry.url);
-        if (recovered) return;
+    if (!res || res.timeout) {
+      /* Not a failure: the bridge is just slow to answer. Leave the job
+       * pending so the pump can bind it from the native list. */
+      if (!job.id) {
+        job.message = "Waiting for the downloader\u2026";
+        setStatus(entry.url, job.message);
       }
-      ytdlpJobs.delete(entry.url);
-      stopPumpIfIdle();
-      setBusy(entry.url, false);
-      if (ref && ref.cancel) ref.cancel.hidden = true;
-      setStatus(entry.url, res.error, true);
       return;
     }
 
+    /* A definitive failure (no bridge at all, bad URL, ...). */
     ytdlpJobs.delete(entry.url);
     stopPumpIfIdle();
     setBusy(entry.url, false);
     if (ref && ref.cancel) ref.cancel.hidden = true;
-    setStatus(entry.url, (res && res.error) || "yt-dlp is not available on this device.", true);
-  }
-
-  async function recoverYtdlpJob(url) {
-    const res = await sendYtDlp({ action: "list" });
-    if (!res || !res.ok || !Array.isArray(res.jobs)) return false;
-    const match = res.jobs.find(function (job) { return job && job.url === url && job.id; });
-    if (!match) return false;
-    const job = ytdlpJobs.get(url) || {
-      url: url, state: "running", progress: 0, message: "Downloading\u2026",
-      filename: "", error: null, cancelRequested: false,
-    };
-    job.id = match.id;
-    job.state = match.state || "running";
-    if (typeof match.progress === "number") job.progress = match.progress;
-    if (match.message) job.message = match.message;
-    ytdlpJobs.set(url, job);
-    startPump();
-    applyJobToRow(url, job);
-    return true;
+    setStatus(entry.url, res.error || "yt-dlp is not available on this device.", true);
   }
 
   function cancelYtDlp(entry) {
     const job = ytdlpJobs.get(entry.url);
     if (!job) return;
+    job.cancelRequested = true;
     setStatus(entry.url, "Canceling\u2026");
     if (!job.id) {
-      job.cancelRequested = true;
+      /* The bridge still owes us an id; bindNativeJob sends the cancel when it
+       * arrives. If it never does, the pump times the job out. */
+      job.message = "Canceling\u2026";
+      applyJobToRow(entry.url, job);
       return;
     }
-    job.cancelRequested = true;
     send("novaVideo:ytdlp", { action: "cancel", id: job.id });
   }
 

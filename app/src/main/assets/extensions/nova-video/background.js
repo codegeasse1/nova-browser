@@ -651,6 +651,33 @@ function normaliseNative(res) {
   return res || { ok: false, error: "no response" };
 }
 
+/*
+ * A native message can hang forever when the Kotlin bridge has not finished
+ * registering its handler yet (GeckoView queues messages for a name with no
+ * delegate). Race it against a timeout so callers always get an answer.
+ */
+function nativeWithTimeout(payload, ms) {
+  return new Promise(function (resolve) {
+    let settled = false;
+    const timer = setTimeout(function () {
+      if (settled) return;
+      settled = true;
+      resolve({ ok: false, timeout: true, error: "The downloader took too long to respond." });
+    }, ms);
+    browser.runtime.sendNativeMessage(NATIVE_APP, payload).then(function (res) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(normaliseNative(res));
+    }).catch(function (e) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve({ ok: false, error: String((e && e.message) || e) });
+    });
+  });
+}
+
 async function callNativeYtdlp(message, tabId) {
   const action = message.action || "start";
   const payload = {
@@ -680,7 +707,28 @@ async function callNativeYtdlp(message, tabId) {
   return res;
 }
 
-/* Native `list` + the URL/tab we recorded for each id. */
+/*
+ * Warm the native bridge up as soon as the extension loads, so the very first
+ * "Download" tap doesn't have to wait for the registration round-trip. Keeps
+ * retrying quietly until the bridge answers.
+ */
+let nativeWarm = false;
+async function warmNativeBridge(attempt) {
+  if (nativeWarm) return;
+  if (!browser.runtime || typeof browser.runtime.sendNativeMessage !== "function") return;
+  const res = await nativeWithTimeout({ action: "ping", url: "", audioOnly: false }, 8000);
+  if (res && res.ok) {
+    nativeWarm = true;
+    return;
+  }
+  if (attempt < 30) {
+    setTimeout(function () { warmNativeBridge(attempt + 1); }, 2000);
+  }
+}
+warmNativeBridge(0);
+
+/* Native `list` + the URL/tab we recorded for each id (native now sends `url`
+ * itself, the registry is only a fallback for old builds). */
 async function listNativeYtdlp() {
   const res = await callNativeYtdlp({ action: "list" });
   if (res && res.ok && Array.isArray(res.jobs)) {
@@ -688,7 +736,7 @@ async function listNativeYtdlp() {
     res.jobs = res.jobs.map(function (job) {
       const info = job && job.id ? ytdlpJobs.get(job.id) : null;
       if (info) {
-        job.url = info.url;
+        if (!job.url) job.url = info.url;
         job.tabId = info.tabId;
         job.audioOnly = info.audioOnly;
         job.startedAt = info.startedAt;

@@ -81,7 +81,7 @@ object NovaYtDlp {
     @Volatile
     private var lastError: String? = null
 
-    private class DownloadJob(val id: String, val notificationId: Int) {
+    private class DownloadJob(val id: String, val url: String, val notificationId: Int) {
         @Volatile var state: String = "running"
         @Volatile var progress: Float = 0f
         @Volatile var message: String = ""
@@ -123,8 +123,9 @@ object NovaYtDlp {
                 extension.registerBackgroundMessageHandler(NATIVE_APP, handler)
                 appContext?.let { NovaDebugLog.log(it, "Nova yt-dlp bridge registered") }
             } catch (e: Throwable) {
-                if (attempt < 8) {
-                    mainHandler.postDelayed({ registerOnMain(extension, attempt + 1) }, 400L * (attempt + 1))
+                if (attempt < 30) {
+                    val delay = minOf(3000L, 400L * (attempt + 1))
+                    mainHandler.postDelayed({ registerOnMain(extension, attempt + 1) }, delay)
                 } else {
                     registered.set(false)
                     appContext?.let { NovaDebugLog.log(it, "Nova yt-dlp bridge registration failed: ${e.message}") }
@@ -209,7 +210,7 @@ object NovaYtDlp {
         val ctx = appContext ?: return error("Not ready")
         val audioOnly = json.optBoolean("audioOnly", false)
         val id = UUID.randomUUID().toString()
-        val job = DownloadJob(id, notificationIds.incrementAndGet())
+        val job = DownloadJob(id, url, notificationIds.incrementAndGet())
         job.message = "Starting\u2026"
         jobs[id] = job
         worker.execute { runJob(ctx, id, job, url, audioOnly) }
@@ -220,6 +221,7 @@ object NovaYtDlp {
         val job = jobs[json.optString("id")] ?: return error("Unknown job")
         val out = JSONObject()
             .put("ok", true)
+            .put("url", job.url)
             .put("state", job.state)
             .put("progress", job.progress.toDouble())
             .put("message", job.message)
@@ -252,6 +254,7 @@ object NovaYtDlp {
         for (job in jobs.values) {
             val item = JSONObject()
                 .put("id", job.id)
+                .put("url", job.url)
                 .put("state", job.state)
                 .put("progress", job.progress.toDouble())
                 .put("message", job.message)
