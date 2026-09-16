@@ -173,6 +173,7 @@ object NovaYtDlp {
             return try {
                 when (json.optString("action")) {
                     "ping" -> ping()
+                    "prefs" -> prefs()
                     "start" -> start(json)
                     "status" -> status(json)
                     "cancel" -> cancel(json)
@@ -201,6 +202,21 @@ object NovaYtDlp {
         val out = JSONObject().put("ok", true).put("ready", ready)
         appContext?.let { out.put("version", YoutubeDL.versionName(it) ?: "") }
         if (!ready && lastError != null) out.put("error", lastError)
+        return out
+    }
+
+    /**
+     * The two Nova video feature switches, so the extension can adapt at
+     * runtime without the page being reloaded: `downloader` hides the download
+     * button, `inbuiltPlayer` shows Nova's own player controls. Read locally
+     * (no disk first-load cost after boot) and always answers, so the content
+     * script never has to wait on a timeout for a normal answer.
+     */
+    private fun prefs(): JSONObject {
+        val ctx = appContext
+        val out = JSONObject().put("ok", true)
+        out.put("downloader", ctx?.let { NovaVideoDownloader.isEnabled(it) } ?: true)
+        out.put("inbuiltPlayer", ctx?.let { NovaInbuiltPlayer.isEnabled(it) } ?: false)
         return out
     }
 

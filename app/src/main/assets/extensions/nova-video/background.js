@@ -758,6 +758,18 @@ browser.runtime.onMessage.addListener(function (message, sender) {
         entries: collectEntries(tabId, message.pageUrl, message.pageTitle),
       });
     }
+    case "novaVideo:prefs": {
+      return nativeWithTimeout({ action: "prefs" }, 6000).then(function (res) {
+        if (res && res.ok) {
+          return {
+            ok: true,
+            inbuiltPlayer: !!res.inbuiltPlayer,
+            downloader: res.downloader !== false,
+          };
+        }
+        return { ok: true, inbuiltPlayer: false, downloader: true };
+      });
+    }
     case "novaVideo:ytdlp": {
       if ((message.action || "start") === "list") {
         return listNativeYtdlp();

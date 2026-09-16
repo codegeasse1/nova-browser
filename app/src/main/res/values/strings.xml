@@ -4321,6 +4321,9 @@
     <string name="browser_menu_video_downloader">Video Downloader</string>
     <string name="browser_menu_video_downloader_on">On: a download button appears on pages with a video.</string>
     <string name="browser_menu_video_downloader_off">Off: nothing is shown while you browse.</string>
+    <string name="browser_menu_inbuilt_player">Inbuilt video player</string>
+    <string name="browser_menu_inbuilt_player_on">On: Nova draws its own controls over videos.</string>
+    <string name="browser_menu_inbuilt_player_off">Show Nova own player controls: play, seek, volume, brightness, speed, rotate and fullscreen.</string>
     <string name="nova_background_notification_channel">Background sites</string>
     <string name="nova_background_notification_text">Keeping a site you enabled running in the background.</string>
     <string name="nova_update_notification_channel">App updates</string>

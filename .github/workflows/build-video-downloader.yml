@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version_name:
-        description: 'Version name (e.g. 3.0.0-video)'
+        description: 'Version name (e.g. 3.1.0-video)'
         required: true
-        default: '3.0.0-video'
+        default: '3.1.0-video'
   push:
     branches: [ feature/video-downloader ]
     paths-ignore:
@@ -45,7 +45,7 @@ jobs:
 
       - name: Create version name
         run: |
-          VERSION_NAME="${{ github.event.inputs.version_name || '3.0.0-video' }}"
+          VERSION_NAME="${{ github.event.inputs.version_name || '3.1.0-video' }}"
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "Building video-downloader test APK, version $VERSION_NAME"
 

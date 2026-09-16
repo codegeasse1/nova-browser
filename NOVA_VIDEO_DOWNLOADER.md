@@ -11,10 +11,12 @@ A third bundled WebExtension (`nova-video@nova.browser`) that:
 - watches network traffic and detects media the page loads â direct files
   (`Content-Type: video/*` / `audio/*`, or a known extension) and streaming
   manifests (HLS `.m3u8`, DASH `.mpd`);
-- shows **one small (38px) download-arrow icon**, and only while the page actually
-  has a downloadable video/audio. There is no other on-screen chrome: no floating
-  panel, no "Rescan" button, no "Hide here" dialog. The icon is draggable and hides
-  itself while a video is fullscreen;
+- shows **one small (38px) download-arrow icon**, but only as a brief *peek*: it
+  fades in for ~2.5s when the page discovers media and then fades out again. It
+  comes back for ~2.5s whenever a video starts or pauses, when the page is tapped
+  (or the pointer rests on it), and while the picker is open. There is no other
+  on-screen chrome: no floating panel, no "Rescan" button, no "Hide here" dialog.
+  The icon is draggable and hides itself while a video is fullscreen;
 - tapping the icon opens a compact picker (at most 40% of the screen height) listing
   the detected items, with a 32px `X` to close it and tap-outside-to-close.
   Closing the picker never cancels a download: a yt-dlp download keeps running in
@@ -32,21 +34,52 @@ A third bundled WebExtension (`nova-video@nova.browser`) that:
 
 It also reports `<video>`/`<audio>` elements found in the page (including frames).
 
+## In-page player (optional)
+
+A second switch, **"Inbuilt video player"**, adds Nova's own player controls on
+top of the page's `<video>` (drawn in the same shadow DOM as the download icon,
+in the top frame only):
+
+- play/pause, a seek bar with current/total time, and a mute button + volume slider;
+- a **brightness** slider (applied as a CSS `filter: brightness()` on the video,
+  restored if the player is switched off);
+- a **playback speed** button cycling 0.5x / 0.75x / 1x / 1.25x / 1.5x / 1.75x / 2x;
+- **rotate** and **fullscreen** (Nova's own theater mode: the video is pinned to
+  the viewport, and rotate re-lays it out at 90 degrees - no Fullscreen API needed,
+  so the controls stay visible);
+- a **download** button that opens the same picker as the icon.
+
+The bar behaves like the icon: it appears for ~3s, and comes back when a video
+starts/pauses or the video is tapped. Switching it off removes it again without a
+page reload. It is independent of the downloader switch - with the downloader off,
+the player still works and its download button is hidden.
+
 ## On / off switch in the 3-dot menu
 
-The whole feature can be switched off without uninstalling anything:
+The feature can be switched off without uninstalling anything. The browser's
+3-dot menu has two related items, both with on/off switches (same pattern as the
+existing "Allow background playback" switch):
 
-- The browser's 3-dot menu has a **"Video Downloader"** item with an on/off switch
-  (same pattern as the existing "Allow background playback" switch).
-- Turning it **on** enables the bundled extension in the engine (`EnableSource.USER`),
-  so the small download icon appears on pages that have a video.
-- Turning it **off** disables the extension: the content script stops running and
-  removes the icon/panel on the page it is already loaded in (it notices the dead
-  extension context and tears itself down within a few seconds). Nothing is shown
-  while browsing.
-- The choice is stored in shared preferences (`NovaVideoDownloader` /
-  `novaVideoDownloaderEnabled`, default on) and re-applied on launch, so it
-  survives restarts.
+- **"Video Downloader"** - the download icon + picker.
+- **"Inbuilt video player"** - Nova's own player controls over videos.
+
+Turning the downloader **on** enables the bundled extension in the engine
+(`EnableSource.USER`); turning it **off** disables the extension once the player
+is off too. Turning the player **on** keeps the extension enabled and makes the
+content script draw its controls; turning it **off** removes them.
+
+- The extension is disabled only when **both** switches are off, because it is
+  the vehicle for both features (see `NovaVideoDownloader.isExtensionWanted`).
+- When the extension is disabled its content scripts stop running and the
+  already-injected icon/panel/player tear themselves down (they notice the dead
+  extension context), so nothing is shown while browsing.
+- Both choices are stored in shared preferences (`NovaVideoDownloader` /
+  `novaVideoDownloaderEnabled`, default on; `NovaInbuiltPlayer` /
+  `novaInbuiltPlayerEnabled`, default off) and re-applied on launch, so they
+  survive restarts.
+- The content script reads them at runtime through the native bridge
+  (`novaVideoYtdlp`, action `prefs`), polls every few seconds and on page focus,
+  so a toggle takes effect without reloading the page.
 
 ## Files added / changed
 
@@ -58,6 +91,8 @@ The whole feature can be switched off without uninstalling anything:
 | `app/src/main/java/org/mozilla/fenix/components/NovaVideoDownloader.kt` | new â preference + engine enable/disable helper |
 | `app/src/main/java/org/mozilla/fenix/components/NovaYtDlp.kt` | new â native yt-dlp bridge (init, downloads, progress, MediaStore publish) |
 | `app/build.gradle` | adds the `youtubedl-android` `library` + `ffmpeg` dependencies |
+| `app/src/main/java/org/mozilla/fenix/components/NovaInbuiltPlayer.kt` | new - shared-preference switch for the in-page player |
+| `app/src/main/assets/extensions/nova-video/content.js` | icon auto-hides (peek behaviour) + optional in-page player controls |
 | `app/proguard-rules.pro` | keep/dontwarn rules for youtubedl-android, Jackson and commons-io |
 | `app/src/main/java/org/mozilla/fenix/FenixApplication.kt` | `NOVA_VIDEO_ADDON_ID` constant + `installBuiltInWebExtension(...)` call + re-applies the stored on/off preference |
 | `app/src/main/java/org/mozilla/fenix/components/menu/compose/MainMenu.kt` | new "Video Downloader" menu item with a switch |
@@ -81,8 +116,8 @@ Download the artifact from the Actions run page and sideload it to test.
 
 1. Delete the branch (this deletes every file listed above, including the
    workflow, so no build runs anymore), **or**
-2. Revert the commit and remove the `nova-video` assets, the `NovaVideoDownloader`
-   and `NovaYtDlp` helpers, the `NOVA_VIDEO_ADDON_ID` constant +
+2. Revert the commit and remove the `nova-video` assets, the `NovaVideoDownloader`,
+   `NovaInbuiltPlayer` and `NovaYtDlp` helpers, the `NOVA_VIDEO_ADDON_ID` constant +
    `installBuiltInWebExtension` call, the menu item / strings, the workflow file,
    and the `youtubedl-android` dependencies in `app/build.gradle` plus their
    Proguard rules. No other code depends on them.
@@ -115,7 +150,7 @@ CPython and ffmpeg. `NovaYtDlp`:
   **`novaVideoYtdlp`** (via `WebExtension.registerBackgroundMessageHandler`), so
   the extension's background script can call
   `browser.runtime.sendNativeMessage("novaVideoYtdlp", â¦)`;
-- supports `action`s `ping` / `start` / `status` / `cancel` / `list`. `start`
+- supports `action`s `ping` / `prefs` / `start` / `status` / `cancel` / `list`. `start`
   returns a job id immediately and runs the download on a worker thread; the
   content script polls `status` for progress and uses `list` to re-attach to a
   running download after a page reload or after the picker was closed;

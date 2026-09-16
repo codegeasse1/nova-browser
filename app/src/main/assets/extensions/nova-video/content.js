@@ -123,7 +123,22 @@
   let hlsInfo = new Map();
   let dashInfo = new Map();
   let ytdlpJobs = new Map();
-  let idleTimer = null;
+  let hideTimer = null;
+  let prefsTimer = null;
+  let prefs = { inbuiltPlayer: false, downloader: true };
+  let prefsBusy = false;
+  let playerEl = null;
+  let pl = null;
+  let playerVideo = null;
+  let playerTimer = null;
+  let playerTheater = false;
+  let playerRotated = false;
+  let playerSavedStyle = null;
+  let playerBrightness = 100;
+  let playerSpeedIdx = 2;
+  let playerSeekDragging = false;
+  let playerMediaBound = [];
+  const playerOrigFilters = new WeakMap();
   let pollTimer = null;
   let pos = null;
 
@@ -132,7 +147,14 @@
     instance.beat = 0;
     clearInterval(reportTimer);
     clearInterval(pollTimer);
-    clearTimeout(idleTimer);
+    clearTimeout(hideTimer);
+    clearTimeout(prefsTimer);
+    clearTimeout(playerTimer);
+    try {
+      destroyPlayer();
+    } catch (e) {
+      /* ignore */
+    }
     if (host && host.parentNode) host.parentNode.removeChild(host);
     host = null;
     shadow = null;
@@ -159,7 +181,7 @@
       transition: opacity .3s ease;
       opacity: .92;
     }
-    .nv-btn.nv-idle { opacity: .35; }
+    .nv-btn.nv-hide { opacity: 0; pointer-events: none; }
     .nv-btn svg { width: 20px; height: 20px; fill: #7f9dff; pointer-events: none; }
     .nv-panel {
       position: fixed; width: 300px; max-width: calc(100vw - 20px);
@@ -235,11 +257,52 @@
       font: 12px/1.4 -apple-system, system-ui, sans-serif;
       box-shadow: 0 8px 24px rgba(0,0,0,.5);
     }
+    .nv-player {
+      position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%);
+      width: min(680px, calc(100vw - 16px));
+      background: rgba(18,19,24,.95);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.55);
+      padding: 8px 10px 9px;
+      font: 12px/1.3 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+      color: #e9e9ef;
+      display: flex; flex-direction: column; gap: 7px;
+      transition: opacity .25s ease;
+      opacity: 1;
+    }
+    .nv-player.nv-hide { opacity: 0; pointer-events: none; }
+    .nv-pl-seekrow { display: flex; align-items: center; gap: 8px; }
+    .nv-pl-cur, .nv-pl-dur {
+      flex: none; color: #b9bbc9; font-variant-numeric: tabular-nums; min-width: 40px;
+    }
+    .nv-pl-dur { text-align: right; }
+    .nv-pl-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .nv-plb {
+      flex: none; width: 34px; height: 32px; border: 0; border-radius: 9px; cursor: pointer;
+      background: #2b2d36; color: #e9e9ef; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .nv-plb:hover { background: #383b46; }
+    .nv-plb svg { width: 18px; height: 18px; fill: currentColor; pointer-events: none; }
+    .nv-plb.nv-on { background: #5847f5; color: #fff; }
+    .nv-pl-speed { width: auto; min-width: 44px; padding: 0 8px; font-size: 12px; font-weight: 600; }
+    .nv-pl-range {
+      -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px;
+      background: #3a3d49; outline: none; flex: 1 1 56px; min-width: 42px; max-width: 110px; margin: 0;
+    }
+    .nv-pl-range::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%;
+      background: #7f9dff; border: 0;
+    }
+    .nv-pl-seek { flex: 1 1 auto; max-width: none; height: 5px; }
+    .nv-pl-seek::-webkit-slider-thumb { width: 15px; height: 15px; background: #5847f5; }
+    .nv-pl-dl { margin-left: auto; }
     @keyframes nova-keepalive {
       0%, 91% { visibility: visible; }
       100% { visibility: hidden; }
     }
-    .nv-btn, .nv-panel, .nv-toast { animation: nova-keepalive 2.6s linear forwards; }
+    .nv-btn, .nv-panel, .nv-toast, .nv-player { animation: nova-keepalive 2.6s linear forwards; }
   `;
 
   function applyStyles(root) {
@@ -262,7 +325,7 @@
    * so this is the only way to guarantee the icon disappears without a reload.
    */
   function keepAlive() {
-    const els = [btnEl, panelEl, shadow && shadow.querySelector(".nv-toast")];
+    const els = [btnEl, panelEl, playerEl, shadow && shadow.querySelector(".nv-toast")];
     for (const el of els) {
       if (!el) continue;
       el.style.animation = "none";
@@ -313,6 +376,9 @@
     closeBtn.addEventListener("pointerup", doClose);
 
     document.addEventListener("pointerdown", onDocumentPointerDown, true);
+    for (const evt of MEDIA_EVENTS) {
+      document.addEventListener(evt, onMediaEvent, true);
+    }
 
     (document.body || document.documentElement).appendChild(host);
     setupDrag();
@@ -323,10 +389,19 @@
   }
 
   function onDocumentPointerDown(e) {
-    if (!panelOpen) return;
     const path = typeof e.composedPath === "function" ? e.composedPath() : [];
-    if (path.indexOf(panelEl) > -1 || path.indexOf(btnEl) > -1) return;
-    closePanel();
+    const insideUi =
+      path.indexOf(panelEl) > -1 || path.indexOf(btnEl) > -1 || path.indexOf(playerEl) > -1;
+    if (insideUi) return;
+    if (panelOpen) closePanel();
+    for (const node of path) {
+      const tag = node && node.tagName;
+      if (tag === "VIDEO" || tag === "AUDIO") {
+        if (btnEl && !btnEl.hidden) showButton();
+        if (playerEl && playerVideo) showPlayer();
+        break;
+      }
+    }
   }
 
   /* -------------------------- drag -------------------------------- */
@@ -384,6 +459,7 @@
         return;
       }
       snapToEdge();
+      scheduleIdle();
     });
 
     btnEl.addEventListener("pointercancel", function () {
@@ -391,8 +467,7 @@
     });
 
     btnEl.addEventListener("pointerenter", function () {
-      btnEl.classList.remove("nv-idle");
-      clearTimeout(idleTimer);
+      showButtonNow();
     });
     btnEl.addEventListener("pointerleave", function () {
       scheduleIdle();
@@ -431,11 +506,44 @@
     positionPanel();
   }
 
+  const AUTO_HIDE_MS = 2500;
+
+  /*
+   * The download button is a "peek" affordance: it appears for a couple of
+   * seconds and then fades away, and comes back whenever something happens
+   * that the user might want it for (a video starts or pauses, the page is
+   * tapped, the pointer is resting on it, it was just dragged, ...). It stays
+   * put while the picker is open, because the picker is anchored to it.
+   */
+  function showButtonNow() {
+    if (!btnEl) return;
+    btnEl.classList.remove("nv-hide");
+    clearTimeout(hideTimer);
+  }
+
+  function hideIfIdle() {
+    if (!btnEl || panelOpen || btnEl.hidden) return;
+    let hovering = false;
+    try {
+      hovering = btnEl.matches(":hover");
+    } catch (e) {
+      /* ignore */
+    }
+    if (hovering) {
+      scheduleIdle();
+      return;
+    }
+    btnEl.classList.add("nv-hide");
+  }
+
   function scheduleIdle() {
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(function () {
-      if (!panelOpen && btnEl) btnEl.classList.add("nv-idle");
-    }, 3500);
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(hideIfIdle, AUTO_HIDE_MS);
+  }
+
+  function showButton() {
+    showButtonNow();
+    scheduleIdle();
   }
 
   /* -------------------------- panel ------------------------------- */
@@ -450,8 +558,8 @@
     panelOpen = true;
     panelEl.hidden = false;
     keepAlive();
-    btnEl.classList.remove("nv-idle");
-    clearTimeout(idleTimer);
+    showButtonNow();
+    hidePlayer();
     renderList();
     positionPanel();
     requestAnimationFrame(positionPanel);
@@ -507,14 +615,24 @@
   function checkVisibility() {
     if (!host || !btnEl) return;
     keepAlive();
-    if (!entries.length) {
-      btnEl.hidden = true;
-      closePanel();
-      return;
+    const wanted = prefs.downloader !== false && entries.length > 0;
+    if (!wanted) {
+      if (!btnEl.hidden) {
+        btnEl.hidden = true;
+        closePanel();
+      }
+    } else {
+      const wasHidden = btnEl.hidden;
+      btnEl.hidden = false;
+      positionButton();
+      /*
+       * Only pop the button back up on a real no-media -> media transition.
+       * Doing it on every poll would restart the auto-hide timer forever, so
+       * the button would never actually disappear.
+       */
+      if (wasHidden) showButton();
     }
-    positionButton();
-    btnEl.hidden = false;
-    scheduleIdle();
+    updatePlayer();
   }
 
   function toast(message) {
@@ -1299,6 +1417,498 @@
     send("novaVideo:ytdlp", { action: "cancel", id: job.id });
   }
 
+  /* ---------------------------------------------------------------- */
+  /* In-page player (browser-menu switch "Inbuilt video player")       */
+  /* ---------------------------------------------------------------- */
+
+  const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+  const PLAYER_HIDE_MS = 3200;
+  const MEDIA_EVENTS = [
+    "play", "pause", "playing", "seeking", "seeked", "ended",
+    "ratechange", "volumechange", "loadedmetadata", "loadeddata",
+  ];
+  const THEATER_PROPS = [
+    "position", "inset", "top", "left", "right", "bottom", "width", "height",
+    "max-width", "max-height", "margin", "padding", "object-fit", "background",
+    "z-index", "transform", "transform-origin",
+  ];
+
+  function clock(seconds) {
+    if (!isFinite(seconds) || seconds <= 0) return "0:00";
+    return fmtDuration(seconds);
+  }
+
+  const PL_ICON = {
+    play: '<svg viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>',
+    vol:
+      '<svg viewBox="0 0 24 24"><path d="M4 9h3.5L12 5v14L7.5 15H4z"/>' +
+      '<path d="M15 8.4a4.6 4.6 0 0 1 0 7.2V8.4z"/></svg>',
+    mute:
+      '<svg viewBox="0 0 24 24"><path d="M4 9h3.5L12 5v14L7.5 15H4z"/>' +
+      '<path d="M15.7 9.1l1.3-1.3 2.5 2.5 2.5-2.5 1.3 1.3-2.5 2.5 2.5 2.5-1.3 1.3-2.5-2.5-2.5 2.5-1.3-1.3 2.5-2.5z"/></svg>',
+    bright:
+      '<svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>' +
+      '<path d="M11 1.6h2v3.1h-2zm0 17.7h2v3.1h-2zM1.6 11h3.1v2H1.6zm17.7 0h3.1v2h-3.1z' +
+      'M4.3 5.7l1.4-1.4 2.2 2.2-1.4 1.4zm11.5 11.5l1.4-1.4 2.2 2.2-1.4 1.4z' +
+      'M18.3 4.3l1.4 1.4-1.4 1.4-2.2-2.2zM5.7 18.3l1.4 1.4L5.7 21 4.3 19.7z"/></svg>',
+    rotate: '<svg viewBox="0 0 24 24"><path d="M12 5V2L7.5 6.5 12 11V8a5 5 0 1 1-5 5H5a7 7 0 1 0 7-8z"/></svg>',
+    fs: '<svg viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z"/></svg>',
+    dl: '<svg viewBox="0 0 24 24"><path d="M12 16.5l-5.5-5.5h3.25V3h4.5v8H17.5L12 16.5zM5 18h14v2.5H5V18z"/></svg>',
+  };
+
+  /*
+   * The two feature switches live in Android shared preferences, so they are
+   * read through the background script (which owns the native bridge). Polled
+   * lazily: on boot, when the page regains focus, and every few seconds, so a
+   * menu toggle is picked up without the user having to reload the page.
+   */
+  function fetchPrefs() {
+    if (contextDead || prefsBusy) return;
+    prefsBusy = true;
+    send("novaVideo:prefs", {}).then(function (res) {
+      prefsBusy = false;
+      if (contextDead) return;
+      if (res && res.ok) {
+        const nextPlayer = !!res.inbuiltPlayer;
+        const nextDownloader = res.downloader !== false;
+        const changed = nextPlayer !== prefs.inbuiltPlayer || nextDownloader !== prefs.downloader;
+        prefs.inbuiltPlayer = nextPlayer;
+        prefs.downloader = nextDownloader;
+        if (changed) applyPrefs();
+      }
+    });
+  }
+
+  function applyPrefs() {
+    if (!btnEl) return;
+    if (prefs.downloader === false && !btnEl.hidden) {
+      btnEl.hidden = true;
+      closePanel();
+    }
+    updatePlayer();
+  }
+
+  function onMediaEvent(e) {
+    const el = e.target;
+    if (!el || (el.tagName !== "VIDEO" && el.tagName !== "AUDIO")) return;
+    if (btnEl && !btnEl.hidden) showButton();
+    if (!prefs.inbuiltPlayer || el.tagName !== "VIDEO") return;
+    if (playerVideo !== el) bindVideo(el);
+    showPlayer();
+    syncPlayer();
+  }
+
+  /* -------------------------- player shell ------------------------ */
+
+  function ensurePlayer() {
+    if (playerEl || !shadow) return;
+    playerEl = document.createElement("div");
+    playerEl.className = "nv-player";
+    playerEl.hidden = true;
+    playerEl.innerHTML =
+      '<div class="nv-pl-seekrow">' +
+      '<span class="nv-pl-cur">0:00</span>' +
+      '<input class="nv-pl-range nv-pl-seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Seek">' +
+      '<span class="nv-pl-dur">0:00</span>' +
+      "</div>" +
+      '<div class="nv-pl-row">' +
+      '<button class="nv-plb nv-pl-play" type="button" title="Play or pause" aria-label="Play or pause"></button>' +
+      '<button class="nv-plb nv-pl-mute" type="button" title="Mute" aria-label="Mute"></button>' +
+      '<input class="nv-pl-range nv-pl-vol" type="range" min="0" max="100" step="1" value="100" aria-label="Volume">' +
+      '<button class="nv-plb nv-pl-bright" type="button" title="Brightness" aria-label="Brightness"></button>' +
+      '<input class="nv-pl-range nv-pl-bri" type="range" min="20" max="200" step="1" value="100" aria-label="Brightness level">' +
+      '<button class="nv-plb nv-pl-speed" type="button" title="Playback speed" aria-label="Playback speed">1\u00d7</button>' +
+      '<button class="nv-plb nv-pl-rotate" type="button" title="Rotate" aria-label="Rotate"></button>' +
+      '<button class="nv-plb nv-pl-fs" type="button" title="Fullscreen" aria-label="Fullscreen"></button>' +
+      '<button class="nv-plb nv-pl-dl" type="button" title="Download video" aria-label="Download video"></button>' +
+      "</div>";
+
+    pl = {
+      cur: playerEl.querySelector(".nv-pl-cur"),
+      dur: playerEl.querySelector(".nv-pl-dur"),
+      seek: playerEl.querySelector(".nv-pl-seek"),
+      play: playerEl.querySelector(".nv-pl-play"),
+      mute: playerEl.querySelector(".nv-pl-mute"),
+      vol: playerEl.querySelector(".nv-pl-vol"),
+      brightBtn: playerEl.querySelector(".nv-pl-bright"),
+      bri: playerEl.querySelector(".nv-pl-bri"),
+      speed: playerEl.querySelector(".nv-pl-speed"),
+      rotate: playerEl.querySelector(".nv-pl-rotate"),
+      fs: playerEl.querySelector(".nv-pl-fs"),
+      dl: playerEl.querySelector(".nv-pl-dl"),
+    };
+    pl.play.innerHTML = PL_ICON.play;
+    pl.mute.innerHTML = PL_ICON.vol;
+    pl.brightBtn.innerHTML = PL_ICON.bright;
+    pl.rotate.innerHTML = PL_ICON.rotate;
+    pl.fs.innerHTML = PL_ICON.fs;
+    pl.dl.innerHTML = PL_ICON.dl;
+
+    pl.play.addEventListener("click", togglePlay);
+    pl.mute.addEventListener("click", toggleMute);
+    pl.vol.addEventListener("input", function () {
+      if (!playerVideo) return;
+      const value = Number(pl.vol.value) / 100;
+      playerVideo.volume = value;
+      playerVideo.muted = value === 0;
+      syncPlayer();
+      showPlayer();
+    });
+    pl.bri.addEventListener("input", function () {
+      playerBrightness = Number(pl.bri.value) || 100;
+      applyBrightness();
+      showPlayer();
+    });
+    pl.speed.addEventListener("click", cycleSpeed);
+    pl.rotate.addEventListener("click", toggleRotate);
+    pl.fs.addEventListener("click", toggleTheater);
+    pl.dl.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (prefs.downloader === false) return;
+      if (panelOpen) closePanel();
+      else openPanel();
+    });
+    pl.seek.addEventListener("input", function () {
+      playerSeekDragging = true;
+      if (!playerVideo) return;
+      const dur = isFinite(playerVideo.duration) ? playerVideo.duration : 0;
+      if (dur > 0) {
+        try {
+          playerVideo.currentTime = (Number(pl.seek.value) / 1000) * dur;
+        } catch (err) {
+          /* ignore */
+        }
+      }
+      pl.cur.textContent = clock(playerVideo.currentTime);
+      clearTimeout(playerTimer);
+    });
+    pl.seek.addEventListener("change", function () {
+      playerSeekDragging = false;
+      schedulePlayerHide();
+    });
+    pl.seek.addEventListener("pointerup", function () {
+      playerSeekDragging = false;
+      schedulePlayerHide();
+    });
+
+    playerEl.addEventListener("pointerenter", function () {
+      clearTimeout(playerTimer);
+    });
+    playerEl.addEventListener("pointerleave", function () {
+      if (!playerSeekDragging) schedulePlayerHide();
+    });
+
+    shadow.appendChild(playerEl);
+    keepAlive();
+  }
+
+  function destroyPlayer() {
+    clearTimeout(playerTimer);
+    exitTheater();
+    unbindVideo();
+    if (playerEl && playerEl.parentNode) playerEl.parentNode.removeChild(playerEl);
+    playerEl = null;
+    pl = null;
+  }
+
+  /* -------------------------- video binding ----------------------- */
+
+  function selectVideo() {
+    let best = null;
+    let bestScore = -1;
+    let nodes;
+    try {
+      nodes = document.querySelectorAll("video");
+    } catch (e) {
+      return null;
+    }
+    for (const v of nodes) {
+      let hasMedia = false;
+      try {
+        hasMedia = !!(v.currentSrc || v.src || v.querySelector("source[src]"));
+      } catch (e) {
+        hasMedia = false;
+      }
+      if (!hasMedia) continue;
+      const rect = v.getBoundingClientRect();
+      const area = Math.max(0, rect.width) * Math.max(0, rect.height);
+      if (area < 2500 && (v.paused || v.ended)) continue;
+      let score = area;
+      if (!v.paused && !v.ended) score += 1e9;
+      if (isFinite(v.duration) && v.duration > 0) score += 1e6;
+      if (score > bestScore) {
+        bestScore = score;
+        best = v;
+      }
+    }
+    return best;
+  }
+
+  function unbindVideo() {
+    if (playerVideo) {
+      for (const pair of playerMediaBound) {
+        try {
+          playerVideo.removeEventListener(pair[0], pair[1], true);
+        } catch (e) {
+          /* ignore */
+        }
+      }
+      restoreFilter(playerVideo);
+    }
+    playerMediaBound = [];
+    playerVideo = null;
+  }
+
+  function bindVideo(v) {
+    unbindVideo();
+    if (!v) {
+      hidePlayer();
+      return;
+    }
+    playerVideo = v;
+
+    const onDiscrete = function () {
+      showPlayer();
+      syncPlayer();
+    };
+    const onSimple = function () {
+      syncPlayer();
+    };
+    const onTime = function () {
+      if (!pl || !playerVideo || playerSeekDragging) return;
+      const dur = isFinite(playerVideo.duration) ? playerVideo.duration : 0;
+      pl.cur.textContent = clock(playerVideo.currentTime);
+      pl.seek.value = dur > 0 ? String(Math.round((playerVideo.currentTime / dur) * 1000)) : "0";
+    };
+
+    const discrete = [
+      "play", "pause", "playing", "seeking", "seeked", "ended",
+      "loadedmetadata", "loadeddata",
+    ];
+    for (const evt of discrete) {
+      v.addEventListener(evt, onDiscrete, true);
+      playerMediaBound.push([evt, onDiscrete]);
+    }
+    for (const evt of ["ratechange", "volumechange", "durationchange"]) {
+      v.addEventListener(evt, onSimple, true);
+      playerMediaBound.push([evt, onSimple]);
+    }
+    v.addEventListener("timeupdate", onTime, true);
+    playerMediaBound.push(["timeupdate", onTime]);
+
+    const idx = SPEEDS.indexOf(v.playbackRate);
+    playerSpeedIdx = idx < 0 ? 2 : idx;
+    applyBrightness();
+    syncPlayer();
+    showPlayer();
+  }
+
+  function updatePlayer() {
+    if (!prefs.inbuiltPlayer) {
+      if (playerEl) destroyPlayer();
+      return;
+    }
+    ensurePlayer();
+    if (!playerEl) return;
+    if (playerVideo && !playerVideo.isConnected) {
+      unbindVideo();
+      hidePlayer();
+    }
+    const v = playerVideo || selectVideo();
+    if (v !== playerVideo) bindVideo(v);
+    if (playerVideo) syncPlayer();
+    else hidePlayer();
+  }
+
+  /* -------------------------- player state ------------------------ */
+
+  function syncPlayer() {
+    if (!pl || !playerVideo) return;
+    const v = playerVideo;
+    const playing = !v.paused && !v.ended;
+    pl.play.innerHTML = playing ? PL_ICON.pause : PL_ICON.play;
+    const muted = !!v.muted || v.volume === 0;
+    pl.mute.innerHTML = muted ? PL_ICON.mute : PL_ICON.vol;
+    pl.mute.classList.toggle("nv-on", muted);
+    const dur = isFinite(v.duration) ? v.duration : 0;
+    pl.dur.textContent = clock(dur);
+    pl.cur.textContent = clock(v.currentTime);
+    if (!playerSeekDragging) {
+      pl.seek.value = dur > 0 ? String(Math.round((v.currentTime / dur) * 1000)) : "0";
+    }
+    pl.vol.value = String(Math.round((muted ? 0 : v.volume) * 100));
+    pl.bri.value = String(playerBrightness);
+    pl.speed.textContent = v.playbackRate + "\u00d7";
+    pl.rotate.classList.toggle("nv-on", playerRotated);
+    pl.fs.classList.toggle("nv-on", playerTheater);
+    pl.dl.hidden = prefs.downloader === false;
+  }
+
+  function showPlayer() {
+    if (!playerEl || !playerVideo) return;
+    playerEl.hidden = false;
+    keepAlive();
+    schedulePlayerHide();
+  }
+
+  function hidePlayer() {
+    clearTimeout(playerTimer);
+    if (playerEl) playerEl.hidden = true;
+  }
+
+  function schedulePlayerHide() {
+    clearTimeout(playerTimer);
+    playerTimer = setTimeout(function () {
+      if (!playerEl || playerSeekDragging) return;
+      let hovering = false;
+      try {
+        hovering = playerEl.matches(":hover");
+      } catch (e) {
+        /* ignore */
+      }
+      if (hovering) {
+        schedulePlayerHide();
+        return;
+      }
+      hidePlayer();
+    }, PLAYER_HIDE_MS);
+  }
+
+  function togglePlay() {
+    if (!playerVideo) return;
+    try {
+      if (playerVideo.paused || playerVideo.ended) playerVideo.play();
+      else playerVideo.pause();
+    } catch (e) {
+      /* ignore */
+    }
+    showPlayer();
+  }
+
+  function toggleMute() {
+    if (!playerVideo) return;
+    playerVideo.muted = !playerVideo.muted;
+    if (!playerVideo.muted && playerVideo.volume === 0) playerVideo.volume = 1;
+    syncPlayer();
+    showPlayer();
+  }
+
+  function cycleSpeed() {
+    if (!playerVideo) return;
+    playerSpeedIdx = (playerSpeedIdx + 1) % SPEEDS.length;
+    const rate = SPEEDS[playerSpeedIdx];
+    try {
+      playerVideo.playbackRate = rate;
+    } catch (e) {
+      /* ignore */
+    }
+    if (pl) pl.speed.textContent = rate + "\u00d7";
+    showPlayer();
+  }
+
+  function applyBrightness() {
+    const v = playerVideo;
+    if (pl) pl.bri.value = String(playerBrightness);
+    if (!v) return;
+    if (!playerOrigFilters.has(v)) {
+      playerOrigFilters.set(v, {
+        value: v.style.getPropertyValue("filter") || "",
+        priority: v.style.getPropertyPriority("filter") || "",
+      });
+    }
+    const orig = playerOrigFilters.get(v);
+    const part = "brightness(" + playerBrightness / 100 + ")";
+    const next = orig.value ? orig.value + " " + part : part;
+    v.style.setProperty("filter", next, "important");
+  }
+
+  function restoreFilter(v) {
+    if (!v || !playerOrigFilters.has(v)) return;
+    const orig = playerOrigFilters.get(v);
+    playerOrigFilters.delete(v);
+    if (orig.value) v.style.setProperty("filter", orig.value, orig.priority);
+    else v.style.removeProperty("filter");
+  }
+
+  /* -------------------------- theater + rotate -------------------- */
+
+  function applyTheaterStyle() {
+    const v = playerVideo;
+    if (!v) return;
+    const set = function (prop, value) {
+      v.style.setProperty(prop, value, "important");
+    };
+    set("position", "fixed");
+    set("top", "0");
+    set("left", "0");
+    set("right", "0");
+    set("bottom", "0");
+    set("margin", "0");
+    set("padding", "0");
+    set("object-fit", "contain");
+    set("background", "#000");
+    set("z-index", "2147483000");
+    if (playerRotated) {
+      set("width", "100vh");
+      set("height", "100vw");
+      set("top", "50%");
+      set("left", "50%");
+      set("transform", "translate(-50%, -50%) rotate(90deg)");
+      set("transform-origin", "center center");
+    } else {
+      set("width", "100vw");
+      set("height", "100vh");
+      set("transform", "none");
+    }
+  }
+
+  function enterTheater() {
+    const v = playerVideo;
+    if (!v || playerTheater) return;
+    playerSavedStyle = v.getAttribute("style") || "";
+    playerTheater = true;
+    applyTheaterStyle();
+    showPlayer();
+  }
+
+  function exitTheater() {
+    const v = playerVideo;
+    if (playerTheater && v) {
+      for (const prop of THEATER_PROPS) v.style.removeProperty(prop);
+      if (playerSavedStyle) v.setAttribute("style", playerSavedStyle);
+      else v.removeAttribute("style");
+      playerRotated = false;
+      applyBrightness();
+    }
+    playerTheater = false;
+    playerSavedStyle = null;
+    if (pl) {
+      pl.fs.classList.remove("nv-on");
+      pl.rotate.classList.remove("nv-on");
+    }
+  }
+
+  function toggleTheater() {
+    if (playerTheater) {
+      exitTheater();
+    } else {
+      enterTheater();
+    }
+    showPlayer();
+    syncPlayer();
+  }
+
+  function toggleRotate() {
+    if (!playerVideo) return;
+    if (!playerTheater) enterTheater();
+    playerRotated = !playerRotated;
+    applyTheaterStyle();
+    if (pl) pl.rotate.classList.toggle("nv-on", playerRotated);
+    showPlayer();
+  }
+
   /* -------------------------- entry polling ----------------------- */
 
   function refreshEntries(force) {
@@ -1313,6 +1923,9 @@
         });
       entries = next;
       checkVisibility();
+      if (changed && entries.length && prefs.downloader !== false && btnEl && !btnEl.hidden) {
+        showButton();
+      }
       if (panelOpen && (changed || force)) renderList();
     });
   }
@@ -1323,7 +1936,15 @@
     buildUi();
     refreshEntries(true);
     restoreYtdlpJobs();
+    fetchPrefs();
     pollTimer = setInterval(refreshEntries, 1200);
+    prefsTimer = setInterval(fetchPrefs, 8000);
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) fetchPrefs();
+    });
+    window.addEventListener("focus", function () {
+      fetchPrefs();
+    });
   }
 
   if (document.readyState === "loading") {

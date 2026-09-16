@@ -150,6 +150,8 @@ fun MainMenu(
     onNovaViewSource: () -> Unit = {},
     novaVideoDownloaderEnabled: Boolean = true,
     onNovaVideoDownloaderToggle: () -> Unit = {},
+    novaInbuiltPlayerEnabled: Boolean = false,
+    onNovaInbuiltPlayerToggle: () -> Unit = {},
     canGoBack: Boolean,
     canGoForward: Boolean,
     scrollState: ScrollState,
@@ -359,6 +361,25 @@ fun MainMenu(
                         androidx.compose.material3.Switch(
                             checked = novaVideoDownloaderEnabled,
                             onCheckedChange = { onNovaVideoDownloaderToggle() },
+                        )
+                    },
+                )
+
+                MenuItem(
+                    label = stringResource(id = R.string.browser_menu_inbuilt_player),
+                    description = stringResource(
+                        id = if (novaInbuiltPlayerEnabled) {
+                            R.string.browser_menu_inbuilt_player_on
+                        } else {
+                            R.string.browser_menu_inbuilt_player_off
+                        },
+                    ),
+                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_autoplay_24),
+                    onClick = onNovaInbuiltPlayerToggle,
+                    afterContent = {
+                        androidx.compose.material3.Switch(
+                            checked = novaInbuiltPlayerEnabled,
+                            onCheckedChange = { onNovaInbuiltPlayerToggle() },
                         )
                     },
                 )

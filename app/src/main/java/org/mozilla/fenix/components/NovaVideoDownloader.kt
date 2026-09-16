@@ -36,14 +36,24 @@ object NovaVideoDownloader {
     }
 
     /**
+     * True while the bundled extension has to stay enabled. The extension is
+     * also the vehicle for Nova's own in-page player, so it is only really
+     * switched off once BOTH the downloader and the player are off.
+     */
+    fun isExtensionWanted(context: Context): Boolean =
+        isEnabled(context) || NovaInbuiltPlayer.isEnabled(context)
+
+    /**
      * Enables or disables the bundled extension in the engine so the change
-     * takes effect without restarting the app.
+     * takes effect without restarting the app. Which state is wanted is read
+     * from the feature switches themselves ([isExtensionWanted]).
      */
     fun apply(
         engine: WebExtensionRuntime,
-        enabled: Boolean,
+        context: Context,
         onFinished: (Boolean) -> Unit = {},
     ) {
+        val wanted = isExtensionWanted(context)
         engine.listInstalledWebExtensions(
             onSuccess = { extensions ->
                 val extension = extensions.firstOrNull { it.id == ADDON_ID }
@@ -51,7 +61,7 @@ object NovaVideoDownloader {
                     onFinished(false)
                     return@listInstalledWebExtensions
                 }
-                if (enabled) {
+                if (wanted) {
                     engine.enableWebExtension(
                         extension = extension,
                         source = EnableSource.USER,
