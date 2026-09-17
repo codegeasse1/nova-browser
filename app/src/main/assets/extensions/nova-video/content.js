@@ -106,10 +106,10 @@
   document.addEventListener("play", reportElements, true);
   document.addEventListener("loadeddata", reportElements, true);
 
-  if (!IS_TOP) return;
-
   /* ---------------------------------------------------------------- */
-  /* Top frame: UI                                                     */
+  /* UI                                                                */
+  /* The download button is a top-frame-only affordance; the player     */
+  /* shell runs in any frame that owns a <video> (see start()).         */
   /* ---------------------------------------------------------------- */
 
   let entries = [];
@@ -130,7 +130,7 @@
   let playerEl = null;
   let pl = null;
   let playerVideo = null;
-  let playerTimer = null;
+  let playerDismissed = false;
   let playerTheater = false;
   let playerRotated = false;
   let playerSavedStyle = null;
@@ -141,15 +141,20 @@
   const playerOrigFilters = new WeakMap();
   let pollTimer = null;
   let pos = null;
+  let frameTouched = false;
+  let prefsPrimed = false;
+  let frameTimer = null;
+  let framePrefsAt = 0;
+  let listenersBound = false;
 
   function teardown() {
     contextDead = true;
     instance.beat = 0;
     clearInterval(reportTimer);
     clearInterval(pollTimer);
+    clearInterval(frameTimer);
     clearTimeout(hideTimer);
     clearTimeout(prefsTimer);
-    clearTimeout(playerTimer);
     try {
       destroyPlayer();
     } catch (e) {
@@ -298,6 +303,7 @@
     .nv-pl-seek { flex: 1 1 auto; max-width: none; height: 5px; }
     .nv-pl-seek::-webkit-slider-thumb { width: 15px; height: 15px; background: #5847f5; }
     .nv-pl-dl { margin-left: auto; }
+    .nv-pl-x { font-size: 17px; line-height: 1; background: #33343d; }
     @keyframes nova-keepalive {
       0%, 91% { visibility: visible; }
       100% { visibility: hidden; }
@@ -337,13 +343,25 @@
   const ICON =
     '<svg viewBox="0 0 24 24"><path d="M12 16.5l-5.5-5.5h3.25V3h4.5v8H17.5L12 16.5zM5 18h14v2.5H5V18z"/></svg>';
 
-  function buildUi() {
+  /*
+   * The host + shadow root is shared by both modes: the download button only
+   * exists in the top frame, while the player shell can be created in any
+   * frame that actually owns a <video> (see start()).
+   */
+  function buildHost() {
+    if (host) return;
     host = document.createElement("div");
     host.id = "nova-video-host";
     host.style.cssText =
       "all:initial;position:fixed;top:0;left:0;width:0;height:0;z-index:2147483647;";
     shadow = host.attachShadow({ mode: "open" });
     applyStyles(shadow);
+    (document.body || document.documentElement).appendChild(host);
+    ensureListeners();
+  }
+
+  function buildUi() {
+    buildHost();
 
     btnEl = document.createElement("div");
     btnEl.className = "nv-btn";
@@ -375,17 +393,32 @@
     closeBtn.addEventListener("touchend", doClose);
     closeBtn.addEventListener("pointerup", doClose);
 
-    document.addEventListener("pointerdown", onDocumentPointerDown, true);
-    for (const evt of MEDIA_EVENTS) {
-      document.addEventListener(evt, onMediaEvent, true);
-    }
-
-    (document.body || document.documentElement).appendChild(host);
     setupDrag();
-    document.addEventListener("fullscreenchange", onFullscreenChange, true);
     window.addEventListener("resize", positionPanel);
     positionButton();
     keepAlive();
+  }
+
+  function videoAtPoint(x, y) {
+    let best = null;
+    let bestArea = Infinity;
+    let nodes;
+    try {
+      nodes = document.querySelectorAll("video");
+    } catch (e) {
+      return null;
+    }
+    for (const v of nodes) {
+      const rect = v.getBoundingClientRect();
+      const area = rect.width * rect.height;
+      if (area <= 0) continue;
+      if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) continue;
+      if (area < bestArea) {
+        bestArea = area;
+        best = v;
+      }
+    }
+    return best;
   }
 
   function onDocumentPointerDown(e) {
@@ -398,10 +431,29 @@
       const tag = node && node.tagName;
       if (tag === "VIDEO" || tag === "AUDIO") {
         if (btnEl && !btnEl.hidden) showButton();
-        if (playerEl && playerVideo) showPlayer();
+        if (tag === "VIDEO") frameTouched = true;
+        if (playerEl && playerVideo && prefs.inbuiltPlayer) showPlayer();
         break;
       }
     }
+    /*
+     * Most players (YouTube, Vimeo, news sites...) draw their own controls on
+     * top of the <video>, so the tap never reaches the video node itself.
+     * A tap inside the video's box means "the user is using this video", so
+     * that is what brings the player back.
+     */
+    /*
+     * A tap inside a video's box is the user using that video, whatever the
+     * switch currently reads: a frame with only a small paused video never hits
+     * the poll that refreshes the preference, so the tap itself asks for it.
+     */
+    if (typeof e.clientX !== "number") return;
+    const hit = videoAtPoint(e.clientX, e.clientY);
+    if (!hit) return;
+    frameTouched = true;
+    if (!prefs.inbuiltPlayer) fetchPrefs();
+    if (playerVideo !== hit) bindVideo(hit);
+    else showPlayer();
   }
 
   /* -------------------------- drag -------------------------------- */
@@ -636,7 +688,7 @@
   }
 
   function toast(message) {
-    if (!shadow) return;
+    if (!shadow || !IS_TOP) return;
     let el = shadow.querySelector(".nv-toast");
     if (!el) {
       el = document.createElement("div");
@@ -1422,7 +1474,8 @@
   /* ---------------------------------------------------------------- */
 
   const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-  const PLAYER_HIDE_MS = 3200;
+  /* ~200x200. Paused videos smaller than this are thumbnails/decoration. */
+  const MIN_PLAYER_AREA = 40000;
   const MEDIA_EVENTS = [
     "play", "pause", "playing", "seeking", "seeked", "ended",
     "ratechange", "volumechange", "loadedmetadata", "loadeddata",
@@ -1469,20 +1522,23 @@
     send("novaVideo:prefs", {}).then(function (res) {
       prefsBusy = false;
       if (contextDead) return;
-      if (res && res.ok) {
-        const nextPlayer = !!res.inbuiltPlayer;
-        const nextDownloader = res.downloader !== false;
-        const changed = nextPlayer !== prefs.inbuiltPlayer || nextDownloader !== prefs.downloader;
-        prefs.inbuiltPlayer = nextPlayer;
-        prefs.downloader = nextDownloader;
-        if (changed) applyPrefs();
+      if (!res || !res.ok) return;
+      const nextPlayer = !!res.inbuiltPlayer;
+      const nextDownloader = res.downloader !== false;
+      const wasPlayer = prefs.inbuiltPlayer;
+      const changed = nextPlayer !== prefs.inbuiltPlayer || nextDownloader !== prefs.downloader;
+      prefs.inbuiltPlayer = nextPlayer;
+      prefs.downloader = nextDownloader;
+      if (changed) applyPrefs();
+      if (prefsPrimed && nextPlayer !== wasPlayer) {
+        toast(nextPlayer ? "Inbuilt player on" : "Inbuilt player off");
       }
+      prefsPrimed = true;
     });
   }
 
   function applyPrefs() {
-    if (!btnEl) return;
-    if (prefs.downloader === false && !btnEl.hidden) {
+    if (btnEl && prefs.downloader === false && !btnEl.hidden) {
       btnEl.hidden = true;
       closePanel();
     }
@@ -1494,6 +1550,7 @@
     if (!el || (el.tagName !== "VIDEO" && el.tagName !== "AUDIO")) return;
     if (btnEl && !btnEl.hidden) showButton();
     if (!prefs.inbuiltPlayer || el.tagName !== "VIDEO") return;
+    if (playerVideo !== el && !plausibleVideo(el)) return;
     if (playerVideo !== el) bindVideo(el);
     showPlayer();
     syncPlayer();
@@ -1502,7 +1559,9 @@
   /* -------------------------- player shell ------------------------ */
 
   function ensurePlayer() {
-    if (playerEl || !shadow) return;
+    if (playerEl) return;
+    if (!shadow) buildHost();
+    if (!shadow) return;
     playerEl = document.createElement("div");
     playerEl.className = "nv-player";
     playerEl.hidden = true;
@@ -1522,6 +1581,7 @@
       '<button class="nv-plb nv-pl-rotate" type="button" title="Rotate" aria-label="Rotate"></button>' +
       '<button class="nv-plb nv-pl-fs" type="button" title="Fullscreen" aria-label="Fullscreen"></button>' +
       '<button class="nv-plb nv-pl-dl" type="button" title="Download video" aria-label="Download video"></button>' +
+      '<button class="nv-plb nv-pl-x" type="button" title="Hide player" aria-label="Hide player">\u00d7</button>' +
       "</div>";
 
     pl = {
@@ -1537,6 +1597,7 @@
       rotate: playerEl.querySelector(".nv-pl-rotate"),
       fs: playerEl.querySelector(".nv-pl-fs"),
       dl: playerEl.querySelector(".nv-pl-dl"),
+      x: playerEl.querySelector(".nv-pl-x"),
     };
     pl.play.innerHTML = PL_ICON.play;
     pl.mute.innerHTML = PL_ICON.vol;
@@ -1570,6 +1631,11 @@
       if (panelOpen) closePanel();
       else openPanel();
     });
+    pl.x.addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      dismissPlayer();
+    });
     pl.seek.addEventListener("input", function () {
       playerSeekDragging = true;
       if (!playerVideo) return;
@@ -1582,22 +1648,12 @@
         }
       }
       pl.cur.textContent = clock(playerVideo.currentTime);
-      clearTimeout(playerTimer);
     });
     pl.seek.addEventListener("change", function () {
       playerSeekDragging = false;
-      schedulePlayerHide();
     });
     pl.seek.addEventListener("pointerup", function () {
       playerSeekDragging = false;
-      schedulePlayerHide();
-    });
-
-    playerEl.addEventListener("pointerenter", function () {
-      clearTimeout(playerTimer);
-    });
-    playerEl.addEventListener("pointerleave", function () {
-      if (!playerSeekDragging) schedulePlayerHide();
     });
 
     shadow.appendChild(playerEl);
@@ -1605,7 +1661,6 @@
   }
 
   function destroyPlayer() {
-    clearTimeout(playerTimer);
     exitTheater();
     unbindVideo();
     if (playerEl && playerEl.parentNode) playerEl.parentNode.removeChild(playerEl);
@@ -1614,6 +1669,26 @@
   }
 
   /* -------------------------- video binding ----------------------- */
+
+  /*
+   * Whether a video is worth drawing Nova's bar for. The bar stays on screen
+   * until it is dismissed, so a paused thumbnail or a small decorative loop must
+   * not attract it - otherwise a page carrying a 140px preview video would get a
+   * full player parked over it. Anything that is playing qualifies, and so does
+   * anything big enough to be a real player; a video the user taps is always
+   * allowed in (see onDocumentPointerDown).
+   */
+  function plausibleVideo(v) {
+    if (!v) return false;
+    try {
+      if (!(v.currentSrc || v.src || v.querySelector("source[src]"))) return false;
+    } catch (e) {
+      return false;
+    }
+    if (!v.paused && !v.ended) return true;
+    const rect = v.getBoundingClientRect();
+    return Math.max(0, rect.width) * Math.max(0, rect.height) >= MIN_PLAYER_AREA;
+  }
 
   function selectVideo() {
     let best = null;
@@ -1625,17 +1700,9 @@
       return null;
     }
     for (const v of nodes) {
-      let hasMedia = false;
-      try {
-        hasMedia = !!(v.currentSrc || v.src || v.querySelector("source[src]"));
-      } catch (e) {
-        hasMedia = false;
-      }
-      if (!hasMedia) continue;
+      if (!plausibleVideo(v)) continue;
       const rect = v.getBoundingClientRect();
-      const area = Math.max(0, rect.width) * Math.max(0, rect.height);
-      if (area < 2500 && (v.paused || v.ended)) continue;
-      let score = area;
+      let score = Math.max(0, rect.width) * Math.max(0, rect.height);
       if (!v.paused && !v.ended) score += 1e9;
       if (isFinite(v.duration) && v.duration > 0) score += 1e6;
       if (score > bestScore) {
@@ -1700,12 +1767,27 @@
 
     const idx = SPEEDS.indexOf(v.playbackRate);
     playerSpeedIdx = idx < 0 ? 2 : idx;
+    playerDismissed = false;
     applyBrightness();
     syncPlayer();
-    showPlayer();
+    if (frameAllows(v)) showPlayer();
+    else hidePlayer();
+  }
+
+  /*
+   * The top frame always owns the player. Inside an iframe it would otherwise
+   * fight with every other embedded player on the page, so there the bar only
+   * appears for a video that is actually playing - or one the user has tapped.
+   */
+  function frameAllows(v) {
+    if (IS_TOP) return true;
+    if (!v) return false;
+    if (!v.paused && !v.ended) return true;
+    return frameTouched;
   }
 
   function updatePlayer() {
+    keepAlive();
     if (!prefs.inbuiltPlayer) {
       if (playerEl) destroyPlayer();
       return;
@@ -1717,9 +1799,26 @@
       hidePlayer();
     }
     const v = playerVideo || selectVideo();
-    if (v !== playerVideo) bindVideo(v);
-    if (playerVideo) syncPlayer();
-    else hidePlayer();
+    if (v !== playerVideo) {
+      bindVideo(v);
+      return;
+    }
+    if (!playerVideo) {
+      hidePlayer();
+      return;
+    }
+    syncPlayer();
+    /*
+     * A paused video fires no events of its own, so the bar is re-shown here
+     * for as long as the page keeps reporting one. A deliberate dismissal
+     * ("x" on the bar) is respected until something actually happens to the
+     * media or the user taps the video again.
+     */
+    if (!frameAllows(playerVideo)) {
+      hidePlayer();
+    } else if (!playerDismissed && !panelOpen && playerEl.hidden) {
+      showPlayer();
+    }
   }
 
   /* -------------------------- player state ------------------------ */
@@ -1743,37 +1842,29 @@
     pl.speed.textContent = v.playbackRate + "\u00d7";
     pl.rotate.classList.toggle("nv-on", playerRotated);
     pl.fs.classList.toggle("nv-on", playerTheater);
-    pl.dl.hidden = prefs.downloader === false;
+    pl.dl.hidden = prefs.downloader === false || !btnEl;
   }
 
   function showPlayer() {
     if (!playerEl || !playerVideo) return;
+    playerDismissed = false;
     playerEl.hidden = false;
     keepAlive();
-    schedulePlayerHide();
   }
 
   function hidePlayer() {
-    clearTimeout(playerTimer);
     if (playerEl) playerEl.hidden = true;
   }
 
-  function schedulePlayerHide() {
-    clearTimeout(playerTimer);
-    playerTimer = setTimeout(function () {
-      if (!playerEl || playerSeekDragging) return;
-      let hovering = false;
-      try {
-        hovering = playerEl.matches(":hover");
-      } catch (e) {
-        /* ignore */
-      }
-      if (hovering) {
-        schedulePlayerHide();
-        return;
-      }
-      hidePlayer();
-    }, PLAYER_HIDE_MS);
+  /*
+   * The bar stays put until it is dismissed on purpose. Auto-hiding it after a
+   * few seconds looked identical to a broken feature: the bar would fade just
+   * after the page loaded, and a paused video fires nothing that would bring
+   * it back, so the player was only ever seen as a brief flash.
+   */
+  function dismissPlayer() {
+    playerDismissed = true;
+    hidePlayer();
   }
 
   function togglePlay() {
@@ -1938,7 +2029,7 @@
     restoreYtdlpJobs();
     fetchPrefs();
     pollTimer = setInterval(refreshEntries, 1200);
-    prefsTimer = setInterval(fetchPrefs, 8000);
+    prefsTimer = setInterval(fetchPrefs, 2000);
     document.addEventListener("visibilitychange", function () {
       if (!document.hidden) fetchPrefs();
     });
@@ -1947,9 +2038,87 @@
     });
   }
 
+  /*
+   * Videos that live inside an iframe (most embedded players) are invisible to
+   * the top frame, so the player also runs in any frame that owns one. The
+   * download button stays a top-frame affordance (see buildUi).
+   *
+   * An iframe with no <video> in it (ads, trackers, widgets) costs nothing but
+   * one cheap query per tick: no host, no shadow root, no native round-trips.
+   */
+  /*
+   * One document-level listener set per frame. Binding it is what lets a tap
+   * on a video reach Nova at all, so it is installed as soon as a frame proves
+   * it can contain media (see ensureListenersIfVideo) - not only when a full
+   * player shell is built.
+   */
+  function ensureListeners() {
+    if (listenersBound) return;
+    listenersBound = true;
+    document.addEventListener("pointerdown", onDocumentPointerDown, true);
+    for (const evt of MEDIA_EVENTS) {
+      document.addEventListener(evt, onMediaEvent, true);
+    }
+    document.addEventListener("fullscreenchange", onFullscreenChange, true);
+  }
+
+  /*
+   * A frame with no <video> at all (ads, trackers, widgets) stays free of Nova's
+   * listeners. A frame that owns even a small paused video still needs the tap
+   * listener, because that tap is what brings the bar up for it.
+   */
+  function ensureListenersIfVideo() {
+    if (listenersBound) return;
+    let hasVideo = false;
+    try {
+      hasVideo = !!document.querySelector("video");
+    } catch (e) {
+      hasVideo = false;
+    }
+    if (hasVideo) ensureListeners();
+  }
+
+  function bootFramePlayer() {
+    ensureListenersIfVideo();
+    frameTimer = setInterval(frameTick, 1200);
+    frameTick();
+  }
+
+  function frameTick() {
+    if (contextDead) return;
+    /*
+     * Tear a frame's player down only when the frame has nothing left to play
+     * for. A video the user tapped stays bound even when it is small and paused,
+     * so an existing binding also counts as "something to play for".
+     */
+    const video = selectVideo();
+    if (!video && !playerVideo) {
+      if (playerEl) {
+        unbindVideo();
+        destroyPlayer();
+      }
+      ensureListenersIfVideo();
+      return;
+    }
+    ensureListenersIfVideo();
+    const now = Date.now();
+    if (now - framePrefsAt > 2000) {
+      framePrefsAt = now;
+      fetchPrefs();
+    }
+    if (!prefs.inbuiltPlayer) return;
+    if (!playerEl) ensurePlayer();
+    updatePlayer();
+  }
+
+  function start() {
+    if (IS_TOP) boot();
+    else bootFramePlayer();
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot, { once: true });
+    document.addEventListener("DOMContentLoaded", start, { once: true });
   } else {
-    boot();
+    start();
   }
 })();

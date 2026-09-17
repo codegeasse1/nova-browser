@@ -37,8 +37,7 @@ It also reports `<video>`/`<audio>` elements found in the page (including frames
 ## In-page player (optional)
 
 A second switch, **"Inbuilt video player"**, adds Nova's own player controls on
-top of the page's `<video>` (drawn in the same shadow DOM as the download icon,
-in the top frame only):
+top of the page's `<video>` (drawn in the same shadow DOM as the download icon):
 
 - play/pause, a seek bar with current/total time, and a mute button + volume slider;
 - a **brightness** slider (applied as a CSS `filter: brightness()` on the video,
@@ -47,12 +46,29 @@ in the top frame only):
 - **rotate** and **fullscreen** (Nova's own theater mode: the video is pinned to
   the viewport, and rotate re-lays it out at 90 degrees - no Fullscreen API needed,
   so the controls stay visible);
-- a **download** button that opens the same picker as the icon.
+- a **download** button that opens the same picker as the icon (top frame only);
+- a small **`x`** whose only job is to hide the bar.
 
-The bar behaves like the icon: it appears for ~3s, and comes back when a video
-starts/pauses or the video is tapped. Switching it off removes it again without a
-page reload. It is independent of the downloader switch - with the downloader off,
-the player still works and its download button is hidden.
+The bar **stays on screen** until that `x` is tapped; it no longer fades out a few
+seconds after appearing. It used to auto-hide, which looked exactly like a broken
+switch - the bar faded just after the page loaded, and a paused video fires no
+event that would bring it back, so the player was only ever seen as a brief
+flash. Tapping the video brings the bar back after a dismissal, and the media
+events (play/pause/etc.) clear a dismissal too. The bar is kept painted by the
+same keep-alive CSS animation as the icon, refreshed by the entry poll.
+
+The player also runs inside frames (`all_frames`), because most embedded players
+live in an iframe where the top frame cannot see their `<video>` at all. In a
+frame it shows only for a video that is **playing**, or for one the user has
+tapped - so a page full of paused embeds does not sprout bars everywhere. A
+small paused video (a thumbnail or decorative loop) is likewise left alone until
+it is tapped, so a page carrying a 140px preview never gets a full bar parked
+over it.
+
+Switching it off removes the bar without a page reload, and a switch flip is
+picked up within ~2s (the content script polls its preferences). The player is
+independent of the downloader switch - with the downloader off, the player still
+works and its download button is hidden.
 
 ## On / off switch in the 3-dot menu
 
@@ -93,6 +109,8 @@ content script draw its controls; turning it **off** removes them.
 | `app/build.gradle` | adds the `youtubedl-android` `library` + `ffmpeg` dependencies |
 | `app/src/main/java/org/mozilla/fenix/components/NovaInbuiltPlayer.kt` | new - shared-preference switch for the in-page player |
 | `app/src/main/assets/extensions/nova-video/content.js` | icon auto-hides (peek behaviour) + optional in-page player controls |
+| `app/src/main/assets/extensions/nova-video/manifest.json` | version `1.1.1` - bumped so the built-in extension is re-installed (GeckoView skips a built-in whose version is unchanged, which would leave the old `content.js` on device) |
+| `app/src/main/assets/extensions/nova-video/content.js` | player bar no longer auto-hides (stays until its `x` is tapped; a tap on the video brings it back) and now runs inside frames too |
 | `app/proguard-rules.pro` | keep/dontwarn rules for youtubedl-android, Jackson and commons-io |
 | `app/src/main/java/org/mozilla/fenix/FenixApplication.kt` | `NOVA_VIDEO_ADDON_ID` constant + `installBuiltInWebExtension(...)` call + re-applies the stored on/off preference |
 | `app/src/main/java/org/mozilla/fenix/components/menu/compose/MainMenu.kt` | new "Video Downloader" menu item with a switch |
