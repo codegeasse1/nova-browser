@@ -36,31 +36,32 @@ It also reports `<video>`/`<audio>` elements found in the page (including frames
 
 ## In-page player (optional)
 
-A second switch, **"Inbuilt video player"**, gives the page's `<video>` to Nova's
-own player. When the switch is on and a video **starts playing** - or the user
-**taps one** - Nova takes the video over into its own full-screen player instead
-of leaving the site's player in charge:
+A second switch, **"Inbuilt video player"**, adds Nova's own player controls over
+the page's `<video>`. When the switch is on and a video **starts playing** - or
+the user **taps one** - a control bar is drawn over the bottom of that video, in
+its normal inline position. Nova **never** takes the video full screen on its own
+and **never** moves it in the DOM; full screen happens only when the user presses
+the fullscreen button. (An earlier version moved the `<video>` into a full-screen
+overlay on play, which read as a full-screen flash that immediately reverted on
+complex sites - that approach is gone.)
 
-- the `<video>` element itself is moved into Nova's full-screen stage, so
-  playback keeps running (the same media element means MSE/`blob:` sources still
-  work) while the site's own player chrome is left behind on the page;
-- Nova's control bar is docked at the bottom, drawn in the same shadow DOM as
-  the download icon:
-  - play/pause, a seek bar with current/total time, and a mute button + volume slider;
-  - a **brightness** slider (applied as a CSS `filter: brightness()` on the video,
-    restored if the player is switched off);
-  - a **playback speed** button cycling 0.5x / 0.75x / 1x / 1.25x / 1.5x / 1.75x / 2x;
-  - **rotate** (turn the staged video 90 degrees);
-  - **fit / fill** (letterbox vs. crop-to-fill);
-  - a **download** button that opens the same picker as the icon (top frame only);
-  - an **`x`** that hands the video back to the site.
+- the bar is anchored to the video's own rectangle (clamped to the viewport) and
+  follows it on scroll/resize, so it looks like part of the site's player;
+- controls: play/pause, a seek bar with current/total time, mute + volume slider,
+  a **brightness** slider (a CSS `filter: brightness()` on the video), a
+  **playback speed** button cycling 0.5x / 0.75x / 1x / 1.25x / 1.5x / 1.75x / 2x,
+  **rotate** and **fullscreen**, a **download** button that opens the same picker
+  as the icon (top frame only), and an **`x`** that hides the bar;
+- the bar **auto-hides** after ~4s of playback with no interaction (like a normal
+  player), comes back on any tap on the video, stays up while paused, and stays
+  up while the pointer is moving over the video;
+- fullscreen uses Nova's own styling of the video (stretched to the viewport via
+  inline styles, the bar spanning the bottom); Escape or the button again puts
+  the video's own inline styles back. The element is never moved.
 
-The `x` (or the Escape key) restores the page exactly as it was: the video goes
-back to its original parent, with its original inline styles and `controls`
-attribute, and Nova does not take over again until the user plays or taps a
-video. A paused video the user has not engaged with is left alone, so loading a
-page with a paused video never hijacks the screen. The player is kept painted by
-the same keep-alive CSS animation as the download icon, refreshed by the poll.
+A paused video the user has not touched is left alone (no bar), so loading a page
+with a paused video never clutters it. The bar is kept painted by the same
+keep-alive CSS animation as the download icon, refreshed by the poll.
 
 Videos hidden inside **open shadow roots** are handled too: media events are
 matched via `composedPath()` (not `event.target`, which is retargeted to the
@@ -69,15 +70,14 @@ shadow host) and a throttled, capped scan reaches shadow-root videos that a plai
 
 The player also runs inside frames (`all_frames`), because most embedded players
 live in an iframe where the top frame cannot see their `<video>` at all. In a
-frame it takes over a video that is **playing**, or one the user has **tapped** -
-so a page full of paused embeds does not sprout players everywhere. A small
-paused video (a thumbnail or decorative loop) is likewise left alone until it is
-tapped, so a page carrying a 140px preview never gets a full player parked over
-it.
+frame it shows for a video that is **playing**, or one the user has **tapped** -
+so a page full of paused embeds does not sprout bars everywhere. A small paused
+video (a thumbnail or decorative loop) is likewise left alone until it is tapped,
+so a page carrying a 140px preview never gets a full bar parked over it.
 
-Switching it off restores the page and removes the player without a page reload,
-and a switch flip is picked up within ~2s (the content script polls its
-preferences). The player is independent of the downloader switch - with the
+Switching it off restores the video's inline styles and removes the bar without a
+page reload, and a switch flip is picked up within ~2s (the content script polls
+its preferences). The player is independent of the downloader switch - with the
 downloader off, the player still works and its download button is hidden.
 
 ## On / off switch in the 3-dot menu
@@ -118,8 +118,8 @@ content script draw its controls; turning it **off** removes them.
 | `app/src/main/java/org/mozilla/fenix/components/NovaYtDlp.kt` | new â native yt-dlp bridge (init, downloads, progress, MediaStore publish) |
 | `app/build.gradle` | adds the `youtubedl-android` `library` + `ffmpeg` dependencies |
 | `app/src/main/java/org/mozilla/fenix/components/NovaInbuiltPlayer.kt` | new - shared-preference switch for the in-page player |
-| `app/src/main/assets/extensions/nova-video/content.js` | icon auto-hides (peek behaviour); optional in-page player that takes the page's `<video>` over into a full-screen Nova player (the element is moved into Nova's stage and restored on `x`), incl. shadow-DOM and frame support |
-| `app/src/main/assets/extensions/nova-video/manifest.json` | version `1.2.0` - bumped so the built-in extension is re-installed (GeckoView skips a built-in whose version is unchanged, which would leave the old `content.js` on device) |
+| `app/src/main/assets/extensions/nova-video/content.js` | icon auto-hides (peek behaviour); optional inline in-page player (control bar over the video, auto-hide, fullscreen only on the button; the `<video>` is never moved), incl. shadow-DOM and frame support |
+| `app/src/main/assets/extensions/nova-video/manifest.json` | version `1.2.1` - bumped so the built-in extension is re-installed (GeckoView skips a built-in whose version is unchanged, which would leave the old `content.js` on device) |
 | `app/proguard-rules.pro` | keep/dontwarn rules for youtubedl-android, Jackson and commons-io |
 | `app/src/main/java/org/mozilla/fenix/FenixApplication.kt` | `NOVA_VIDEO_ADDON_ID` constant + `installBuiltInWebExtension(...)` call + re-applies the stored on/off preference |
 | `app/src/main/java/org/mozilla/fenix/components/menu/compose/MainMenu.kt` | new "Video Downloader" menu item with a switch |

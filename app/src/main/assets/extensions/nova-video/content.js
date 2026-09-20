@@ -129,19 +129,19 @@
   let prefsBusy = false;
   let playerEl = null;
   let pl = null;
-  let overlayEl = null;
-  let stageEl = null;
   let playerVideo = null;
-  let playerActive = false;
   let playerDismissed = false;
+  let playerTheater = false;
   let playerRotated = false;
-  let playerFit = "contain";
-  let videoHome = null;
+  let playerSavedStyle = null;
+  let playerHomeStyle = "";
   let playerBrightness = 100;
   let playerSpeedIdx = 2;
   let playerSeekDragging = false;
   let playerMediaBound = [];
   const playerOrigFilters = new WeakMap();
+  let controlsTimer = null;
+  let posRaf = null;
   let pollTimer = null;
   let pos = null;
   let frameTouched = false;
@@ -267,64 +267,63 @@
       font: 12px/1.4 -apple-system, system-ui, sans-serif;
       box-shadow: 0 8px 24px rgba(0,0,0,.5);
     }
-    .nv-overlay {
-      position: fixed; inset: 0; z-index: 2147483646;
-      width: 100vw; height: 100vh;
-      background: #000;
-      display: flex; flex-direction: column;
-    }
-    .nv-stage {
-      position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
-      background: #000;
-    }
-    .nv-stage > video { transform-origin: center center; }
-    .nv-stage.nv-rot > video { transform: rotate(90deg) scale(var(--nv-rot-scale, 1)); }
     .nv-player {
-      position: relative; flex: none;
-      width: 100%; max-width: none;
-      background: linear-gradient(to top, rgba(0,0,0,.94), rgba(0,0,0,.72));
-      border: 0; border-radius: 0;
-      padding: 8px 12px 10px;
-      font: 12px/1.3 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
-      color: #e9e9ef;
-      display: flex; flex-direction: column; gap: 7px;
-      transition: opacity .25s ease;
+      position: fixed; z-index: 2147483647;
+      background: rgba(12,13,17,.86);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 12px;
+      box-shadow: 0 6px 22px rgba(0,0,0,.55);
+      padding: 6px 10px 8px;
+      font: 12px/1.35 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+      color: #f2f3f7;
+      display: flex; flex-direction: column; gap: 5px;
+      transition: opacity .18s ease;
       opacity: 1;
     }
     .nv-player.nv-hide { opacity: 0; pointer-events: none; }
-    .nv-pl-seekrow { display: flex; align-items: center; gap: 8px; }
+    .nv-player.nv-fs { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; }
+    .nv-pl-seekrow { display: flex; align-items: center; gap: 9px; }
     .nv-pl-cur, .nv-pl-dur {
-      flex: none; color: #b9bbc9; font-variant-numeric: tabular-nums; min-width: 40px;
+      flex: none; min-width: 36px; font-size: 11px; font-weight: 600;
+      color: #cfd1db; font-variant-numeric: tabular-nums;
     }
     .nv-pl-dur { text-align: right; }
-    .nv-pl-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .nv-pl-row { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
     .nv-plb {
-      flex: none; width: 34px; height: 32px; border: 0; border-radius: 9px; cursor: pointer;
-      background: #2b2d36; color: #e9e9ef; padding: 0;
+      flex: none; width: 32px; height: 30px; border: 0; border-radius: 8px; cursor: pointer;
+      background: transparent; color: #f2f3f7; padding: 0;
       display: inline-flex; align-items: center; justify-content: center;
+      transition: background .12s ease, color .12s ease;
     }
-    .nv-plb:hover { background: #383b46; }
-    .nv-plb svg { width: 18px; height: 18px; fill: currentColor; pointer-events: none; }
-    .nv-plb.nv-on { background: #5847f5; color: #fff; }
-    .nv-pl-speed { width: auto; min-width: 44px; padding: 0 8px; font-size: 12px; font-weight: 600; }
+    .nv-plb:hover { background: rgba(255,255,255,.16); }
+    .nv-plb:active { background: rgba(255,255,255,.28); }
+    .nv-plb svg { width: 19px; height: 19px; fill: currentColor; pointer-events: none; }
+    .nv-plb.nv-on { color: #7f9dff; }
+    .nv-plb.nv-on:hover { background: rgba(127,157,255,.22); }
+    .nv-pl-play { width: 36px; height: 32px; }
+    .nv-pl-play svg { width: 22px; height: 22px; }
+    .nv-pl-speed { width: auto; min-width: 40px; padding: 0 7px; font-size: 12px; font-weight: 700; }
     .nv-pl-range {
-      -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px;
-      background: #3a3d49; outline: none; flex: 1 1 56px; min-width: 42px; max-width: 110px; margin: 0;
+      -webkit-appearance: none; appearance: none; height: 3px; border-radius: 2px;
+      background: rgba(255,255,255,.3); outline: none; margin: 0; flex: 0 1 58px; min-width: 40px;
     }
     .nv-pl-range::-webkit-slider-thumb {
-      -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%;
-      background: #7f9dff; border: 0;
+      -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%;
+      background: #fff; border: 0; box-shadow: 0 1px 3px rgba(0,0,0,.5);
     }
-    .nv-pl-seek { flex: 1 1 auto; max-width: none; height: 5px; }
-    .nv-pl-seek::-webkit-slider-thumb { width: 15px; height: 15px; background: #5847f5; }
+    .nv-pl-range:hover { background: rgba(255,255,255,.42); }
+    .nv-pl-seek { flex: 1 1 auto; max-width: none; height: 4px; }
+    .nv-pl-seek::-webkit-slider-thumb { width: 13px; height: 13px; }
+    .nv-pl-bri { flex: 0 1 52px; }
     .nv-pl-dl { margin-left: auto; }
-    .nv-pl-x { font-size: 17px; line-height: 1; background: #33343d; }
+    .nv-pl-x { font-size: 18px; line-height: 1; }
     @keyframes nova-keepalive {
       0%, 91% { visibility: visible; }
       100% { visibility: hidden; }
     }
-    .nv-btn, .nv-panel, .nv-toast, .nv-overlay, .nv-player { animation: nova-keepalive 2.6s linear forwards; }
+    .nv-btn, .nv-panel, .nv-toast, .nv-player { animation: nova-keepalive 2.6s linear forwards; }
   `;
 
   function applyStyles(root) {
@@ -347,7 +346,7 @@
    * so this is the only way to guarantee the icon disappears without a reload.
    */
   function keepAlive() {
-    const els = [btnEl, panelEl, playerEl, overlayEl, shadow && shadow.querySelector(".nv-toast")];
+    const els = [btnEl, panelEl, playerEl, shadow && shadow.querySelector(".nv-toast")];
     for (const el of els) {
       if (!el) continue;
       el.style.animation = "none";
@@ -442,8 +441,7 @@
     const insideUi =
       path.indexOf(panelEl) > -1 ||
       path.indexOf(btnEl) > -1 ||
-      path.indexOf(playerEl) > -1 ||
-      (overlayEl && path.indexOf(overlayEl) > -1);
+      path.indexOf(playerEl) > -1;
     if (insideUi) return;
     if (panelOpen) closePanel();
     /*
@@ -473,7 +471,7 @@
     frameTouched = true;
     if (!prefs.inbuiltPlayer) fetchPrefs();
     if (playerVideo !== hit) bindVideo(hit);
-    activatePlayer();
+    if (playerVideo === hit) showControls(!hit.paused && !hit.ended);
   }
 
   /* -------------------------- drag -------------------------------- */
@@ -631,7 +629,7 @@
     panelEl.hidden = false;
     keepAlive();
     showButtonNow();
-    if (!playerActive) hidePlayer();
+    /* The picker draws above the bar; leave the bar where it is. */
     renderList();
     positionPanel();
     requestAnimationFrame(positionPanel);
@@ -654,10 +652,17 @@
   function positionPanel() {
     if (!panelEl || panelEl.hidden) return;
     const margin = 10;
-    if (playerActive) {
+    if (controlsVisible() && playerVideo) {
+      const r = playerVideo.getBoundingClientRect();
       const width = panelEl.offsetWidth || 300;
-      panelEl.style.left = Math.max(margin, (window.innerWidth - width) / 2) + "px";
-      panelEl.style.top = margin + "px";
+      const height = panelEl.offsetHeight || 260;
+      let left = r.left + (r.width - width) / 2;
+      left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+      let top = r.bottom - height - 12;
+      if (top < margin) top = r.top + 12;
+      if (top + height > window.innerHeight - margin) top = Math.max(margin, window.innerHeight - height - margin);
+      panelEl.style.left = left + "px";
+      panelEl.style.top = top + "px";
       panelEl.style.right = "auto";
       panelEl.style.bottom = "auto";
       return;
@@ -1508,7 +1513,12 @@
     "play", "pause", "playing", "seeking", "seeked", "ended",
     "ratechange", "volumechange", "loadedmetadata", "loadeddata",
   ];
-  /* Inline styles for the takeover stage are applied in enterTakeover(). */
+  /* Inline styles Nova sets on the video while it owns the full screen. */
+  const THEATER_PROPS = [
+    "position", "inset", "top", "left", "right", "bottom", "width", "height",
+    "max-width", "max-height", "margin", "padding", "object-fit", "background",
+    "z-index", "transform", "transform-origin",
+  ];
 
   function clock(seconds) {
     if (!isFinite(seconds) || seconds <= 0) return "0:00";
@@ -1599,12 +1609,15 @@
     if (!prefs.inbuiltPlayer || el.tagName !== "VIDEO") return;
     if (playerVideo !== el && !plausibleVideo(el)) return;
     if (playerVideo !== el) bindVideo(el);
+    if (playerVideo !== el) return;
     /*
-     * Nova takes the video over when it actually starts playing (or when it is
-     * already in charge). A pause on a video the user never engaged with is
-     * ignored, so a paused page load does not hijack the screen.
+     * Controls follow the video: they come up when it plays and stay up when
+     * the user pauses it. A pause on a video nobody engaged with is ignored, so
+     * a page full of paused clips does not sprout control bars.
      */
-    if ((!el.paused && !el.ended) || playerActive) activatePlayer();
+    const playing = !el.paused && !el.ended;
+    if (playing) showControls(true);
+    else if (controlsVisible() || frameTouched) showControls(false);
     syncPlayer();
   }
 
@@ -1614,16 +1627,8 @@
     if (playerEl) return;
     if (!shadow) buildHost();
     if (!shadow) return;
-    overlayEl = document.createElement("div");
-    overlayEl.className = "nv-overlay";
-    overlayEl.hidden = true;
-    stageEl = document.createElement("div");
-    stageEl.className = "nv-stage";
-    overlayEl.appendChild(stageEl);
-
     playerEl = document.createElement("div");
-    playerEl.className = "nv-player";
-    playerEl.hidden = true;
+    playerEl.className = "nv-player nv-hide";
     playerEl.innerHTML =
       '<div class="nv-pl-seekrow">' +
       '<span class="nv-pl-cur">0:00</span>' +
@@ -1638,7 +1643,7 @@
       '<input class="nv-pl-range nv-pl-bri" type="range" min="20" max="200" step="1" value="100" aria-label="Brightness level">' +
       '<button class="nv-plb nv-pl-speed" type="button" title="Playback speed" aria-label="Playback speed">1\u00d7</button>' +
       '<button class="nv-plb nv-pl-rotate" type="button" title="Rotate" aria-label="Rotate"></button>' +
-      '<button class="nv-plb nv-pl-fs" type="button" title="Fit or fill" aria-label="Fit or fill the screen"></button>' +
+      '<button class="nv-plb nv-pl-fs" type="button" title="Fullscreen" aria-label="Fullscreen"></button>' +
       '<button class="nv-plb nv-pl-dl" type="button" title="Download video" aria-label="Download video"></button>' +
       '<button class="nv-plb nv-pl-x" type="button" title="Close Nova player" aria-label="Close Nova player">\u00d7</button>' +
       "</div>";
@@ -1673,16 +1678,16 @@
       playerVideo.volume = value;
       playerVideo.muted = value === 0;
       syncPlayer();
-      showPlayer();
+      showControls(false);
     });
     pl.bri.addEventListener("input", function () {
       playerBrightness = Number(pl.bri.value) || 100;
       applyBrightness();
-      showPlayer();
+      showControls(false);
     });
     pl.speed.addEventListener("click", cycleSpeed);
     pl.rotate.addEventListener("click", toggleRotate);
-    pl.fs.addEventListener("click", toggleFit);
+    pl.fs.addEventListener("click", toggleTheater);
     pl.dl.addEventListener("click", function (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -1715,20 +1720,26 @@
       playerSeekDragging = false;
     });
 
-    overlayEl.appendChild(playerEl);
-    shadow.appendChild(overlayEl);
+    shadow.appendChild(playerEl);
+    playerEl.addEventListener("pointerdown", function (e) {
+      keepAlive();
+      if (controlsVisible()) scheduleControlsHide();
+      e.stopPropagation();
+    });
+    playerEl.addEventListener("click", function (e) {
+      e.stopPropagation();
+    });
     keepAlive();
   }
 
   function destroyPlayer() {
-    exitTakeover();
+    exitTheater();
     unbindVideo();
-    if (overlayEl && overlayEl.parentNode) overlayEl.parentNode.removeChild(overlayEl);
-    overlayEl = null;
-    stageEl = null;
     if (playerEl && playerEl.parentNode) playerEl.parentNode.removeChild(playerEl);
     playerEl = null;
     pl = null;
+    stopPosLoop();
+    clearTimeout(controlsTimer);
   }
 
   /* -------------------------- video binding ----------------------- */
@@ -1806,7 +1817,7 @@
   }
 
   function unbindVideo() {
-    if (playerActive) exitTakeover();
+    if (playerTheater) exitTheater();
     if (playerVideo) {
       for (const pair of playerMediaBound) {
         try {
@@ -1824,13 +1835,15 @@
   function bindVideo(v) {
     unbindVideo();
     if (!v) {
-      hidePlayer();
+      hideControls();
       return;
     }
     playerVideo = v;
 
     const onDiscrete = function () {
-      showPlayer();
+      const playing = !playerVideo.paused && !playerVideo.ended;
+      if (playing) showControls(true);
+      else if (controlsVisible() || frameTouched) showControls(false);
       syncPlayer();
     };
     const onSimple = function () {
@@ -1861,16 +1874,19 @@
     const idx = SPEEDS.indexOf(v.playbackRate);
     playerSpeedIdx = idx < 0 ? 2 : idx;
     playerDismissed = false;
+    playerHomeStyle = v.getAttribute("style") || "";
     applyBrightness();
     syncPlayer();
     /*
-     * Binding must not hijack a paused video the user has not engaged with;
-     * that only happens on a play or a tap (see onMediaEvent /
-     * onDocumentPointerDown). But once Nova is in charge it stays in charge.
+     * Controls appear for a playing video, or for a paused one the user has
+     * engaged with (tapped). A paused video nobody has touched is left to the
+     * site's own player.
      */
     const playing = !v.paused && !v.ended;
-    if (frameAllows(v) && (playing || playerActive)) showPlayer();
-    else hidePlayer();
+    if (!frameAllows(v)) hideControls();
+    else if (playing) showControls(true);
+    else if (frameTouched) showControls(false);
+    else hideControls();
   }
 
   /*
@@ -1894,9 +1910,9 @@
     ensurePlayer();
     if (!playerEl) return;
     if (playerVideo && !playerVideo.isConnected) {
-      exitTakeover();
+      exitTheater();
       unbindVideo();
-      hidePlayer();
+      hideControls();
     }
     const v = playerVideo || selectVideo();
     if (v !== playerVideo) {
@@ -1904,32 +1920,25 @@
       return;
     }
     if (!playerVideo) {
-      hidePlayer();
+      hideControls();
       return;
     }
     syncPlayer();
-    /*
-     * A paused video fires no events of its own, so the poll is what keeps an
-     * active player alive (and picks up a video that starts playing on its
-     * own). A video the user has not engaged with stays with the site's own
-     * player until they press play or tap it; a dismissal ("x") is respected
-     * until something happens to the media again.
-     */
     if (!frameAllows(playerVideo)) {
-      exitTakeover();
-      hidePlayer();
-    } else if (playerDismissed) {
-      /* handed back to the site on purpose - leave it alone */
-      if (playerActive) exitTakeover();
-      hidePlayer();
-    } else if (!playerVideo.paused && !playerVideo.ended) {
-      if (playerActive) showPlayer();
-      else activatePlayer();
-    } else if (playerActive) {
-      showPlayer();
-    } else if (playerEl && !playerEl.hidden) {
-      hidePlayer();
+      exitTheater();
+      hideControls();
+      return;
     }
+    if (playerDismissed) {
+      hideControls();
+      return;
+    }
+    /*
+     * The poll must not force the bar back on (or it could never auto-hide),
+     * so it only keeps an already-visible bar glued to the video. bindVideo and
+     * the media events are what raise it.
+     */
+    if (controlsVisible()) positionPlayer();
   }
 
   /* -------------------------- player state ------------------------ */
@@ -1952,48 +1961,111 @@
     pl.bri.value = String(playerBrightness);
     pl.speed.textContent = v.playbackRate + "\u00d7";
     pl.rotate.classList.toggle("nv-on", playerRotated);
-    pl.fs.classList.toggle("nv-on", playerFit === "cover");
+    pl.fs.classList.toggle("nv-on", playerTheater);
     pl.dl.hidden = prefs.downloader === false || !btnEl;
   }
 
-  function showPlayer() {
-    if (!playerEl || !playerVideo) return;
-    playerDismissed = false;
-    if (!playerActive) enterTakeover();
-    playerEl.hidden = false;
-    keepAlive();
+  /* --------------------- controls visibility ---------------------- */
+
+  function controlsVisible() {
+    return !!(playerEl && !playerEl.classList.contains("nv-hide"));
   }
 
   /*
-   * Start (or keep) Nova's takeover player. The video itself is moved into
-   * Nova's own full-screen stage, so the site's player chrome is left behind on
-   * the page and the user is looking at Nova's player instead.
+   * Raise the control bar over the video. `auto` schedules the usual player
+   * behaviour of fading the controls out again while playback continues; a
+   * paused video keeps them, and any tap brings them back.
    */
-  function activatePlayer() {
+  function showControls(auto) {
     if (!playerVideo) return;
     ensurePlayer();
     if (!playerEl) return;
     playerDismissed = false;
-    enterTakeover();
-    if (overlayEl) overlayEl.hidden = false;
-    playerEl.hidden = false;
+    playerEl.classList.remove("nv-hide");
     keepAlive();
+    positionPlayer();
+    startPosLoop();
     syncPlayer();
+    clearTimeout(controlsTimer);
+    if (auto) scheduleControlsHide();
   }
 
-  function hidePlayer() {
-    if (playerEl) playerEl.hidden = true;
-    if (overlayEl) overlayEl.hidden = true;
+  function hideControls() {
+    if (!playerEl) return;
+    playerEl.classList.add("nv-hide");
+    clearTimeout(controlsTimer);
+    stopPosLoop();
+  }
+
+  function scheduleControlsHide() {
+    clearTimeout(controlsTimer);
+    if (!playerVideo || playerVideo.paused || playerVideo.ended) return;
+    controlsTimer = setTimeout(function () {
+      if (!playerVideo || playerVideo.paused || playerVideo.ended) return;
+      if (panelOpen || playerSeekDragging) return;
+      hideControls();
+    }, 4200);
+  }
+
+  /* Pin the bar to the bottom edge of the video (or the viewport in fullscreen). */
+  function positionPlayer() {
+    if (!playerEl || !playerVideo || !controlsVisible()) return;
+    if (playerTheater) {
+      playerEl.classList.add("nv-fs");
+      const h = playerEl.offsetHeight || 96;
+      playerEl.style.visibility = "";
+      playerEl.style.left = "0px";
+      playerEl.style.width = window.innerWidth + "px";
+      playerEl.style.top = Math.max(0, window.innerHeight - h) + "px";
+      return;
+    }
+    playerEl.classList.remove("nv-fs");
+    const r = playerVideo.getBoundingClientRect();
+    if (r.width < 120 || r.height < 90 || r.bottom < 8 || r.top > window.innerHeight - 8) {
+      playerEl.style.visibility = "hidden";
+      return;
+    }
+    playerEl.style.visibility = "";
+    const margin = 8;
+    const width = Math.max(220, Math.min(r.width - margin * 2, window.innerWidth - margin * 2));
+    const left = Math.max(margin, Math.min(r.left + margin, window.innerWidth - width - margin));
+    const h = playerEl.offsetHeight || 96;
+    let top = r.bottom - h - margin;
+    if (top < r.top + 2) top = r.top + 2;
+    if (top + h > window.innerHeight - 2) top = window.innerHeight - h - 2;
+    playerEl.style.left = left + "px";
+    playerEl.style.width = width + "px";
+    playerEl.style.top = top + "px";
+  }
+
+  function startPosLoop() {
+    if (posRaf != null) return;
+    const tick = function () {
+      if (!playerEl || !controlsVisible()) {
+        posRaf = null;
+        return;
+      }
+      positionPlayer();
+      posRaf = requestAnimationFrame(tick);
+    };
+    posRaf = requestAnimationFrame(tick);
+  }
+
+  function stopPosLoop() {
+    if (posRaf != null) {
+      cancelAnimationFrame(posRaf);
+      posRaf = null;
+    }
   }
 
   /*
-   * "x" hands the video back to the site: Nova leaves the page exactly as it
-   * found it and does not take over again until the user plays or taps a video.
+   * "x" hides Nova's controls for this video; they come back on the next tap,
+   * play or pause. Nova never leaves the page itself altered.
    */
   function dismissPlayer() {
     playerDismissed = true;
-    exitTakeover();
-    hidePlayer();
+    exitTheater();
+    hideControls();
   }
 
   function togglePlay() {
@@ -2004,7 +2076,7 @@
     } catch (e) {
       /* ignore */
     }
-    showPlayer();
+    showControls(!playerVideo.paused && !playerVideo.ended);
   }
 
   function toggleMute() {
@@ -2012,7 +2084,7 @@
     playerVideo.muted = !playerVideo.muted;
     if (!playerVideo.muted && playerVideo.volume === 0) playerVideo.volume = 1;
     syncPlayer();
-    showPlayer();
+    showControls(false);
   }
 
   function cycleSpeed() {
@@ -2025,7 +2097,7 @@
       /* ignore */
     }
     if (pl) pl.speed.textContent = rate + "\u00d7";
-    showPlayer();
+    showControls(false);
   }
 
   function applyBrightness() {
@@ -2052,138 +2124,122 @@
     else v.style.removeProperty("filter");
   }
 
-  /* -------------------------- takeover stage ---------------------- */
+  /* -------------------------- full screen ------------------------- */
 
   /*
-   * Move the page's own <video> into Nova's full-screen stage. Playback keeps
-   * running because it is the same media element (so MSE/blob sources keep
-   * working, which they would not if Nova created a second video), while the
-   * site's player chrome is left behind on the page underneath. Everything
-   * needed to put the video back exactly where it was is saved first.
+   * Nova's full screen, entered only from the fullscreen button. The page's own
+   * <video> is stretched to the viewport with Nova's inline styles (the element
+   * is never moved, so the site keeps working), and the bar spans the bottom.
+   * Exiting restores the video's own inline styles untouched.
    */
-  function enterTakeover() {
+  function enterTheater() {
     const v = playerVideo;
-    if (!v || playerActive) return;
-    ensurePlayer();
-    if (!stageEl) return;
-    videoHome = {
-      parent: v.parentNode,
-      next: v.nextSibling,
-      style: v.getAttribute("style") || "",
-      controls: v.hasAttribute("controls"),
-    };
-    playerActive = true;
-    try {
-      v.removeAttribute("controls");
-    } catch (e) {
-      /* ignore */
-    }
+    if (!v || playerTheater) return;
+    playerTheater = true;
     const set = function (prop, value) {
       v.style.setProperty(prop, value, "important");
     };
-    try {
-      v.style.cssText = "";
-    } catch (e) {
-      /* ignore */
-    }
-    set("display", "block");
-    set("width", "100%");
-    set("height", "100%");
-    set("max-width", "100%");
-    set("max-height", "100%");
+    set("position", "fixed");
+    set("top", "0");
+    set("left", "0");
+    set("right", "0");
+    set("bottom", "0");
+    set("width", "100vw");
+    set("height", "100vh");
+    set("max-width", "100vw");
+    set("max-height", "100vh");
     set("margin", "0");
     set("padding", "0");
-    set("position", "static");
+    set("object-fit", "contain");
     set("background", "#000");
-    set("object-fit", playerFit);
-    stageEl.appendChild(v);
-    applyBrightness();
-    if (btnEl) btnEl.hidden = true;
-    if (overlayEl) overlayEl.hidden = false;
-    if (playerEl) playerEl.hidden = false;
-    keepAlive();
-    syncPlayer();
+    set("z-index", "2147483000");
+    set("transform-origin", "center center");
+    applyRotateState();
+    if (pl) pl.fs.classList.add("nv-on");
+    if (controlsVisible()) positionPlayer();
   }
 
-  function exitTakeover() {
-    if (!playerActive) return;
+  function exitTheater() {
     const v = playerVideo;
-    playerActive = false;
+    if (!playerTheater) return;
+    playerTheater = false;
     playerRotated = false;
-    playerFit = "contain";
-    if (stageEl) {
-      stageEl.classList.remove("nv-rot", "nv-fill");
-      stageEl.style.removeProperty("--nv-rot-scale");
+    if (v) {
+      for (const prop of THEATER_PROPS) v.style.removeProperty(prop);
+      try {
+        v.style.removeProperty("filter");
+      } catch (e) {
+        /* ignore */
+      }
+      if (playerHomeStyle) v.setAttribute("style", playerHomeStyle);
+      else v.removeAttribute("style");
+      applyBrightness();
     }
     if (pl) {
       pl.rotate.classList.remove("nv-on");
       pl.fs.classList.remove("nv-on");
     }
-    if (v) {
-      restoreFilter(v);
-      const home = videoHome;
-      videoHome = null;
-      try {
-        v.style.cssText = "";
-      } catch (e) {
-        /* ignore */
-      }
-      try {
-        if (home && home.parent && home.parent.isConnected) {
-          const next = home.next && home.next.parentNode === home.parent ? home.next : null;
-          home.parent.insertBefore(v, next);
-        }
-        /* If the site removed the video's parent while Nova held it, leave it
-         * out of the document rather than resurrecting it somewhere arbitrary. */
-      } catch (e) {
-        /* ignore */
-      }
-      try {
-        if (home && home.style) v.setAttribute("style", home.style);
-        else v.removeAttribute("style");
-      } catch (e) {
-        /* ignore */
-      }
-      try {
-        if (home && home.controls) v.setAttribute("controls", "");
-      } catch (e) {
-        /* ignore */
-      }
-    }
-    if (overlayEl) overlayEl.hidden = true;
-    if (playerEl) playerEl.hidden = true;
-    if (btnEl) btnEl.hidden = !(prefs.downloader !== false && entries.length > 0);
+    if (controlsVisible()) positionPlayer();
   }
 
-  /* The "fit / fill" button: contain (letterbox) vs cover (crop to fill). */
-  function toggleFit() {
-    playerFit = playerFit === "contain" ? "cover" : "contain";
-    if (playerVideo) playerVideo.style.setProperty("object-fit", playerFit, "important");
-    if (stageEl) stageEl.classList.toggle("nv-fill", playerFit === "cover");
-    if (pl) pl.fs.classList.toggle("nv-on", playerFit === "cover");
-    showPlayer();
+  function toggleTheater() {
+    if (playerTheater) exitTheater();
+    else enterTheater();
+    if (controlsVisible()) showControls(false);
+  }
+
+  function applyRotateState() {
+    const v = playerVideo;
+    if (!v) return;
+    if (playerRotated) {
+      const k = Math.min(window.innerWidth, window.innerHeight) / Math.max(window.innerWidth, window.innerHeight);
+      v.style.setProperty("transform", "rotate(90deg) scale(" + k + ")", "important");
+    } else {
+      v.style.setProperty("transform", "none", "important");
+    }
   }
 
   function toggleRotate() {
     if (!playerVideo) return;
+    if (!playerTheater) enterTheater();
     playerRotated = !playerRotated;
-    if (stageEl) {
-      stageEl.classList.toggle("nv-rot", playerRotated);
-      const sw = stageEl.clientWidth || 1;
-      const sh = stageEl.clientHeight || 1;
-      stageEl.style.setProperty("--nv-rot-scale", String(Math.min(sw, sh) / Math.max(sw, sh)));
-    }
+    applyRotateState();
     if (pl) pl.rotate.classList.toggle("nv-on", playerRotated);
-    showPlayer();
+    if (controlsVisible()) showControls(false);
   }
 
   function onPlayerKeydown(e) {
-    if (!playerActive) return;
-    if (e.key === "Escape") {
+    if (!e || e.key !== "Escape") return;
+    if (playerTheater) {
       e.preventDefault();
       e.stopPropagation();
-      dismissPlayer();
+      exitTheater();
+      if (controlsVisible()) showControls(false);
+      return;
     }
+    if (controlsVisible()) dismissPlayer();
+  }
+
+  function onViewportChange() {
+    if (controlsVisible()) positionPlayer();
+  }
+
+  /*
+   * Movement over the video keeps the controls up (and never pops them in on
+   * its own), so the auto-hide only kicks in when the user is actually idle.
+   */
+  let lastMoveAt = 0;
+  function onPointerActivity(e) {
+    if (!controlsVisible() || !playerVideo) return;
+    const now = Date.now();
+    if (now - lastMoveAt < 300) return;
+    lastMoveAt = now;
+    if (!playerTheater && typeof e.clientX === "number") {
+      const r = playerVideo.getBoundingClientRect();
+      if (e.clientX < r.left - 30 || e.clientX > r.right + 30 ||
+          e.clientY < r.top - 30 || e.clientY > r.bottom + 30) return;
+    }
+    scheduleControlsHide();
   }
 
   /* -------------------------- entry polling ----------------------- */
@@ -2247,6 +2303,9 @@
     }
     document.addEventListener("fullscreenchange", onFullscreenChange, true);
     document.addEventListener("keydown", onPlayerKeydown, true);
+    document.addEventListener("scroll", onViewportChange, true);
+    document.addEventListener("pointermove", onPointerActivity, true);
+    window.addEventListener("resize", onViewportChange);
   }
 
   /*
