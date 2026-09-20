@@ -141,7 +141,17 @@
   let playerMediaBound = [];
   const playerOrigFilters = new WeakMap();
   let controlsTimer = null;
+  let controlsUntil = 0;
   let posRaf = null;
+  let sheetEl = null;
+  let sheetOpen = false;
+  let playerRepeat = "off";
+  let sleepIdx = 0;
+  let sleepUntil = 0;
+  let sleepTimer = null;
+  let lastAliveAt = 0;
+  let fsGuard = false;
+  let fsTakeovers = [];
   let pollTimer = null;
   let pos = null;
   let frameTouched = false;
@@ -323,7 +333,7 @@
       0%, 91% { visibility: visible; }
       100% { visibility: hidden; }
     }
-    .nv-btn, .nv-panel, .nv-toast, .nv-player { animation: nova-keepalive 2.6s linear forwards; }
+    .nv-btn, .nv-panel, .nv-toast, .nv-player, .nv-sheet { animation: nova-keepalive 2.6s linear forwards; }
   `;
 
   function applyStyles(root) {
@@ -346,7 +356,8 @@
    * so this is the only way to guarantee the icon disappears without a reload.
    */
   function keepAlive() {
-    const els = [btnEl, panelEl, playerEl, shadow && shadow.querySelector(".nv-toast")];
+    lastAliveAt = Date.now();
+    const els = [btnEl, panelEl, playerEl, sheetEl, shadow && shadow.querySelector(".nv-toast")];
     for (const el of els) {
       if (!el) continue;
       el.style.animation = "none";
@@ -441,8 +452,17 @@
     const insideUi =
       path.indexOf(panelEl) > -1 ||
       path.indexOf(btnEl) > -1 ||
-      path.indexOf(playerEl) > -1;
+      path.indexOf(playerEl) > -1 ||
+      (sheetEl && path.indexOf(sheetEl) > -1);
     if (insideUi) return;
+    /*
+     * Tapping outside the settings sheet closes it. The tap is not also treated
+     * as a "use this video" signal: the user asked for the sheet to go away.
+     */
+    if (sheetOpen) {
+      closeSheet();
+      return;
+    }
     if (panelOpen) closePanel();
     /*
      * A tap on the video itself is the clearest "use this one" signal - and the
@@ -686,12 +706,61 @@
     panelEl.style.bottom = "auto";
   }
 
+  /*
+   * Sites put their own <video> into native fullscreen when the user taps their
+   * fullscreen button. Nova's player never uses the Fullscreen API - it restyles
+   * the video in place - so the two cannot run together. The old code hid the
+   * whole Nova host while *any* element was fullscreen, which meant the player
+   * flashed for a moment and vanished for the rest of the page's life. Instead
+   * the video is handed to Nova's own fullscreen, so there is exactly one
+   * player, and only the download button is put away while the page itself is
+   * fullscreen (the player bar lives in the same host as the button).
+   */
   function onFullscreenChange() {
     if (!host) return;
-    if (document.fullscreenElement) {
-      host.style.display = "none";
-    } else {
-      host.style.display = "";
+    let el = null;
+    try {
+      el = document.fullscreenElement || document.webkitFullscreenElement || null;
+    } catch (e) {
+      el = null;
+    }
+    let video = null;
+    if (el) {
+      if (el.tagName === "VIDEO") video = el;
+      else if (el.querySelector) {
+        try {
+          video = el.querySelector("video");
+        } catch (e) {
+          video = null;
+        }
+      }
+    }
+    const now = Date.now();
+    fsTakeovers = fsTakeovers.filter(function (t) { return now - t < 5000; });
+    if (video && prefs.inbuiltPlayer && (video === playerVideo || plausibleVideo(video)) &&
+        fsTakeovers.length < 4) {
+      frameTouched = true;
+      if (playerVideo !== video) bindVideo(video);
+      if (!fsGuard) {
+        fsGuard = true;
+        fsTakeovers.push(now);
+        try {
+          if (document.exitFullscreen) document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        } catch (e) {
+          /* ignore */
+        }
+        setTimeout(function () {
+          fsGuard = false;
+        }, 700);
+      }
+      enterTheater();
+      showControls(false);
+      return;
+    }
+    if (btnEl) btnEl.hidden = !!el || entries.length === 0 || prefs.downloader === false;
+    if (el && panelOpen) closePanel();
+    if (!el) {
       positionButton();
       positionPanel();
     }
@@ -1504,11 +1573,24 @@
 
   /* ---------------------------------------------------------------- */
   /* In-page player (browser-menu switch "Inbuilt video player")       */
+  /*                                                                   */
+  /* Nova draws its own controls over the page's <video>. The video is  */
+  /* never moved, so the site keeps working; fullscreen restyles it in  */
+  /* place instead of using the Fullscreen API. Controls come up on     */
+  /* play, pause and tap, then fade out again after a few seconds, like */
+  /* the player on any phone. The 3-dot button opens a settings sheet   */
+  /* (subtitles / quality / speed / repeat / sleep timer).              */
   /* ---------------------------------------------------------------- */
 
   const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
   /* ~200x200. Paused videos smaller than this are thumbnails/decoration. */
   const MIN_PLAYER_AREA = 40000;
+  /* How long the controls linger after a play, pause or tap. */
+  const SHOW_MS = 3000;
+  const SLEEP_MINUTES = [0, 5, 15, 30, 60];
+  const REPEAT_MODES = ["off", "loop", "one"];
+  /* The sun button cycles these inline; fullscreen has a slider for fine control. */
+  const BRIGHT_STEPS = [100, 125, 150, 175, 200, 75, 50];
   const MEDIA_EVENTS = [
     "play", "pause", "playing", "seeking", "seeked", "ended",
     "ratechange", "volumechange", "loadedmetadata", "loadeddata",
@@ -1516,8 +1598,8 @@
   /* Inline styles Nova sets on the video while it owns the full screen. */
   const THEATER_PROPS = [
     "position", "inset", "top", "left", "right", "bottom", "width", "height",
-    "max-width", "max-height", "margin", "padding", "object-fit", "background",
-    "z-index", "transform", "transform-origin",
+    "max-width", "max-height", "margin", "padding", "object-fit", "object-position",
+    "background", "z-index", "transform", "transform-origin",
   ];
 
   function clock(seconds) {
@@ -1540,9 +1622,123 @@
       'M4.3 5.7l1.4-1.4 2.2 2.2-1.4 1.4zm11.5 11.5l1.4-1.4 2.2 2.2-1.4 1.4z' +
       'M18.3 4.3l1.4 1.4-1.4 1.4-2.2-2.2zM5.7 18.3l1.4 1.4L5.7 21 4.3 19.7z"/></svg>',
     rotate: '<svg viewBox="0 0 24 24"><path d="M12 5V2L7.5 6.5 12 11V8a5 5 0 1 1-5 5H5a7 7 0 1 0 7-8z"/></svg>',
-    fs: '<svg viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4zm10 0h6v6h-2V6h-4zM4 14h2v4h4v2H4zm14 0h2v6h-6v-2h4z"/></svg>',
+    fs: '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>',
+    fsExit: '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/></svg>',
     dl: '<svg viewBox="0 0 24 24"><path d="M12 16.5l-5.5-5.5h3.25V3h4.5v8H17.5L12 16.5zM5 18h14v2.5H5V18z"/></svg>',
+    back: '<svg viewBox="0 0 24 24"><path d="M15.6 4.2L7.8 12l7.8 7.8 1.8-1.8-6-6 6-6z"/></svg>',
+    kebab:
+      '<svg viewBox="0 0 24 24"><circle cx="12" cy="5.4" r="1.8"/>' +
+      '<circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="18.6" r="1.8"/></svg>',
+    back10:
+      '<svg viewBox="0 0 24 24"><path d="M12.6 6.3V3.1L8 6.7l4.6 3.6V7.2a4.9 4.9 0 1 1-4.9 4.9H5.2a7.4 7.4 0 1 0 7.4-5.8z"/>' +
+      '<text x="13.1" y="17" font-size="8.4" font-weight="800" text-anchor="middle" fill="currentColor">10</text></svg>',
+    fwd10:
+      '<svg viewBox="0 0 24 24"><path d="M11.4 6.3V3.1L16 6.7l-4.6 3.6V7.2a4.9 4.9 0 1 0 4.9 4.9h2.5a7.4 7.4 0 1 1-7.4-5.8z"/>' +
+      '<text x="10.9" y="17" font-size="8.4" font-weight="800" text-anchor="middle" fill="currentColor">10</text></svg>',
   };
+
+  /*
+   * Player-only styles. Applied as a second sheet inside the shadow root so
+   * the download-button styling above is left exactly as it is.
+   */
+  const PLAYER_CSS = `
+    .nv-player { padding: 7px 7px 8px; border-radius: 14px; gap: 6px; }
+    .nv-pl-top {
+      display: none; position: fixed; left: 0; right: 0; top: 0; box-sizing: border-box;
+      align-items: center; gap: 6px; padding: 7px 9px 16px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.7), rgba(0,0,0,0));
+      color: #fff;
+    }
+    .nv-player.nv-fs .nv-pl-top { display: flex; }
+    .nv-pl-title {
+      flex: 1 1 auto; min-width: 0; text-align: left; text-shadow: 0 1px 3px rgba(0,0,0,.75);
+      font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .nv-player.nv-fs {
+      border: 0; border-radius: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.86), rgba(0,0,0,.15) 62%, rgba(0,0,0,0));
+      backdrop-filter: none; -webkit-backdrop-filter: none;
+      padding: 10px 12px 12px;
+    }
+    .nv-player.nv-fs .nv-plb:hover { background: rgba(255,255,255,.2); }
+    .nv-plb { width: 28px; }
+    .nv-plb svg { width: 19px; height: 19px; }
+    .nv-pl-play { width: 32px; height: 30px; }
+    .nv-pl-play svg { width: 21px; height: 21px; }
+    .nv-plb.nv-plk svg { width: 17px; height: 17px; }
+    .nv-plb.nv-pl-sm { width: 25px; }
+    .nv-plb.nv-pl-sm svg { width: 19px; height: 19px; }
+    .nv-pl-row { gap: 2px; }
+    .nv-pl-speed { min-width: 30px; padding: 0 3px; font-size: 11px; }
+    .nv-pl-x { font-size: 16px; }
+    /*
+     * The inline bar has to stay one row wide over a phone-sized video, so the
+     * two sliders and the rotate button (which only means something in
+     * fullscreen) are fullscreen-only; the sun button cycles brightness inline.
+     */
+    .nv-player:not(.nv-fs) .nv-pl-bri { display: none; }
+    .nv-player:not(.nv-fs) .nv-pl-rotate { display: none; }
+    /* Only the two small sliders are short; the seek bar fills its row. */
+    .nv-pl-vol, .nv-pl-bri { flex: 0 1 40px; min-width: 30px; }
+    .nv-pl-seek { flex: 1 1 auto; max-width: none; min-width: 60px; }
+    /* Secondary controls gather on the right, like a phone player's. */
+    .nv-pl-dl { margin-left: 0; }
+    .nv-pl-menu { margin-left: auto; }
+    /*
+     * On a narrow bar (a phone-sized video) there is barely any slack, so the
+     * right-aligned group would only open one odd-looking gap. Spread it out
+     * across the row instead.
+     */
+    .nv-player.nv-pl-tight .nv-pl-row { gap: 4px; }
+    .nv-player.nv-pl-tight .nv-pl-menu { margin-left: 0; }
+    .nv-sheet {
+      position: fixed; z-index: 2147483647; left: 50%; bottom: 0;
+      transform: translateX(-50%); width: min(94vw, 470px); box-sizing: border-box;
+      background: rgba(19,20,25,.97); color: #f2f3f7;
+      border: 1px solid rgba(255,255,255,.12); border-bottom: 0;
+      border-radius: 16px 16px 0 0; box-shadow: 0 -14px 44px rgba(0,0,0,.65);
+      padding: 10px 12px 14px;
+      font: 13px/1.35 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+      text-align: left;
+      max-height: calc(100vh - 20px); overflow-y: auto;
+    }
+    .nv-sheet.nv-side {
+      left: auto; right: 0; top: 56px; bottom: auto; transform: none;
+      width: min(64vw, 540px); border-radius: 16px 0 0 16px; border-right: 0;
+      max-height: calc(100vh - 66px);
+    }
+    .nv-sheet-head { display: flex; align-items: center; gap: 10px; padding: 2px 2px 8px; }
+    .nv-sheet-head b { flex: 1 1 auto; font-size: 14.5px; font-weight: 700; }
+    .nv-sheet-x {
+      flex: none; width: 30px; height: 30px; border: 0; border-radius: 9px; cursor: pointer;
+      background: rgba(255,255,255,.12); color: #fff; font-size: 17px; line-height: 1;
+    }
+    .nv-srow {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      border: 0; background: transparent; color: inherit; text-align: left;
+      padding: 9px 4px; border-radius: 10px; cursor: pointer; font: inherit;
+    }
+    .nv-srow:hover { background: rgba(255,255,255,.08); }
+    .nv-srow-ic {
+      flex: none; width: 32px; height: 23px; border-radius: 6px;
+      background: rgba(255,255,255,.15); color: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 9.5px; font-weight: 800; letter-spacing: .01em;
+    }
+    .nv-srow-label { flex: 1 1 auto; }
+    .nv-srow-val { flex: none; color: #b9bcc8; font-size: 12.5px; }
+    .nv-chev { flex: none; color: #8d90a0; font-size: 15px; }
+    .nv-chips { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; flex: 0 1 auto; }
+    .nv-chip {
+      border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.06);
+      color: #e9eaf2; border-radius: 999px; padding: 4px 10px; cursor: pointer;
+      font-size: 11.5px; font-weight: 600;
+    }
+    .nv-chip.nv-on { background: #5847f5; border-color: #5847f5; color: #fff; }
+    .nv-note { font-size: 11px; color: #8d90a0; padding: 6px 4px 0; }
+    .nv-note:empty { display: none; }
+  `;
 
   /*
    * The two feature switches live in Android shared preferences, so they are
@@ -1611,9 +1807,10 @@
     if (playerVideo !== el) bindVideo(el);
     if (playerVideo !== el) return;
     /*
-     * Controls follow the video: they come up when it plays and stay up when
-     * the user pauses it. A pause on a video nobody engaged with is ignored, so
-     * a page full of paused clips does not sprout control bars.
+     * Controls follow the video: they come up when it plays and when it is
+     * paused, and hide themselves again a few seconds later. A pause on a video
+     * nobody engaged with is ignored, so a page full of paused clips does not
+     * sprout control bars.
      */
     const playing = !el.paused && !el.ended;
     if (playing) showControls(true);
@@ -1623,13 +1820,41 @@
 
   /* -------------------------- player shell ------------------------ */
 
+  let playerCssDone = false;
+
   function ensurePlayer() {
     if (playerEl) return;
     if (!shadow) buildHost();
     if (!shadow) return;
+    if (!playerCssDone) {
+      playerCssDone = true;
+      /*
+       * Adopted stylesheets sit *after* a shadow root's <style> elements in the
+       * cascade, so the player tweaks have to be adopted too - a plain <style>
+       * element would lose every conflict against the base sheet.
+       */
+      try {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(PLAYER_CSS);
+        shadow.adoptedStyleSheets = [].concat(shadow.adoptedStyleSheets || [], sheet);
+      } catch (e) {
+        try {
+          const style = document.createElement("style");
+          style.textContent = PLAYER_CSS;
+          shadow.appendChild(style);
+        } catch (e2) {
+          /* ignore */
+        }
+      }
+    }
     playerEl = document.createElement("div");
     playerEl.className = "nv-player nv-hide";
     playerEl.innerHTML =
+      '<div class="nv-pl-top">' +
+      '<button class="nv-plb nv-pl-back" type="button" title="Exit fullscreen" aria-label="Exit fullscreen"></button>' +
+      '<div class="nv-pl-title"></div>' +
+      '<button class="nv-plb nv-plk nv-pl-menu" type="button" title="Player settings" aria-label="Player settings"></button>' +
+      "</div>" +
       '<div class="nv-pl-seekrow">' +
       '<span class="nv-pl-cur">0:00</span>' +
       '<input class="nv-pl-range nv-pl-seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Seek">' +
@@ -1637,11 +1862,14 @@
       "</div>" +
       '<div class="nv-pl-row">' +
       '<button class="nv-plb nv-pl-play" type="button" title="Play or pause" aria-label="Play or pause"></button>' +
+      '<button class="nv-plb nv-pl-sm nv-pl-back10" type="button" title="Back 10 seconds" aria-label="Back 10 seconds"></button>' +
+      '<button class="nv-plb nv-pl-sm nv-pl-fwd10" type="button" title="Forward 10 seconds" aria-label="Forward 10 seconds"></button>' +
       '<button class="nv-plb nv-pl-mute" type="button" title="Mute" aria-label="Mute"></button>' +
       '<input class="nv-pl-range nv-pl-vol" type="range" min="0" max="100" step="1" value="100" aria-label="Volume">' +
       '<button class="nv-plb nv-pl-bright" type="button" title="Brightness" aria-label="Brightness"></button>' +
       '<input class="nv-pl-range nv-pl-bri" type="range" min="20" max="200" step="1" value="100" aria-label="Brightness level">' +
       '<button class="nv-plb nv-pl-speed" type="button" title="Playback speed" aria-label="Playback speed">1\u00d7</button>' +
+      '<button class="nv-plb nv-plk nv-pl-menu" type="button" title="Player settings" aria-label="Player settings"></button>' +
       '<button class="nv-plb nv-pl-rotate" type="button" title="Rotate" aria-label="Rotate"></button>' +
       '<button class="nv-plb nv-pl-fs" type="button" title="Fullscreen" aria-label="Fullscreen"></button>' +
       '<button class="nv-plb nv-pl-dl" type="button" title="Download video" aria-label="Download video"></button>' +
@@ -1649,10 +1877,15 @@
       "</div>";
 
     pl = {
+      top: playerEl.querySelector(".nv-pl-top"),
+      title: playerEl.querySelector(".nv-pl-title"),
+      back: playerEl.querySelector(".nv-pl-back"),
       cur: playerEl.querySelector(".nv-pl-cur"),
       dur: playerEl.querySelector(".nv-pl-dur"),
       seek: playerEl.querySelector(".nv-pl-seek"),
       play: playerEl.querySelector(".nv-pl-play"),
+      back10: playerEl.querySelector(".nv-pl-back10"),
+      fwd10: playerEl.querySelector(".nv-pl-fwd10"),
       mute: playerEl.querySelector(".nv-pl-mute"),
       vol: playerEl.querySelector(".nv-pl-vol"),
       brightBtn: playerEl.querySelector(".nv-pl-bright"),
@@ -1662,16 +1895,26 @@
       fs: playerEl.querySelector(".nv-pl-fs"),
       dl: playerEl.querySelector(".nv-pl-dl"),
       x: playerEl.querySelector(".nv-pl-x"),
+      menus: playerEl.querySelectorAll(".nv-pl-menu"),
     };
     pl.play.innerHTML = PL_ICON.play;
+    pl.back10.innerHTML = PL_ICON.back10;
+    pl.fwd10.innerHTML = PL_ICON.fwd10;
     pl.mute.innerHTML = PL_ICON.vol;
     pl.brightBtn.innerHTML = PL_ICON.bright;
     pl.rotate.innerHTML = PL_ICON.rotate;
     pl.fs.innerHTML = PL_ICON.fs;
     pl.dl.innerHTML = PL_ICON.dl;
+    pl.back.innerHTML = PL_ICON.back;
+    for (const b of pl.menus) b.innerHTML = PL_ICON.kebab;
 
-    pl.play.addEventListener("click", togglePlay);
-    pl.mute.addEventListener("click", toggleMute);
+    const stop = function (e) {
+      if (e) e.stopPropagation();
+    };
+    pl.play.addEventListener("click", function (e) { stop(e); togglePlay(); });
+    pl.back10.addEventListener("click", function (e) { stop(e); seekBy(-10); });
+    pl.fwd10.addEventListener("click", function (e) { stop(e); seekBy(10); });
+    pl.mute.addEventListener("click", function (e) { stop(e); toggleMute(); });
     pl.vol.addEventListener("input", function () {
       if (!playerVideo) return;
       const value = Number(pl.vol.value) / 100;
@@ -1685,9 +1928,14 @@
       applyBrightness();
       showControls(false);
     });
-    pl.speed.addEventListener("click", cycleSpeed);
-    pl.rotate.addEventListener("click", toggleRotate);
-    pl.fs.addEventListener("click", toggleTheater);
+    pl.brightBtn.addEventListener("click", function (e) { stop(e); cycleBrightness(); });
+    pl.speed.addEventListener("click", function (e) { stop(e); cycleSpeed(); });
+    pl.rotate.addEventListener("click", function (e) { stop(e); toggleRotate(); });
+    pl.fs.addEventListener("click", function (e) { stop(e); toggleTheater(); });
+    pl.back.addEventListener("click", function (e) { stop(e); exitTheater(); showControls(false); });
+    for (const b of pl.menus) {
+      b.addEventListener("click", function (e) { stop(e); toggleSheet(); });
+    }
     pl.dl.addEventListener("click", function (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -1712,18 +1960,21 @@
         }
       }
       pl.cur.textContent = clock(playerVideo.currentTime);
+      showControls(true);
     });
     pl.seek.addEventListener("change", function () {
       playerSeekDragging = false;
+      showControls(true);
     });
     pl.seek.addEventListener("pointerup", function () {
       playerSeekDragging = false;
+      showControls(true);
     });
 
     shadow.appendChild(playerEl);
     playerEl.addEventListener("pointerdown", function (e) {
       keepAlive();
-      if (controlsVisible()) scheduleControlsHide();
+      if (controlsVisible()) showControls(false);
       e.stopPropagation();
     });
     playerEl.addEventListener("click", function (e) {
@@ -1735,6 +1986,7 @@
   function destroyPlayer() {
     exitTheater();
     unbindVideo();
+    closeSheet();
     if (playerEl && playerEl.parentNode) playerEl.parentNode.removeChild(playerEl);
     playerEl = null;
     pl = null;
@@ -1844,6 +2096,15 @@
       const playing = !playerVideo.paused && !playerVideo.ended;
       if (playing) showControls(true);
       else if (controlsVisible() || frameTouched) showControls(false);
+      /* "Repeat one" has to restart by hand: the loop flag repeats seamlessly. */
+      if (playerRepeat === "one" && playerVideo.ended) {
+        try {
+          playerVideo.currentTime = 0;
+          playerVideo.play();
+        } catch (e) {
+          /* ignore */
+        }
+      }
       syncPlayer();
     };
     const onSimple = function () {
@@ -1875,6 +2136,8 @@
     playerSpeedIdx = idx < 0 ? 2 : idx;
     playerDismissed = false;
     playerHomeStyle = v.getAttribute("style") || "";
+    playerRepeat = v.loop ? "loop" : "off";
+    applyRepeat();
     applyBrightness();
     syncPlayer();
     /*
@@ -1943,6 +2206,26 @@
 
   /* -------------------------- player state ------------------------ */
 
+  function playerTitle() {
+    let t = "";
+    try {
+      t = (document.title || "").trim();
+    } catch (e) {
+      t = "";
+    }
+    if (!t) {
+      try {
+        const h = document.querySelector("h1");
+        t = h ? (h.textContent || "").trim() : "";
+      } catch (e) {
+        t = "";
+      }
+    }
+    if (!t) t = "Video";
+    t = t.replace(/\s*[-\u2013|]\s*(YouTube|Vimeo|Dailymotion|Twitch)\s*$/i, "");
+    return t.length > 90 ? t.slice(0, 89) + "\u2026" : t;
+  }
+
   function syncPlayer() {
     if (!pl || !playerVideo) return;
     const v = playerVideo;
@@ -1958,11 +2241,14 @@
       pl.seek.value = dur > 0 ? String(Math.round((v.currentTime / dur) * 1000)) : "0";
     }
     pl.vol.value = String(Math.round((muted ? 0 : v.volume) * 100));
-    pl.bri.value = String(playerBrightness);
+    if (pl.bri) pl.bri.value = String(playerBrightness);
     pl.speed.textContent = v.playbackRate + "\u00d7";
     pl.rotate.classList.toggle("nv-on", playerRotated);
+    pl.fs.innerHTML = playerTheater ? PL_ICON.fsExit : PL_ICON.fs;
     pl.fs.classList.toggle("nv-on", playerTheater);
     pl.dl.hidden = prefs.downloader === false || !btnEl;
+    pl.title.textContent = playerTheater ? playerTitle() : "";
+    pl.seek.disabled = !(dur > 0);
   }
 
   /* --------------------- controls visibility ---------------------- */
@@ -1972,9 +2258,9 @@
   }
 
   /*
-   * Raise the control bar over the video. `auto` schedules the usual player
-   * behaviour of fading the controls out again while playback continues; a
-   * paused video keeps them, and any tap brings them back.
+   * Raise the control bar over the video. It always fades back out after a few
+   * seconds (whether the video is playing or paused - the behaviour of every
+   * phone player); a tap, a play, a pause or any interaction brings it back.
    */
   function showControls(auto) {
     if (!playerVideo) return;
@@ -1982,12 +2268,13 @@
     if (!playerEl) return;
     playerDismissed = false;
     playerEl.classList.remove("nv-hide");
+    playerEl.style.visibility = "";
     keepAlive();
+    syncPlayer();
     positionPlayer();
     startPosLoop();
-    syncPlayer();
-    clearTimeout(controlsTimer);
-    if (auto) scheduleControlsHide();
+    controlsUntil = Date.now() + SHOW_MS;
+    scheduleControlsHide();
   }
 
   function hideControls() {
@@ -1995,39 +2282,63 @@
     playerEl.classList.add("nv-hide");
     clearTimeout(controlsTimer);
     stopPosLoop();
+    closeSheet();
   }
 
   function scheduleControlsHide() {
     clearTimeout(controlsTimer);
-    if (!playerVideo || playerVideo.paused || playerVideo.ended) return;
+    if (!playerVideo || playerDismissed) return;
+    if (sheetOpen || panelOpen || playerSeekDragging) {
+      /* Something is holding the controls open; look again shortly. */
+      controlsTimer = setTimeout(scheduleControlsHide, 600);
+      return;
+    }
+    const delay = Math.max(250, controlsUntil - Date.now());
     controlsTimer = setTimeout(function () {
-      if (!playerVideo || playerVideo.paused || playerVideo.ended) return;
-      if (panelOpen || playerSeekDragging) return;
+      if (!playerVideo || playerDismissed) return;
+      if (sheetOpen || panelOpen || playerSeekDragging) {
+        scheduleControlsHide();
+        return;
+      }
       hideControls();
-    }, 4200);
+    }, delay);
   }
 
-  /* Pin the bar to the bottom edge of the video (or the viewport in fullscreen). */
+  /*
+   * Pin the bar to the bottom edge of the video (or the viewport in fullscreen).
+   * A single bad frame - a site re-laying the video out for a moment - must not
+   * blink the bar away, so the rect has to stay bad for several frames before
+   * the bar gives up and hides.
+   */
+  let posBadFrames = 0;
   function positionPlayer() {
     if (!playerEl || !playerVideo || !controlsVisible()) return;
     if (playerTheater) {
       playerEl.classList.add("nv-fs");
+      playerEl.classList.remove("nv-pl-tight");
       const h = playerEl.offsetHeight || 96;
       playerEl.style.visibility = "";
       playerEl.style.left = "0px";
       playerEl.style.width = window.innerWidth + "px";
       playerEl.style.top = Math.max(0, window.innerHeight - h) + "px";
+      posBadFrames = 0;
       return;
     }
     playerEl.classList.remove("nv-fs");
     const r = playerVideo.getBoundingClientRect();
-    if (r.width < 120 || r.height < 90 || r.bottom < 8 || r.top > window.innerHeight - 8) {
-      playerEl.style.visibility = "hidden";
+    const bad =
+      r.width < 120 || r.height < 90 ||
+      r.bottom < 8 || r.top > window.innerHeight - 8;
+    if (bad) {
+      posBadFrames++;
+      if (posBadFrames >= 8) playerEl.style.visibility = "hidden";
       return;
     }
+    posBadFrames = 0;
     playerEl.style.visibility = "";
     const margin = 8;
     const width = Math.max(220, Math.min(r.width - margin * 2, window.innerWidth - margin * 2));
+    playerEl.classList.toggle("nv-pl-tight", width < 520);
     const left = Math.max(margin, Math.min(r.left + margin, window.innerWidth - width - margin));
     const h = playerEl.offsetHeight || 96;
     let top = r.bottom - h - margin;
@@ -2046,6 +2357,10 @@
         return;
       }
       positionPlayer();
+      positionSheet();
+      /* The keep-alive animation hides injected UI if this script ever stops
+         running; ping it while the player is up so it never dies mid-view. */
+      if (Date.now() - lastAliveAt > 1500) keepAlive();
       posRaf = requestAnimationFrame(tick);
     };
     posRaf = requestAnimationFrame(tick);
@@ -2064,6 +2379,7 @@
    */
   function dismissPlayer() {
     playerDismissed = true;
+    closeSheet();
     exitTheater();
     hideControls();
   }
@@ -2076,7 +2392,21 @@
     } catch (e) {
       /* ignore */
     }
-    showControls(!playerVideo.paused && !playerVideo.ended);
+    showControls(true);
+  }
+
+  function seekBy(seconds) {
+    const v = playerVideo;
+    if (!v) return;
+    let next = 0;
+    try {
+      const dur = isFinite(v.duration) ? v.duration : Infinity;
+      next = Math.max(0, Math.min((v.currentTime || 0) + seconds, dur));
+      v.currentTime = next;
+    } catch (e) {
+      /* ignore */
+    }
+    showControls(true);
   }
 
   function toggleMute() {
@@ -2100,9 +2430,17 @@
     showControls(false);
   }
 
+  function cycleBrightness() {
+    const i = BRIGHT_STEPS.indexOf(playerBrightness);
+    playerBrightness = BRIGHT_STEPS[(i + 1) % BRIGHT_STEPS.length];
+    applyBrightness();
+    toast("Brightness: " + playerBrightness + "%");
+    showControls(false);
+  }
+
   function applyBrightness() {
     const v = playerVideo;
-    if (pl) pl.bri.value = String(playerBrightness);
+    if (pl && pl.bri) pl.bri.value = String(playerBrightness);
     if (!v) return;
     if (!playerOrigFilters.has(v)) {
       playerOrigFilters.set(v, {
@@ -2124,17 +2462,30 @@
     else v.style.removeProperty("filter");
   }
 
+  function applyRepeat() {
+    const v = playerVideo;
+    if (!v) return;
+    try {
+      v.loop = playerRepeat === "loop";
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   /* -------------------------- full screen ------------------------- */
 
   /*
-   * Nova's full screen, entered only from the fullscreen button. The page's own
-   * <video> is stretched to the viewport with Nova's inline styles (the element
-   * is never moved, so the site keeps working), and the bar spans the bottom.
-   * Exiting restores the video's own inline styles untouched.
+   * Nova's full screen, entered only from the fullscreen button (Nova never
+   * grabs full screen on its own). The page's own <video> is stretched to the
+   * viewport with Nova's inline styles - the element is never moved, so the
+   * site keeps working - and the controls become a top bar (back, title,
+   * settings) plus a bottom bar spanning the viewport. Exiting restores the
+   * video's own inline styles untouched.
    */
   function enterTheater() {
     const v = playerVideo;
     if (!v || playerTheater) return;
+    playerHomeStyle = v.getAttribute("style") || "";
     playerTheater = true;
     const set = function (prop, value) {
       v.style.setProperty(prop, value, "important");
@@ -2151,11 +2502,15 @@
     set("margin", "0");
     set("padding", "0");
     set("object-fit", "contain");
+    set("object-position", "center center");
     set("background", "#000");
     set("z-index", "2147483000");
     set("transform-origin", "center center");
     applyRotateState();
-    if (pl) pl.fs.classList.add("nv-on");
+    if (pl) {
+      pl.fs.classList.add("nv-on");
+      pl.fs.innerHTML = PL_ICON.fsExit;
+    }
     if (controlsVisible()) positionPlayer();
   }
 
@@ -2178,6 +2533,7 @@
     if (pl) {
       pl.rotate.classList.remove("nv-on");
       pl.fs.classList.remove("nv-on");
+      pl.fs.innerHTML = PL_ICON.fs;
     }
     if (controlsVisible()) positionPlayer();
   }
@@ -2208,8 +2564,343 @@
     if (controlsVisible()) showControls(false);
   }
 
+  /* ------------------------ settings sheet ------------------------ */
+
+  function textTrackOf(v) {
+    try {
+      const tracks = v.textTracks;
+      if (!tracks || !tracks.length) return null;
+      for (let i = 0; i < tracks.length; i++) {
+        const t = tracks[i];
+        if (t.kind === "subtitles" || t.kind === "captions") return t;
+      }
+      return tracks[0];
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function subsLabel(v) {
+    const t = textTrackOf(v);
+    if (!t || t.mode !== "showing") return "Turn off";
+    return t.label || t.language || "On";
+  }
+
+  function toggleSubs(v) {
+    const t = textTrackOf(v);
+    if (!t) {
+      toast("This video has no subtitles");
+      return;
+    }
+    const on = t.mode !== "showing";
+    try {
+      t.mode = on ? "showing" : "disabled";
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function qualityLabel(raw) {
+    const s = String(raw == null ? "" : raw).trim();
+    if (!s) return "";
+    const m = s.match(/(\d{3,4})\s*[pP]?\b/);
+    if (m) return m[1] + "p";
+    return s.length > 9 ? s.slice(0, 9) : s;
+  }
+
+  /*
+   * Whatever quality list the page happens to expose: an hls.js instance hung
+   * off the element (or the global), a set of <source> elements with size
+   * hints, or nothing at all - in which case the video's own decoded height is
+   * all there is to show.
+   */
+  function hlsOf(v) {
+    const cands = [
+      v.hls, v._hls, v.hlsInstance, v.__hls,
+      typeof window !== "undefined" ? window.hls : null,
+      typeof window !== "undefined" && window.Hls && window.Hls.instances ? window.Hls.instances[0] : null,
+    ];
+    for (const c of cands) {
+      try {
+        if (c && c.levels && c.levels.length && typeof c.currentLevel === "number") return c;
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    return null;
+  }
+
+  function qualityOptions(v) {
+    const out = [];
+    const seen = {};
+    const hls = hlsOf(v);
+    if (hls) {
+      try {
+        for (let i = 0; i < hls.levels.length; i++) {
+          const lv = hls.levels[i] || {};
+          const label = qualityLabel(lv.height ? lv.height + "p" : Math.round((lv.bitrate || 0) / 1000) + "k");
+          if (!label || seen[label]) continue;
+          seen[label] = 1;
+          out.push({ label: label, kind: "level", index: i, active: i === hls.currentLevel });
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    if (!out.length) {
+      try {
+        const srcs = v.querySelectorAll("source");
+        for (const s of srcs) {
+          const raw =
+            s.getAttribute("data-quality") || s.getAttribute("label") ||
+            s.getAttribute("res") || s.getAttribute("data-res") || s.getAttribute("size");
+          const label = qualityLabel(raw);
+          if (!label || seen[label]) continue;
+          seen[label] = 1;
+          out.push({ label: label, kind: "source", el: s, active: false });
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    if (out.length && !out.some(function (o) { return o.active; })) {
+      const cur = v.currentSrc || v.src || "";
+      for (const o of out) {
+        if (o.kind === "source" && o.el && (o.el.src || o.el.getAttribute("src")) === cur) o.active = true;
+      }
+      if (!out.some(function (o) { return o.active; })) out[0].active = true;
+    }
+    if (!out.length) {
+      const h = v.videoHeight || 0;
+      out.push({ label: h ? h + "p" : "Auto", kind: "current", active: true });
+    }
+    return out;
+  }
+
+  function applyQuality(opt) {
+    const v = playerVideo;
+    if (!v) return;
+    try {
+      if (opt.kind === "level") {
+        const hls = hlsOf(v);
+        if (hls) {
+          hls.currentLevel = opt.index;
+          toast("Quality: " + opt.label);
+        } else {
+          toast("Quality switching is not available here");
+        }
+      } else if (opt.kind === "source") {
+        const url = opt.el && (opt.el.src || opt.el.getAttribute("src"));
+        if (!url) {
+          toast("Quality switching is not available here");
+        } else {
+          const at = v.currentTime;
+          const wasPlaying = !v.paused;
+          v.src = url;
+          try {
+            v.load();
+          } catch (e) {
+            /* ignore */
+          }
+          v.addEventListener("loadedmetadata", function once() {
+            v.removeEventListener("loadedmetadata", once);
+            try {
+              v.currentTime = at;
+            } catch (e) {
+              /* ignore */
+            }
+            if (wasPlaying) {
+              try {
+                v.play();
+              } catch (e) {
+                /* ignore */
+              }
+            }
+          });
+          try {
+            v.playbackRate = SPEEDS[playerSpeedIdx];
+          } catch (e) {
+            /* ignore */
+          }
+          toast("Quality: " + opt.label);
+        }
+      } else {
+        toast("Quality switching is not available here");
+      }
+    } catch (e) {
+      toast("Could not switch quality");
+    }
+    if (sheetOpen) renderSheet();
+  }
+
+  function sleepLabel() {
+    if (!sleepUntil) return "Turn off";
+    const m = Math.max(1, Math.ceil((sleepUntil - Date.now()) / 60000));
+    return m + " min";
+  }
+
+  function cycleSleep() {
+    clearTimeout(sleepTimer);
+    sleepTimer = null;
+    sleepIdx = (sleepIdx + 1) % SLEEP_MINUTES.length;
+    if (!SLEEP_MINUTES[sleepIdx]) {
+      sleepUntil = 0;
+      return;
+    }
+    const ms = SLEEP_MINUTES[sleepIdx] * 60000;
+    sleepUntil = Date.now() + ms;
+    sleepTimer = setTimeout(function () {
+      sleepUntil = 0;
+      sleepIdx = 0;
+      sleepTimer = null;
+      if (playerVideo) {
+        try {
+          playerVideo.pause();
+        } catch (e) {
+          /* ignore */
+        }
+      }
+      toast("Sleep timer: playback paused");
+      if (sheetOpen) renderSheet();
+    }, ms);
+  }
+
+  function sheetRow(name, icon, label) {
+    return (
+      '<button class="nv-srow" type="button" data-row="' + name + '">' +
+      '<span class="nv-srow-ic">' + icon + "</span>" +
+      '<span class="nv-srow-label">' + label + "</span>" +
+      '<span class="nv-srow-val"></span><span class="nv-chev">\u203a</span></button>'
+    );
+  }
+
+  function buildSheet() {
+    if (!shadow || sheetEl) return;
+    sheetEl = document.createElement("div");
+    sheetEl.className = "nv-sheet";
+    sheetEl.hidden = true;
+    sheetEl.innerHTML =
+      '<div class="nv-sheet-head"><b>Nova Player</b>' +
+      '<button class="nv-sheet-x" type="button" title="Close" aria-label="Close">\u00d7</button></div>' +
+      sheetRow("subs", "CC", "Subtitles") +
+      '<div class="nv-srow"><span class="nv-srow-ic">HD</span>' +
+      '<span class="nv-srow-label">Quality</span><span class="nv-chips"></span></div>' +
+      sheetRow("speed", "1\u00d7", "Playback Speed") +
+      sheetRow("repeat", "\u21bb", "Repeat") +
+      sheetRow("sleep", "\u23f1", "Sleep Timer") +
+      '<div class="nv-note"></div>';
+    shadow.appendChild(sheetEl);
+    sheetEl.querySelector(".nv-sheet-x").addEventListener("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeSheet();
+    });
+    for (const row of sheetEl.querySelectorAll(".nv-srow[data-row]")) {
+      row.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        sheetAction(row.getAttribute("data-row"));
+      });
+    }
+    sheetEl.addEventListener("pointerdown", function (e) {
+      keepAlive();
+      e.stopPropagation();
+    });
+  }
+
+  function setSheetValue(name, text) {
+    if (!sheetEl) return;
+    const row = sheetEl.querySelector('.nv-srow[data-row="' + name + '"]');
+    if (!row) return;
+    const val = row.querySelector(".nv-srow-val");
+    if (val) val.textContent = text;
+  }
+
+  function renderSheet() {
+    if (!sheetEl || !playerVideo) return;
+    const v = playerVideo;
+    setSheetValue("subs", subsLabel(v));
+    setSheetValue("speed", v.playbackRate + "\u00d7");
+    setSheetValue("repeat", playerRepeat === "off" ? "Turn off" : playerRepeat === "loop" ? "Loop" : "Repeat one");
+    setSheetValue("sleep", sleepLabel());
+    const chips = sheetEl.querySelector(".nv-chips");
+    chips.innerHTML = "";
+    const opts = qualityOptions(v);
+    for (const opt of opts) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "nv-chip" + (opt.active ? " nv-on" : "");
+      b.textContent = opt.label;
+      b.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        applyQuality(opt);
+      });
+      chips.appendChild(b);
+    }
+    const note = sheetEl.querySelector(".nv-note");
+    note.textContent =
+      opts.length < 2
+        ? "This video only exposes one quality level; the site controls the rest."
+        : "";
+  }
+
+  function sheetAction(which) {
+    const v = playerVideo;
+    if (!v) return;
+    if (which === "subs") toggleSubs(v);
+    else if (which === "speed") cycleSpeed();
+    else if (which === "repeat") {
+      playerRepeat = REPEAT_MODES[(REPEAT_MODES.indexOf(playerRepeat) + 1) % REPEAT_MODES.length];
+      applyRepeat();
+    } else if (which === "sleep") cycleSleep();
+    renderSheet();
+    /* The user is in the sheet; keep it (and the controls) put. */
+    clearTimeout(controlsTimer);
+  }
+
+  function positionSheet() {
+    if (!sheetEl || sheetEl.hidden) return;
+    sheetEl.classList.toggle("nv-side", window.innerWidth > window.innerHeight);
+  }
+
+  function openSheet() {
+    ensurePlayer();
+    if (!playerEl || !playerVideo) return;
+    sheetOpen = true;
+    buildSheet();
+    if (!sheetEl) return;
+    renderSheet();
+    positionSheet();
+    sheetEl.hidden = false;
+    keepAlive();
+    showControls(false);
+    /* Nothing times out while the sheet is open (see scheduleControlsHide). */
+    clearTimeout(controlsTimer);
+  }
+
+  function closeSheet() {
+    if (!sheetOpen && (!sheetEl || sheetEl.hidden)) return;
+    sheetOpen = false;
+    if (sheetEl) sheetEl.hidden = true;
+    if (controlsVisible()) scheduleControlsHide();
+  }
+
+  function toggleSheet() {
+    if (sheetOpen) closeSheet();
+    else openSheet();
+  }
+
+  /* -------------------------- shortcuts --------------------------- */
+
   function onPlayerKeydown(e) {
     if (!e || e.key !== "Escape") return;
+    if (sheetOpen) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeSheet();
+      return;
+    }
     if (playerTheater) {
       e.preventDefault();
       e.stopPropagation();
@@ -2222,6 +2913,7 @@
 
   function onViewportChange() {
     if (controlsVisible()) positionPlayer();
+    positionSheet();
   }
 
   /*
@@ -2239,7 +2931,7 @@
       if (e.clientX < r.left - 30 || e.clientX > r.right + 30 ||
           e.clientY < r.top - 30 || e.clientY > r.bottom + 30) return;
     }
-    scheduleControlsHide();
+    showControls(false);
   }
 
   /* -------------------------- entry polling ----------------------- */
@@ -2302,6 +2994,7 @@
       document.addEventListener(evt, onMediaEvent, true);
     }
     document.addEventListener("fullscreenchange", onFullscreenChange, true);
+    document.addEventListener("webkitfullscreenchange", onFullscreenChange, true);
     document.addEventListener("keydown", onPlayerKeydown, true);
     document.addEventListener("scroll", onViewportChange, true);
     document.addEventListener("pointermove", onPointerActivity, true);

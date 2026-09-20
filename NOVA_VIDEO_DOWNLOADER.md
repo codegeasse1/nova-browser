@@ -37,27 +37,53 @@ It also reports `<video>`/`<audio>` elements found in the page (including frames
 ## In-page player (optional)
 
 A second switch, **"Inbuilt video player"**, adds Nova's own player controls over
-the page's `<video>`. When the switch is on and a video **starts playing** - or
-the user **taps one** - a control bar is drawn over the bottom of that video, in
-its normal inline position. Nova **never** takes the video full screen on its own
-and **never** moves it in the DOM; full screen happens only when the user presses
-the fullscreen button. (An earlier version moved the `<video>` into a full-screen
-overlay on play, which read as a full-screen flash that immediately reverted on
-complex sites - that approach is gone.)
+the page's `<video>` - a phone-style player, not a bare toolbar. When the switch
+is on and a video **starts playing** - or the user **taps one** - Nova's controls
+come up over the video, in its normal inline position, and fade out again ~3s
+later. Nova **never** takes the video full screen on its own and **never** moves
+it in the DOM, so the site's own player keeps working underneath.
 
+- controls come up on **play, pause and tap**, and hide again after **~3s**
+  (`SHOW_MS`) whether the video is playing or paused - the behaviour of every
+  phone player. Any tap, play/pause, seek or button press brings them straight
+  back, and they stay up while the pointer moves over the video;
+- the inline bar is a seek row (`0:00` / slider / duration) plus **one** row of
+  icons: play/pause, back-10, forward-10, mute + volume slider, brightness (the
+  sun button cycles presets inline; fullscreen has a fine slider), playback
+  speed (0.5x ... 2x), the settings (3-dot) button, rotate, fullscreen, download
+  (opens the same picker as the icon; top frame only) and an `x` that hides the
+  bar. The bar is clamped to at least 220px and switches to a "tight" layout
+  under 520px so the icons stay on one row over a phone-sized video, with the
+  slack spread evenly instead of pooling into one gap;
+- **fullscreen** (only ever from its own button; Escape leaves) restyles the
+  video to the viewport with Nova's inline styles and turns the controls into a
+  real player: a top bar with a back button, the page title and the settings
+  button, and a full-width bottom control bar. Rotate only exists there. Leaving
+  fullscreen restores the video's original inline styles untouched;
+- the **3-dot button** opens a *Nova Player* settings sheet (a bottom sheet in
+  portrait, a right-hand side panel in landscape, laid out like Quetta's player):
+  **Subtitles** (toggles the video's own text track, or says it has none),
+  **Quality** (lists whatever levels the page exposes - an `hls.js` instance hung
+  off the element or the window, or `<source>` elements with size hints - and
+  switches between them; with only one level it shows the decoded resolution and
+  says the site controls the rest), **Playback Speed**, **Repeat** (off / loop /
+  repeat-one; repeat-one restarts by hand on `ended`, since the `loop` flag
+  repeats seamlessly) and **Sleep Timer** (5/15/30/60 min, then pauses playback).
+  The controls stay up while the sheet is open; it closes on `x`, on Escape, or
+  on a tap outside it;
 - the bar is anchored to the video's own rectangle (clamped to the viewport) and
-  follows it on scroll/resize, so it looks like part of the site's player;
-- controls: play/pause, a seek bar with current/total time, mute + volume slider,
-  a **brightness** slider (a CSS `filter: brightness()` on the video), a
-  **playback speed** button cycling 0.5x / 0.75x / 1x / 1.25x / 1.5x / 1.75x / 2x,
-  **rotate** and **fullscreen**, a **download** button that opens the same picker
-  as the icon (top frame only), and an **`x`** that hides the bar;
-- the bar **auto-hides** after ~4s of playback with no interaction (like a normal
-  player), comes back on any tap on the video, stays up while paused, and stays
-  up while the pointer is moving over the video;
-- fullscreen uses Nova's own styling of the video (stretched to the viewport via
-  inline styles, the bar spanning the bottom); Escape or the button again puts
-  the video's own inline styles back. The element is never moved.
+  follows it on scroll/resize. A transient bad rectangle (a site re-laying the
+  video out for a frame) no longer blinks the bar away: it has to stay bad for
+  several frames before the bar gives up;
+- **a site that fullscreens its own video no longer makes Nova vanish.** The old
+  handler hid the *whole* Nova host while any element was fullscreen, so tapping
+  a video on such a site showed Nova's controls for a moment and then hid them
+  for the rest of the page's life - the "it flashes for a nanosecond and
+  disappears" bug. Now a video entering native fullscreen is handed straight to
+  Nova's own fullscreen (rate-limited, so a site that re-requests fullscreen
+  cannot cause a loop), and only the download button is put away while the page
+  itself is fullscreen - it lives in the same host, which is why hiding the host
+  killed the player too.
 
 A paused video the user has not touched is left alone (no bar), so loading a page
 with a paused video never clutters it. The bar is kept painted by the same
@@ -118,8 +144,8 @@ content script draw its controls; turning it **off** removes them.
 | `app/src/main/java/org/mozilla/fenix/components/NovaYtDlp.kt` | new â native yt-dlp bridge (init, downloads, progress, MediaStore publish) |
 | `app/build.gradle` | adds the `youtubedl-android` `library` + `ffmpeg` dependencies |
 | `app/src/main/java/org/mozilla/fenix/components/NovaInbuiltPlayer.kt` | new - shared-preference switch for the in-page player |
-| `app/src/main/assets/extensions/nova-video/content.js` | icon auto-hides (peek behaviour); optional inline in-page player (control bar over the video, auto-hide, fullscreen only on the button; the `<video>` is never moved), incl. shadow-DOM and frame support |
-| `app/src/main/assets/extensions/nova-video/manifest.json` | version `1.2.1` - bumped so the built-in extension is re-installed (GeckoView skips a built-in whose version is unchanged, which would leave the old `content.js` on device) |
+| `app/src/main/assets/extensions/nova-video/content.js` | icon auto-hides (peek behaviour); optional in-page player (control bar over the video, ~3s auto-hide on play/pause/tap, own fullscreen with a top bar, 3-dot settings sheet for subtitles/quality/speed/repeat/sleep; the `<video>` is never moved), incl. shadow-DOM and frame support |
+| `app/src/main/assets/extensions/nova-video/manifest.json` | version `1.2.2` - bumped so the built-in extension is re-installed (GeckoView skips a built-in whose version is unchanged, which would leave the old `content.js` on device) |
 | `app/proguard-rules.pro` | keep/dontwarn rules for youtubedl-android, Jackson and commons-io |
 | `app/src/main/java/org/mozilla/fenix/FenixApplication.kt` | `NOVA_VIDEO_ADDON_ID` constant + `installBuiltInWebExtension(...)` call + re-applies the stored on/off preference |
 | `app/src/main/java/org/mozilla/fenix/components/menu/compose/MainMenu.kt` | new "Video Downloader" menu item with a switch |
@@ -195,6 +221,15 @@ CPython and ffmpeg. `NovaYtDlp`:
 This is a sideload-only build, so Play Store policy does not apply.
 
 ## Gotchas (why the code looks the way it does)
+
+- **Adopted stylesheets beat `<style>` elements inside a shadow root.** The
+  player's extra CSS has to be *adopted* (appended to
+  `shadowRoot.adoptedStyleSheets`), not injected as a `<style>` element: the base
+  sheet wins every conflict against a later `<style>`, which silently collapsed
+  the seek bar's `flex: 1 1 auto` into a 40px stub and oversized every button.
+  The player applies its stylesheet as a second adopted sheet for exactly this
+  reason (a `<style>` element is only the fallback for engines without
+  constructable stylesheets, and it is safe there because it is the only sheet).
 
 - **`geckoViewAddons` is mandatory.** `manifest.json` must list it alongside
   `nativeMessaging`, otherwise GeckoView's `ExtensionParent.openNative` takes the
