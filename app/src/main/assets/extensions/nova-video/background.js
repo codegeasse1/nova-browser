@@ -25,6 +25,8 @@ const MAX_ENTRIES_PER_TAB = 80;
 
 /** Name of the native (Kotlin) bridge that runs the bundled yt-dlp. */
 const NATIVE_APP = "novaVideoYtdlp";
+/* Nova: the native bridge that floats the browser window (PIP mode). */
+const NATIVE_PIP_APP = "novaPip";
 
 /*
  * Sites whose media is not reachable as a plain file/manifest, but which the
@@ -763,12 +765,29 @@ browser.runtime.onMessage.addListener(function (message, sender) {
         if (res && res.ok) {
           return {
             ok: true,
-            inbuiltPlayer: !!res.inbuiltPlayer,
+            pip: !!res.pip,
             downloader: res.downloader !== false,
           };
         }
-        return { ok: true, inbuiltPlayer: false, downloader: true };
+        return { ok: true, pip: false, downloader: true };
       });
+    }
+    case "novaVideo:pip": {
+      if (!browser.runtime || typeof browser.runtime.sendNativeMessage !== "function") {
+        return Promise.resolve({ ok: false, error: "no native bridge" });
+      }
+      return browser.runtime
+        .sendNativeMessage(NATIVE_PIP_APP, {
+          action: "enter",
+          width: message.width || 0,
+          height: message.height || 0,
+        })
+        .then(function (res) {
+          return res || { ok: false, error: "no response" };
+        })
+        .catch(function (e) {
+          return { ok: false, error: String((e && e.message) || e) };
+        });
     }
     case "novaVideo:ytdlp": {
       if ((message.action || "start") === "list") {

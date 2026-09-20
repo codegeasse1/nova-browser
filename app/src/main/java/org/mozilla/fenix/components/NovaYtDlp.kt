@@ -208,15 +208,15 @@ object NovaYtDlp {
     /**
      * The two Nova video feature switches, so the extension can adapt at
      * runtime without the page being reloaded: `downloader` hides the download
-     * button, `inbuiltPlayer` shows Nova's own player controls. Read locally
-     * (no disk first-load cost after boot) and always answers, so the content
-     * script never has to wait on a timeout for a normal answer.
+     * button, `pip` shows the peek-a-boo picture-in-picture button over
+     * videos. Read locally (no disk first-load cost after boot) and always
+     * answers, so the content script never has to wait on a timeout.
      */
     private fun prefs(): JSONObject {
         val ctx = appContext
         val out = JSONObject().put("ok", true)
         out.put("downloader", ctx?.let { NovaVideoDownloader.isEnabled(it) } ?: true)
-        out.put("inbuiltPlayer", ctx?.let { NovaInbuiltPlayer.isEnabled(it) } ?: false)
+        out.put("pip", ctx?.let { NovaPipMode.isEnabled(it) } ?: false)
         return out
     }
 

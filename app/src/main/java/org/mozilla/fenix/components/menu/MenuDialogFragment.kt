@@ -671,18 +671,18 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                     Unit
                                 }
 
-                                var novaInbuiltPlayerEnabled by remember {
+                                var novaPipModeEnabled by remember {
                                     mutableStateOf(
-                                        org.mozilla.fenix.components.NovaInbuiltPlayer.isEnabled(requireContext()),
+                                        org.mozilla.fenix.components.NovaPipMode.isEnabled(requireContext()),
                                     )
                                 }
-                                val onNovaInbuiltPlayerToggle = {
-                                    val nextEnabled = !novaInbuiltPlayerEnabled
-                                    org.mozilla.fenix.components.NovaInbuiltPlayer.setEnabled(
+                                val onNovaPipModeToggle = {
+                                    val nextEnabled = !novaPipModeEnabled
+                                    org.mozilla.fenix.components.NovaPipMode.setEnabled(
                                         requireContext(),
                                         nextEnabled,
                                     )
-                                    novaInbuiltPlayerEnabled = nextEnabled
+                                    novaPipModeEnabled = nextEnabled
                                     org.mozilla.fenix.components.NovaVideoDownloader.apply(
                                         requireComponents.core.engine,
                                         requireContext(),
@@ -766,8 +766,8 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                     onNovaViewSource = onNovaViewSource,
                                     novaVideoDownloaderEnabled = novaVideoDownloaderEnabled,
                                     onNovaVideoDownloaderToggle = onNovaVideoDownloaderToggle,
-                                    novaInbuiltPlayerEnabled = novaInbuiltPlayerEnabled,
-                                    onNovaInbuiltPlayerToggle = onNovaInbuiltPlayerToggle,
+                                    novaPipModeEnabled = novaPipModeEnabled,
+                                    onNovaPipModeToggle = onNovaPipModeToggle,
                                     isAllWebExtensionsDisabled = isAllWebExtensionsDisabled,
                                     showIPProtection = components.ipProtection.store.state.isEligible,
                                     ipProtectionMenuState = ipProtectionMenuState,

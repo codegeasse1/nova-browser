@@ -37,11 +37,11 @@ object NovaVideoDownloader {
 
     /**
      * True while the bundled extension has to stay enabled. The extension is
-     * also the vehicle for Nova's own in-page player, so it is only really
-     * switched off once BOTH the downloader and the player are off.
+     * also the vehicle for PIP mode, so it is only really switched off once
+     * BOTH the downloader and PIP mode are off.
      */
     fun isExtensionWanted(context: Context): Boolean =
-        isEnabled(context) || NovaInbuiltPlayer.isEnabled(context)
+        isEnabled(context) || NovaPipMode.isEnabled(context)
 
     /**
      * Enables or disables the bundled extension in the engine so the change

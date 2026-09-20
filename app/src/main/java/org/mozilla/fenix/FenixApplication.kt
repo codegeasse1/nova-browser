@@ -943,6 +943,7 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
                 org.mozilla.fenix.components.NovaDebugLog.log(applicationContext, "Nova Video Downloader installed: ${extension.id}")
                 org.mozilla.fenix.components.NovaYtDlp.init(applicationContext)
                 org.mozilla.fenix.components.NovaYtDlp.registerHandler(extension)
+                org.mozilla.fenix.components.NovaPip.registerHandler(extension)
                 if (!org.mozilla.fenix.components.NovaVideoDownloader.isExtensionWanted(applicationContext)) {
                     engine.disableWebExtension(
                         extension = extension,
