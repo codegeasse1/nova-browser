@@ -129,6 +129,7 @@
   let prefsBusy = false;
   let playerEl = null;
   let pl = null;
+  let plFabEl = null;
   let playerVideo = null;
   let playerDismissed = false;
   let playerTheater = false;
@@ -152,6 +153,7 @@
   let lastAliveAt = 0;
   let fsGuard = false;
   let fsTakeovers = [];
+  let theaterGuard = null;
   let pollTimer = null;
   let pos = null;
   let frameTouched = false;
@@ -333,7 +335,7 @@
       0%, 91% { visibility: visible; }
       100% { visibility: hidden; }
     }
-    .nv-btn, .nv-panel, .nv-toast, .nv-player, .nv-sheet { animation: nova-keepalive 2.6s linear forwards; }
+    .nv-btn, .nv-panel, .nv-toast, .nv-player, .nv-pl-fab, .nv-sheet { animation: nova-keepalive 2.6s linear forwards; }
   `;
 
   function applyStyles(root) {
@@ -357,7 +359,7 @@
    */
   function keepAlive() {
     lastAliveAt = Date.now();
-    const els = [btnEl, panelEl, playerEl, sheetEl, shadow && shadow.querySelector(".nv-toast")];
+    const els = [btnEl, panelEl, playerEl, plFabEl, sheetEl, shadow && shadow.querySelector(".nv-toast")];
     for (const el of els) {
       if (!el) continue;
       el.style.animation = "none";
@@ -453,6 +455,7 @@
       path.indexOf(panelEl) > -1 ||
       path.indexOf(btnEl) > -1 ||
       path.indexOf(playerEl) > -1 ||
+      path.indexOf(plFabEl) > -1 ||
       (sheetEl && path.indexOf(sheetEl) > -1);
     if (insideUi) return;
     /*
@@ -491,7 +494,11 @@
     frameTouched = true;
     if (!prefs.inbuiltPlayer) fetchPrefs();
     if (playerVideo !== hit) bindVideo(hit);
-    if (playerVideo === hit) showControls(!hit.paused && !hit.ended);
+    if (playerVideo !== hit) return;
+    /* A tap is the user saying "yes, this video" - bring the button back. */
+    playerDismissed = false;
+    if (playerTheater) showControls(false);
+    else syncFab();
   }
 
   /* -------------------------- drag -------------------------------- */
@@ -736,9 +743,9 @@
       }
     }
     const now = Date.now();
-    fsTakeovers = fsTakeovers.filter(function (t) { return now - t < 5000; });
+    fsTakeovers = fsTakeovers.filter(function (t) { return now - t < 12000; });
     if (video && prefs.inbuiltPlayer && (video === playerVideo || plausibleVideo(video)) &&
-        fsTakeovers.length < 4) {
+        fsTakeovers.length < 12) {
       frameTouched = true;
       if (playerVideo !== video) bindVideo(video);
       if (!fsGuard) {
@@ -1574,12 +1581,14 @@
   /* ---------------------------------------------------------------- */
   /* In-page player (browser-menu switch "Inbuilt video player")       */
   /*                                                                   */
-  /* Nova draws its own controls over the page's <video>. The video is  */
-  /* never moved, so the site keeps working; fullscreen restyles it in  */
-  /* place instead of using the Fullscreen API. Controls come up on     */
-  /* play, pause and tap, then fade out again after a few seconds, like */
-  /* the player on any phone. The 3-dot button opens a settings sheet   */
-  /* (subtitles / quality / speed / repeat / sleep timer).              */
+  /* Nova adds exactly one small round button over the page's <video>   */
+  /* - nothing else. The site keeps its own inline player, so nothing   */
+  /* is duplicated or covered up. Tapping the button (or the site's own */
+  /* fullscreen button) hands the video to Nova's fullscreen player:    */
+  /* the video is restyled to fill the viewport in place (it is never   */
+  /* moved, so the site keeps working) with Nova's own controls, and    */
+  /* the 3-dot opens a settings sheet (subtitles / quality / speed /    */
+  /* repeat / sleep timer) that drives the page's real player.          */
   /* ---------------------------------------------------------------- */
 
   const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -1642,6 +1651,38 @@
    * the download-button styling above is left exactly as it is.
    */
   const PLAYER_CSS = `
+    /*
+     * Nova's full control surface only ever exists in fullscreen. Inline the
+     * video keeps the site's own player and Nova adds nothing but the small
+     * round button (see .nv-pl-fab).
+     */
+    .nv-player:not(.nv-fs) { display: none; }
+    .nv-pl-fab {
+      position: fixed; z-index: 2147483647; width: 42px; height: 42px;
+      border-radius: 50%; box-sizing: border-box;
+      background: rgba(18,19,24,.58); color: #fff;
+      border: 1px solid rgba(255,255,255,.34);
+      box-shadow: 0 3px 14px rgba(0,0,0,.5);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; touch-action: none;
+      transition: transform .16s ease, background .16s ease, border-color .16s ease;
+    }
+    .nv-pl-fab svg { width: 22px; height: 22px; fill: #fff; pointer-events: none; }
+    .nv-pl-fab.nv-hold {
+      transform: scale(.86); background: rgba(88,71,245,.9); border-color: #5847f5;
+    }
+    .nv-pl-center { display: none; }
+    .nv-player.nv-fs .nv-pl-center {
+      display: flex; align-items: center; justify-content: center; gap: 30px;
+      position: fixed; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+      pointer-events: none;
+    }
+    .nv-player.nv-fs .nv-pl-center .nv-plb { pointer-events: auto; }
+    .nv-player.nv-fs .nv-pl-big { width: 62px; height: 62px; border-radius: 50%; background: rgba(0,0,0,.42); }
+    .nv-player.nv-fs .nv-pl-big svg { width: 34px; height: 34px; }
+    .nv-player.nv-fs .nv-pl-center .nv-pl-sm svg { width: 30px; height: 30px; }
+    .nv-player.nv-fs .nv-pl-center .nv-pl-sm { width: 44px; height: 44px; }
     .nv-player { padding: 7px 7px 8px; border-radius: 14px; gap: 6px; }
     .nv-pl-top {
       display: none; position: fixed; left: 0; right: 0; top: 0; box-sizing: border-box;
@@ -1813,8 +1854,13 @@
      * sprout control bars.
      */
     const playing = !el.paused && !el.ended;
-    if (playing) showControls(true);
-    else if (controlsVisible() || frameTouched) showControls(false);
+    if (playing) playerDismissed = false;
+    if (playerTheater) {
+      if (playing) showControls(true);
+      else if (controlsVisible() || frameTouched) showControls(false);
+    } else {
+      syncFab();
+    }
     syncPlayer();
   }
 
@@ -1855,15 +1901,17 @@
       '<div class="nv-pl-title"></div>' +
       '<button class="nv-plb nv-plk nv-pl-menu" type="button" title="Player settings" aria-label="Player settings"></button>' +
       "</div>" +
+      '<div class="nv-pl-center">' +
+      '<button class="nv-plb nv-pl-sm nv-pl-back10" type="button" title="Back 10 seconds" aria-label="Back 10 seconds"></button>' +
+      '<button class="nv-plb nv-pl-play nv-pl-big" type="button" title="Play or pause" aria-label="Play or pause"></button>' +
+      '<button class="nv-plb nv-pl-sm nv-pl-fwd10" type="button" title="Forward 10 seconds" aria-label="Forward 10 seconds"></button>' +
+      "</div>" +
       '<div class="nv-pl-seekrow">' +
       '<span class="nv-pl-cur">0:00</span>' +
       '<input class="nv-pl-range nv-pl-seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Seek">' +
       '<span class="nv-pl-dur">0:00</span>' +
       "</div>" +
       '<div class="nv-pl-row">' +
-      '<button class="nv-plb nv-pl-play" type="button" title="Play or pause" aria-label="Play or pause"></button>' +
-      '<button class="nv-plb nv-pl-sm nv-pl-back10" type="button" title="Back 10 seconds" aria-label="Back 10 seconds"></button>' +
-      '<button class="nv-plb nv-pl-sm nv-pl-fwd10" type="button" title="Forward 10 seconds" aria-label="Forward 10 seconds"></button>' +
       '<button class="nv-plb nv-pl-mute" type="button" title="Mute" aria-label="Mute"></button>' +
       '<input class="nv-pl-range nv-pl-vol" type="range" min="0" max="100" step="1" value="100" aria-label="Volume">' +
       '<button class="nv-plb nv-pl-bright" type="button" title="Brightness" aria-label="Brightness"></button>' +
@@ -1980,6 +2028,56 @@
     playerEl.addEventListener("click", function (e) {
       e.stopPropagation();
     });
+
+    /*
+     * The inline affordance: one small round button over the video. Tapping it
+     * opens Nova's fullscreen player; holding it hides the button for this
+     * video (the same idea as the download button's peek, so a page can be
+     * watched with no Nova chrome at all).
+     */
+    plFabEl = document.createElement("div");
+    plFabEl.className = "nv-pl-fab";
+    plFabEl.hidden = true;
+    plFabEl.title = "Nova player";
+    plFabEl.setAttribute("role", "button");
+    plFabEl.setAttribute("aria-label", "Nova player");
+    plFabEl.innerHTML = PL_ICON.fs;
+    let holdTimer = null;
+    let held = false;
+    plFabEl.addEventListener("pointerdown", function (e) {
+      e.stopPropagation();
+      try {
+        plFabEl.setPointerCapture(e.pointerId);
+      } catch (err) {
+        /* ignore */
+      }
+      held = false;
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(function () {
+        holdTimer = null;
+        held = true;
+        plFabEl.classList.add("nv-hold");
+        dismissPlayer();
+      }, 650);
+    });
+    plFabEl.addEventListener("pointerup", function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      const wasHeld = held;
+      held = false;
+      clearTimeout(holdTimer);
+      holdTimer = null;
+      plFabEl.classList.remove("nv-hold");
+      if (!wasHeld) openTheater();
+    });
+    plFabEl.addEventListener("pointercancel", function () {
+      held = false;
+      clearTimeout(holdTimer);
+      holdTimer = null;
+      plFabEl.classList.remove("nv-hold");
+    });
+    shadow.appendChild(plFabEl);
+
     keepAlive();
   }
 
@@ -1987,10 +2085,13 @@
     exitTheater();
     unbindVideo();
     closeSheet();
+    if (plFabEl && plFabEl.parentNode) plFabEl.parentNode.removeChild(plFabEl);
+    plFabEl = null;
     if (playerEl && playerEl.parentNode) playerEl.parentNode.removeChild(playerEl);
     playerEl = null;
     pl = null;
     stopPosLoop();
+    stopTheaterGuard();
     clearTimeout(controlsTimer);
   }
 
@@ -2147,9 +2248,8 @@
      */
     const playing = !v.paused && !v.ended;
     if (!frameAllows(v)) hideControls();
-    else if (playing) showControls(true);
-    else if (frameTouched) showControls(false);
-    else hideControls();
+    else if (playerTheater) showControls(false);
+    else syncFab();
   }
 
   /*
@@ -2167,7 +2267,7 @@
   function updatePlayer() {
     keepAlive();
     if (!prefs.inbuiltPlayer) {
-      if (playerEl) destroyPlayer();
+      if (playerEl || plFabEl) destroyPlayer();
       return;
     }
     ensurePlayer();
@@ -2197,11 +2297,12 @@
       return;
     }
     /*
-     * The poll must not force the bar back on (or it could never auto-hide),
-     * so it only keeps an already-visible bar glued to the video. bindVideo and
-     * the media events are what raise it.
+     * The poll keeps the inline button glued to the video, and in fullscreen
+     * keeps the bar glued to the bottom of the viewport. It never *raises* the
+     * bar - that is bindVideo and the media events - so the auto-hide works.
      */
-    if (controlsVisible()) positionPlayer();
+    if (playerTheater && controlsVisible()) positionPlayer();
+    else syncFab();
   }
 
   /* -------------------------- player state ------------------------ */
@@ -2258,18 +2359,24 @@
   }
 
   /*
-   * Raise the control bar over the video. It always fades back out after a few
-   * seconds (whether the video is playing or paused - the behaviour of every
-   * phone player); a tap, a play, a pause or any interaction brings it back.
+   * Nova has two faces. Inline there is nothing but the small round button over
+   * the video, and the site keeps its own player. In fullscreen Nova shows its
+   * full control surface, which fades back out after a few seconds like any
+   * phone player. showControls picks the right one for the current state.
    */
   function showControls(auto) {
     if (!playerVideo) return;
     ensurePlayer();
     if (!playerEl) return;
     playerDismissed = false;
+    if (!playerTheater) {
+      syncFab();
+      return;
+    }
     playerEl.classList.remove("nv-hide");
     playerEl.style.visibility = "";
     keepAlive();
+    syncFab();
     syncPlayer();
     positionPlayer();
     startPosLoop();
@@ -2278,11 +2385,67 @@
   }
 
   function hideControls() {
-    if (!playerEl) return;
-    playerEl.classList.add("nv-hide");
+    if (playerEl) playerEl.classList.add("nv-hide");
     clearTimeout(controlsTimer);
     stopPosLoop();
     closeSheet();
+    syncFab();
+  }
+
+  /* ---------------------- inline button (FAB) --------------------- */
+
+  /*
+   * The single inline affordance only exists while it has something to open: a
+   * real video, on screen, with the inbuilt player switched on.
+   */
+  function fabWanted() {
+    if (!prefs.inbuiltPlayer || !playerVideo || playerTheater || playerDismissed) return false;
+    if (!playerVideo.isConnected) return false;
+    if (!plausibleVideo(playerVideo)) return false;
+    return frameAllows(playerVideo);
+  }
+
+  function syncFab() {
+    if (!plFabEl) return;
+    if (!fabWanted()) {
+      plFabEl.hidden = true;
+      return;
+    }
+    plFabEl.hidden = false;
+    positionFab();
+  }
+
+  /*
+   * The button sits in the bottom-right of the video it belongs to, so it is
+   * always clear which video it will open. A bad frame (the site re-laying the
+   * video out, an off-screen embed) only hides it for that frame.
+   */
+  function positionFab() {
+    if (!plFabEl || !playerVideo || plFabEl.hidden) return;
+    const r = playerVideo.getBoundingClientRect();
+    const size = 42;
+    const margin = 10;
+    const bad =
+      r.width < 140 || r.height < 80 ||
+      r.right < 30 || r.left > window.innerWidth - 30 ||
+      r.bottom < 30 || r.top > window.innerHeight - 30;
+    if (bad) {
+      plFabEl.style.visibility = "hidden";
+      return;
+    }
+    plFabEl.style.visibility = "";
+    const left = Math.min(Math.max(4, r.right - size - margin), Math.max(4, window.innerWidth - size - 4));
+    const top = Math.min(Math.max(4, r.bottom - size - margin), Math.max(4, window.innerHeight - size - 4));
+    plFabEl.style.left = left + "px";
+    plFabEl.style.top = top + "px";
+  }
+
+  /* Tapping the inline button hands the video to Nova's fullscreen player. */
+  function openTheater() {
+    if (!playerVideo) return;
+    playerDismissed = false;
+    enterTheater();
+    showControls(false);
   }
 
   function scheduleControlsHide() {
@@ -2305,48 +2468,18 @@
   }
 
   /*
-   * Pin the bar to the bottom edge of the video (or the viewport in fullscreen).
-   * A single bad frame - a site re-laying the video out for a moment - must not
-   * blink the bar away, so the rect has to stay bad for several frames before
-   * the bar gives up and hides.
+   * In fullscreen the bar is pinned to the bottom edge of the viewport and spans
+   * it. The video itself is stretched separately (see enterTheater).
    */
-  let posBadFrames = 0;
   function positionPlayer() {
-    if (!playerEl || !playerVideo || !controlsVisible()) return;
-    if (playerTheater) {
-      playerEl.classList.add("nv-fs");
-      playerEl.classList.remove("nv-pl-tight");
-      const h = playerEl.offsetHeight || 96;
-      playerEl.style.visibility = "";
-      playerEl.style.left = "0px";
-      playerEl.style.width = window.innerWidth + "px";
-      playerEl.style.top = Math.max(0, window.innerHeight - h) + "px";
-      posBadFrames = 0;
-      return;
-    }
-    playerEl.classList.remove("nv-fs");
-    const r = playerVideo.getBoundingClientRect();
-    const bad =
-      r.width < 120 || r.height < 90 ||
-      r.bottom < 8 || r.top > window.innerHeight - 8;
-    if (bad) {
-      posBadFrames++;
-      if (posBadFrames >= 8) playerEl.style.visibility = "hidden";
-      return;
-    }
-    posBadFrames = 0;
+    if (!playerEl || !playerVideo || !playerTheater) return;
+    playerEl.classList.add("nv-fs");
+    playerEl.classList.remove("nv-pl-tight");
     playerEl.style.visibility = "";
-    const margin = 8;
-    const width = Math.max(220, Math.min(r.width - margin * 2, window.innerWidth - margin * 2));
-    playerEl.classList.toggle("nv-pl-tight", width < 520);
-    const left = Math.max(margin, Math.min(r.left + margin, window.innerWidth - width - margin));
     const h = playerEl.offsetHeight || 96;
-    let top = r.bottom - h - margin;
-    if (top < r.top + 2) top = r.top + 2;
-    if (top + h > window.innerHeight - 2) top = window.innerHeight - h - 2;
-    playerEl.style.left = left + "px";
-    playerEl.style.width = width + "px";
-    playerEl.style.top = top + "px";
+    playerEl.style.left = "0px";
+    playerEl.style.width = window.innerWidth + "px";
+    playerEl.style.top = Math.max(0, window.innerHeight - h) + "px";
   }
 
   function startPosLoop() {
@@ -2487,6 +2620,94 @@
     if (!v || playerTheater) return;
     playerHomeStyle = v.getAttribute("style") || "";
     playerTheater = true;
+    applyTheaterStyles(v);
+    neutralizeAncestors(v);
+    if (pl) {
+      pl.fs.classList.add("nv-on");
+      pl.fs.innerHTML = PL_ICON.fsExit;
+    }
+    startTheaterGuard();
+    syncFab();
+    if (controlsVisible()) positionPlayer();
+  }
+
+  /*
+   * A `position: fixed` box is laid out against its nearest transformed (or
+   * filtered / contained) ancestor instead of the viewport, which is how a page
+   * can keep its player pinned inside its own layout even while Nova is trying
+   * to go full screen. The chain is parked for the duration of fullscreen and
+   * restored - exactly as it was, priorities included - on the way out.
+   */
+  let theaterAncestors = [];
+
+  function neutralizeAncestors(v) {
+    releaseAncestors();
+    let node = v;
+    let depth = 0;
+    while (node && node !== document.documentElement && depth < 50) {
+      let up = node.parentElement;
+      if (!up) {
+        try {
+          const root = node.getRootNode ? node.getRootNode() : null;
+          if (root && root.host) up = root.host;
+        } catch (e) {
+          up = null;
+        }
+      }
+      node = up;
+      if (!node || node === document.documentElement) break;
+      try {
+        const cs = getComputedStyle(node);
+        const saved = {};
+        const park = function (prop, value) {
+          if (!value || value === "none" || value === "auto" || value === "normal") return;
+          saved[prop] = [node.style.getPropertyValue(prop), node.style.getPropertyPriority(prop)];
+          node.style.setProperty(prop, prop === "will-change" ? "auto" : "none", "important");
+        };
+        park("transform", cs.transform);
+        park("filter", cs.filter);
+        park("perspective", cs.perspective);
+        park("will-change", cs.willChange);
+        park("contain", cs.contain);
+        park("backdrop-filter", cs.backdropFilter || cs.webkitBackdropFilter);
+        if (Object.keys(saved).length) theaterAncestors.push({ node: node, saved: saved });
+      } catch (e) {
+        /* ignore */
+      }
+      depth++;
+    }
+  }
+
+  function releaseAncestors() {
+    for (const rec of theaterAncestors) {
+      for (const prop of Object.keys(rec.saved)) {
+        const pair = rec.saved[prop];
+        if (pair[0]) rec.node.style.setProperty(prop, pair[0], pair[1]);
+        else rec.node.style.removeProperty(prop);
+      }
+    }
+    theaterAncestors = [];
+  }
+
+  /*
+   * The page's own player keeps re-laying the video out (and some players swap
+   * in a brand new <video> the moment fullscreen is entered), which is what made
+   * Nova's player flash for a moment and then vanish. Re-asserting the layout on
+   * a short interval keeps the video where Nova put it, and lets the player hop
+   * to a replacement element without losing fullscreen.
+   */
+  function startTheaterGuard() {
+    if (theaterGuard != null) return;
+    theaterGuard = setInterval(enforceTheater, 400);
+  }
+
+  function stopTheaterGuard() {
+    if (theaterGuard == null) return;
+    clearInterval(theaterGuard);
+    theaterGuard = null;
+  }
+
+  function applyTheaterStyles(v) {
     const set = function (prop, value) {
       v.style.setProperty(prop, value, "important");
     };
@@ -2507,18 +2728,39 @@
     set("z-index", "2147483000");
     set("transform-origin", "center center");
     applyRotateState();
-    if (pl) {
-      pl.fs.classList.add("nv-on");
-      pl.fs.innerHTML = PL_ICON.fsExit;
+  }
+
+  function enforceTheater() {
+    if (!playerTheater) {
+      stopTheaterGuard();
+      return;
     }
+    const v = playerVideo;
+    if (!v || !v.isConnected) {
+      const next = selectVideo();
+      playerTheater = false;
+      unbindVideo();
+      if (next) {
+        bindVideo(next);
+        enterTheater();
+        showControls(false);
+      } else {
+        stopTheaterGuard();
+      }
+      return;
+    }
+    applyTheaterStyles(v);
     if (controlsVisible()) positionPlayer();
   }
 
   function exitTheater() {
     const v = playerVideo;
     if (!playerTheater) return;
+    stopTheaterGuard();
     playerTheater = false;
     playerRotated = false;
+    releaseAncestors();
+    if (playerEl) playerEl.classList.remove("nv-fs");
     if (v) {
       for (const prop of THEATER_PROPS) v.style.removeProperty(prop);
       try {
@@ -2535,7 +2777,7 @@
       pl.fs.classList.remove("nv-on");
       pl.fs.innerHTML = PL_ICON.fs;
     }
-    if (controlsVisible()) positionPlayer();
+    syncFab();
   }
 
   function toggleTheater() {
@@ -2630,6 +2872,53 @@
     return null;
   }
 
+  /*
+   * YouTube-style players (youtube.com, m.youtube.com, embeds) do not use
+   * hls.js and have no <source> list with size hints - their whole ladder lives
+   * behind the page's own JS player object, which is also what the site's own
+   * gear menu drives. Talking to that object is how the quality row can offer
+   * the real list (4320p, 2160p, 1440p, 1080p, ...) and actually switch.
+   */
+  const YT_QUALITY_LABELS = {
+    highres: "4320p", hd2880: "2880p", hd2160: "2160p", hd1440: "1440p",
+    hd1080: "1080p", hd720: "720p", large: "480p", medium: "360p",
+    small: "240p", tiny: "144p", auto: "Auto",
+  };
+
+  function ytPlayer() {
+    const check = function (c) {
+      try {
+        return c && typeof c.getAvailableQualityLevels === "function" ? c : null;
+      } catch (e) {
+        return null;
+      }
+    };
+    const direct = (() => {
+      try {
+        return check(document.getElementById("movie_player"));
+      } catch (e) {
+        return null;
+      }
+    })();
+    if (direct) return direct;
+    try {
+      const nodes = document.querySelectorAll("ytm-player, ytd-player, .html5-video-player");
+      for (const n of nodes) {
+        const found =
+          check(n) || check(n.player_) ||
+          check(n.shadowRoot && n.shadowRoot.querySelector("#movie_player"));
+        if (found) return found;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    try {
+      return check(window.ytplayer);
+    } catch (e) {
+      return null;
+    }
+  }
+
   function qualityOptions(v) {
     const out = [];
     const seen = {};
@@ -2645,6 +2934,23 @@
         }
       } catch (e) {
         /* ignore */
+      }
+    }
+    if (!out.length) {
+      const yt = ytPlayer();
+      if (yt) {
+        try {
+          const avail = yt.getAvailableQualityLevels() || [];
+          const cur = typeof yt.getPlaybackQuality === "function" ? yt.getPlaybackQuality() : "";
+          for (const raw of avail) {
+            const label = YT_QUALITY_LABELS[raw] || qualityLabel(raw);
+            if (!label || seen[label]) continue;
+            seen[label] = 1;
+            out.push({ label: label, kind: "yt", raw: raw, active: raw === cur });
+          }
+        } catch (e) {
+          /* ignore */
+        }
       }
     }
     if (!out.length) {
@@ -2722,6 +3028,15 @@
           } catch (e) {
             /* ignore */
           }
+          toast("Quality: " + opt.label);
+        }
+      } else if (opt.kind === "yt") {
+        const yt = ytPlayer();
+        if (!yt) {
+          toast("Quality switching is not available here");
+        } else {
+          if (typeof yt.setPlaybackQualityRange === "function") yt.setPlaybackQualityRange(opt.raw);
+          else if (typeof yt.setPlaybackQuality === "function") yt.setPlaybackQuality(opt.raw);
           toast("Quality: " + opt.label);
         }
       } else {
@@ -2865,6 +3180,7 @@
   }
 
   function openSheet() {
+    if (!playerTheater) return;
     ensurePlayer();
     if (!playerEl || !playerVideo) return;
     sheetOpen = true;
@@ -2912,7 +3228,8 @@
   }
 
   function onViewportChange() {
-    if (controlsVisible()) positionPlayer();
+    if (playerTheater && controlsVisible()) positionPlayer();
+    else if (plFabEl && !plFabEl.hidden) positionFab();
     positionSheet();
   }
 
@@ -3032,7 +3349,7 @@
      */
     const video = selectVideo();
     if (!video && !playerVideo) {
-      if (playerEl) {
+      if (playerEl || plFabEl) {
         unbindVideo();
         destroyPlayer();
       }
