@@ -8,12 +8,8 @@
  * button - and only while the page actually has a downloadable video/audio.
  * Tapping it opens a compact picker.
  *
- * Independently, with "Enable PIP mode" switched on, a second small button
- * peeks over any video for three seconds on play/pause/tap and opens the
- * browser's picture-in-picture window (see the PIP mode section below).
- *
- * There is no other chrome: to turn either feature off use its switch in the
- * browser menu.
+ * There is no other chrome: to turn the feature off use the "Video Downloader"
+ * switch in the browser menu.
  */
 
 (function () {
@@ -114,8 +110,7 @@
 
   /* ---------------------------------------------------------------- */
   /* UI                                                                */
-  /* The download button is a top-frame-only affordance; the PiP button */
-  /* runs in any frame that owns a <video> (see start()).               */
+  /* The download button is a top-frame-only affordance (see start()).  */
   /* ---------------------------------------------------------------- */
 
   let entries = [];
@@ -131,20 +126,11 @@
   let ytdlpJobs = new Map();
   let hideTimer = null;
   let prefsTimer = null;
-  let prefs = { pip: false, downloader: true };
+  let prefs = { downloader: true };
   let prefsBusy = false;
-  let pipEl = null;
-  let pipVideo = null;
-  let pipMediaBound = [];
-  let pipTimer = null;
-  let pipUntil = 0;
   let lastAliveAt = 0;
   let pollTimer = null;
   let pos = null;
-  let frameTouched = false;
-  let prefsPrimed = false;
-  let frameTimer = null;
-  let framePrefsAt = 0;
   let listenersBound = false;
 
   function teardown() {
@@ -152,14 +138,8 @@
     instance.beat = 0;
     clearInterval(reportTimer);
     clearInterval(pollTimer);
-    clearInterval(frameTimer);
     clearTimeout(hideTimer);
     clearTimeout(prefsTimer);
-    try {
-      destroyPip();
-    } catch (e) {
-      /* ignore */
-    }
     if (host && host.parentNode) host.parentNode.removeChild(host);
     host = null;
     shadow = null;
@@ -264,25 +244,11 @@
       font: 12px/1.4 -apple-system, system-ui, sans-serif;
       box-shadow: 0 8px 24px rgba(0,0,0,.5);
     }
-    .nv-pip {
-      position: fixed; z-index: 2147483647; width: 38px; height: 38px;
-      border-radius: 10px; box-sizing: border-box;
-      background: rgba(18,19,24,.6); color: #fff;
-      border: 1px solid rgba(255,255,255,.3);
-      box-shadow: 0 3px 12px rgba(0,0,0,.45);
-      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; touch-action: none;
-      transition: transform .14s ease, background .14s ease, border-color .14s ease, opacity .3s ease;
-    }
-    .nv-pip.nv-hide { opacity: 0; pointer-events: none; }
-    .nv-pip:active { transform: scale(.9); background: rgba(88,71,245,.88); border-color: #5847f5; }
-    .nv-pip svg { width: 20px; height: 20px; fill: #fff; pointer-events: none; }
     @keyframes nova-keepalive {
       0%, 91% { visibility: visible; }
       100% { visibility: hidden; }
     }
-    .nv-btn, .nv-panel, .nv-toast, .nv-pip { animation: nova-keepalive 2.6s linear forwards; }
+    .nv-btn, .nv-panel, .nv-toast { animation: nova-keepalive 2.6s linear forwards; }
   `;
 
   function applyStyles(root) {
@@ -306,7 +272,7 @@
    */
   function keepAlive() {
     lastAliveAt = Date.now();
-    const els = [btnEl, panelEl, pipEl, shadow && shadow.querySelector(".nv-toast")];
+    const els = [btnEl, panelEl, shadow && shadow.querySelector(".nv-toast")];
     for (const el of els) {
       if (!el) continue;
       el.style.animation = "none";
@@ -318,11 +284,7 @@
   const ICON =
     '<svg viewBox="0 0 24 24"><path d="M12 16.5l-5.5-5.5h3.25V3h4.5v8H17.5L12 16.5zM5 18h14v2.5H5V18z"/></svg>';
 
-  /*
-   * The host + shadow root is shared by both modes: the download button only
-   * exists in the top frame, while the PiP button can be created in any
-   * frame that actually owns a <video> (see start()).
-   */
+  /* The host + shadow root holds the download button (top frame only). */
   function buildHost() {
     if (host) return;
     host = document.createElement("div");
@@ -398,10 +360,7 @@
 
   function onDocumentPointerDown(e) {
     const path = typeof e.composedPath === "function" ? e.composedPath() : [];
-    const insideUi =
-      path.indexOf(panelEl) > -1 ||
-      path.indexOf(btnEl) > -1 ||
-      path.indexOf(pipEl) > -1;
+    const insideUi = path.indexOf(panelEl) > -1 || path.indexOf(btnEl) > -1;
     if (insideUi) return;
     if (panelOpen) closePanel();
     /*
@@ -426,14 +385,8 @@
      */
     if (!hit && typeof e.clientX === "number") hit = videoAtPoint(e.clientX, e.clientY);
     if (!hit) return;
+    /* A tap on (or in) the video is the user asking for the button back. */
     if (btnEl && !btnEl.hidden) showButton();
-    if (hit.tagName !== "VIDEO") return;
-    frameTouched = true;
-    if (!prefs.pip) fetchPrefs();
-    if (pipVideo !== hit) bindPip(hit);
-    if (pipVideo !== hit) return;
-    /* A tap on the video is the user asking for the button back. */
-    showPip();
   }
 
   /* -------------------------- drag -------------------------------- */
@@ -674,7 +627,6 @@
        */
       if (wasHidden) showButton();
     }
-    updatePip();
   }
 
   function toast(message) {
@@ -1459,34 +1411,9 @@
     send("novaVideo:ytdlp", { action: "cancel", id: job.id });
   }
 
-  /* ---------------------------------------------------------------- */
-  /* PIP mode (browser-menu switch "Enable PIP mode")                 */
-  /*                                                                   */
-  /* The whole feature is one small button over the page's <video>. It  */
-  /* peeks for three seconds when the video starts, when it is paused   */
-  /* and when it is tapped - exactly the peek the download button uses  */
-  /* - and hides itself again. Tapping it puts the video into the       */
-  /* browser's picture-in-picture window (or takes it back out). Nova   */
-  /* never moves or restyles the video, so the site's own player keeps  */
-  /* working exactly as before.                                         */
-  /* ---------------------------------------------------------------- */
-
-  /* ~200x200. Paused videos smaller than this are thumbnails/decoration. */
-  const MIN_MEDIA_AREA = 40000;
-  /* How long the button lingers after a play, a pause, a seek or a tap. */
-  const PIP_SHOW_MS = 3000;
-  const MEDIA_EVENTS = [
-    "play", "playing", "pause", "seeked", "loadedmetadata",
-    "enterpictureinpicture", "leavepictureinpicture",
-  ];
-
-  const PIP_ICON =
-    '<svg viewBox="0 0 24 24"><path d="M3 4.2h18c.66 0 1.2.54 1.2 1.2v13.2c0 .66-.54 1.2-1.2 1.2H3c-.66 0-1.2-.54-1.2-1.2V5.4c0-.66.54-1.2 1.2-1.2zm1.2 2.4v10.8h15.6V6.6H4.2z"/>' +
-    '<path d="M12.5 11.6h6.1v4.9h-6.1z"/></svg>';
-
   /*
-   * The two feature switches live in Android shared preferences, so they are
-   * read through the background script (which owns the native bridge). Polled
+   * The downloader switch lives in Android shared preferences, so it is read
+   * through the background script (which owns the native bridge). Polled
    * lazily: on boot, when the page regains focus, and every few seconds, so a
    * menu toggle is picked up without the user having to reload the page.
    */
@@ -1497,17 +1424,11 @@
       prefsBusy = false;
       if (contextDead) return;
       if (!res || !res.ok) return;
-      const nextPip = !!res.pip;
       const nextDownloader = res.downloader !== false;
-      const wasPip = prefs.pip;
-      const changed = nextPip !== prefs.pip || nextDownloader !== prefs.downloader;
-      prefs.pip = nextPip;
-      prefs.downloader = nextDownloader;
-      if (changed) applyPrefs();
-      if (prefsPrimed && nextPip !== wasPip) {
-        toast(nextPip ? "PIP mode on" : "PIP mode off");
+      if (nextDownloader !== prefs.downloader) {
+        prefs.downloader = nextDownloader;
+        applyPrefs();
       }
-      prefsPrimed = true;
     });
   }
 
@@ -1516,166 +1437,7 @@
       btnEl.hidden = true;
       closePanel();
     }
-    if (!prefs.pip) {
-      hidePip();
-      if (pipEl) pipEl.hidden = true;
-    }
-    updatePip();
-  }
-
-  /* ------------------------- pip button --------------------------- */
-
-  function ensurePip() {
-    if (pipEl) return pipEl;
-    if (!shadow) buildHost();
-    if (!shadow) return null;
-    pipEl = document.createElement("div");
-    pipEl.className = "nv-pip nv-hide";
-    pipEl.hidden = true;
-    pipEl.title = "Picture in picture";
-    pipEl.setAttribute("role", "button");
-    pipEl.setAttribute("aria-label", "Picture in picture");
-    pipEl.innerHTML = PIP_ICON;
-    /*
-     * Act on pointerup rather than click so the browser still sees a real user
-     * gesture: requestPictureInPicture refuses to run without one.
-     */
-    pipEl.addEventListener("pointerdown", function (e) {
-      e.stopPropagation();
-      e.preventDefault();
-      showPip();
-    });
-    pipEl.addEventListener("pointerup", function (e) {
-      e.stopPropagation();
-      e.preventDefault();
-      showPip();
-      togglePip();
-    });
-    pipEl.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    });
-    shadow.appendChild(pipEl);
-    keepAlive();
-    return pipEl;
-  }
-
-  function destroyPip() {
-    clearTimeout(pipTimer);
-    unbindPip();
-    if (pipEl && pipEl.parentNode) pipEl.parentNode.removeChild(pipEl);
-    pipEl = null;
-  }
-
-  /*
-   * The peek: three seconds on screen after a play, a pause, a seek or a tap
-   * on the video, then faded out again - the same behaviour as the download
-   * button. The next play/pause/tap brings it straight back.
-   */
-  function showPip() {
-    if (!prefs.pip) return;
-    const el = ensurePip();
-    if (!el) return;
-    pipUntil = Date.now() + PIP_SHOW_MS;
-    clearTimeout(pipTimer);
-    el.hidden = false;
-    el.classList.remove("nv-hide");
-    positionPip();
-    keepAlive();
-    pipTimer = setTimeout(hidePip, PIP_SHOW_MS);
-  }
-
-  /* Fades the button out. It stays in the DOM, ready for the next peek. */
-  function hidePip() {
-    clearTimeout(pipTimer);
-    if (pipEl) pipEl.classList.add("nv-hide");
-  }
-
-  /* Top-left corner of the video it belongs to, clamped to the viewport. */
-  function positionPip() {
-    if (!pipEl || pipEl.hidden || !pipVideo) return;
-    const r = pipVideo.getBoundingClientRect();
-    const size = 38;
-    const margin = 10;
-    const bad =
-      r.width < 140 || r.height < 80 ||
-      r.right < 30 || r.left > window.innerWidth - 30 ||
-      r.bottom < 30 || r.top > window.innerHeight - 30;
-    if (bad) {
-      hidePip();
-      return;
-    }
-    const left = Math.min(Math.max(4, r.left + margin), Math.max(4, window.innerWidth - size - 4));
-    const top = Math.min(Math.max(4, r.top + margin), Math.max(4, window.innerHeight - size - 4));
-    pipEl.style.left = left + "px";
-    pipEl.style.top = top + "px";
-  }
-
-  /*
-   * The site's own picture-in-picture support does the real work; all Nova
-   * does is ask for it (and take it back down on a second tap). Everything is
-   * guarded because the API is simply absent on some pages/devices.
-   */
-  function togglePip() {
-    const v = pipVideo || selectVideo();
-    if (!v) {
-      toast("No video to show in picture-in-picture");
-      return;
-    }
-    let active = null;
-    try {
-      active = document.pictureInPictureElement || null;
-    } catch (e) {
-      active = null;
-    }
-    if (active === v) {
-      try {
-        if (document.exitPictureInPicture) document.exitPictureInPicture();
-      } catch (e) {
-        /* ignore */
-      }
-      return;
-    }
-    const hasApi =
-      typeof v.requestPictureInPicture === "function" &&
-      document.pictureInPictureEnabled !== false;
-    if (!hasApi) {
-      /* Nova's engine does not expose the page-facing picture-in-picture API,
-       * so the browser floats its own window instead (the native bridge). */
-      requestNativePip(v);
-      return;
-    }
-    if (v.disablePictureInPicture === true) {
-      toast("This video blocks picture-in-picture");
-      return;
-    }
-    try {
-      const promise = v.requestPictureInPicture();
-      if (promise && promise.catch) {
-        promise.catch(function (err) {
-          const name = (err && err.name) || "";
-          if (name === "NotAllowedError") toast("Picture-in-picture was blocked");
-          else if (name === "InvalidStateError") toast("The video isn't ready yet");
-          else toast("Could not open picture-in-picture");
-        });
-      }
-    } catch (e) {
-      toast("Could not open picture-in-picture");
-    }
-  }
-
-  /*
-   * The native half of PIP mode: the browser puts its own window into Android's
-   * picture-in-picture, sized to this video. Used whenever the page has no PiP
-   * API of its own.
-   */
-  function requestNativePip(v) {
-    send("novaVideo:pip", {
-      width: v.videoWidth || 0,
-      height: v.videoHeight || 0,
-    }).then(function (res) {
-      if (!res || !res.ok) toast("Picture-in-picture isn't available here");
-    });
+    checkVisibility();
   }
 
   /* ------------------------- video binding ------------------------ */
@@ -1709,152 +1471,6 @@
       /* ignore */
     }
     return out;
-  }
-
-  /*
-   * Whether a video is worth a button. Anything that is playing qualifies, and
-   * so does anything big enough to be a real player; a video the user taps is
-   * always allowed in (see onDocumentPointerDown). A small paused video (a
-   * thumbnail or decorative loop) is left alone until then.
-   */
-  function plausibleVideo(v) {
-    if (!v) return false;
-    try {
-      if (!(v.currentSrc || v.src || v.querySelector("source[src]"))) return false;
-    } catch (e) {
-      return false;
-    }
-    if (!v.paused && !v.ended) return true;
-    const rect = v.getBoundingClientRect();
-    return Math.max(0, rect.width) * Math.max(0, rect.height) >= MIN_MEDIA_AREA;
-  }
-
-  function selectVideo() {
-    let best = null;
-    let bestScore = -1;
-    let nodes;
-    try {
-      nodes = allVideos();
-    } catch (e) {
-      return null;
-    }
-    for (const v of nodes) {
-      if (!plausibleVideo(v)) continue;
-      const rect = v.getBoundingClientRect();
-      let score = Math.max(0, rect.width) * Math.max(0, rect.height);
-      if (!v.paused && !v.ended) score += 1e9;
-      if (isFinite(v.duration) && v.duration > 0) score += 1e6;
-      if (score > bestScore) {
-        bestScore = score;
-        best = v;
-      }
-    }
-    return best;
-  }
-
-  function unbindPip() {
-    if (pipVideo) {
-      for (const pair of pipMediaBound) {
-        try {
-          pipVideo.removeEventListener(pair[0], pair[1], true);
-        } catch (e) {
-          /* ignore */
-        }
-      }
-    }
-    pipMediaBound = [];
-    pipVideo = null;
-  }
-
-  function bindPip(v) {
-    if (pipVideo === v) return;
-    unbindPip();
-    pipVideo = v;
-    if (!v) {
-      if (pipEl) pipEl.hidden = true;
-      return;
-    }
-    const bound = function (e) {
-      onPipMedia(e);
-    };
-    for (const evt of MEDIA_EVENTS) {
-      v.addEventListener(evt, bound, true);
-      pipMediaBound.push([evt, bound]);
-    }
-  }
-
-  /*
-   * The media element behind an event. `e.target` is retargeted to the shadow
-   * host for a <video> that lives inside a shadow root (which is how a growing
-   * number of players are built), so walk the composed path instead. Without
-   * this, Nova never sees those videos.
-   */
-  function mediaFromEvent(e) {
-    try {
-      if (typeof e.composedPath === "function") {
-        for (const node of e.composedPath()) {
-          const tag = node && node.tagName;
-          if (tag === "VIDEO") return node;
-        }
-      }
-    } catch (err) {
-      /* fall through */
-    }
-    const t = e.target;
-    if (t && t.tagName === "VIDEO") return t;
-    return null;
-  }
-
-  /*
-   * The top frame always owns the button. Inside an iframe it would fight with
-   * every other embedded player on the page, so there it only appears for a
-   * video that is actually playing - or one the user has tapped.
-   */
-  function frameAllows(v) {
-    if (IS_TOP) return true;
-    if (!v) return false;
-    if (!v.paused && !v.ended) return true;
-    return frameTouched;
-  }
-
-  function onPipMedia(e) {
-    if (!prefs.pip) return;
-    const el = mediaFromEvent(e);
-    if (!el) return;
-    if (pipVideo !== el) {
-      if (!plausibleVideo(el)) return;
-      bindPip(el);
-    }
-    showPip();
-  }
-
-  /*
-   * The poll never opens the peek itself (that is the media events and the
-   * tap): it only keeps the button on the right video and hides it when there
-   * is nothing to act on.
-   */
-  function updatePip() {
-    if (!prefs.pip) {
-      hidePip();
-      if (pipEl) pipEl.hidden = true;
-      unbindPip();
-      return;
-    }
-    const v = pipVideo && pipVideo.isConnected ? pipVideo : selectVideo();
-    if (v !== pipVideo) {
-      bindPip(v);
-      if (v && !v.paused && !v.ended) showPip();
-      return;
-    }
-    if (!pipVideo || !frameAllows(pipVideo)) {
-      if (pipEl) pipEl.hidden = true;
-      return;
-    }
-    if (pipEl && !pipEl.hidden) positionPip();
-  }
-
-  function onViewportChange() {
-    if (pipEl && !pipEl.hidden) positionPip();
   }
 
   /* -------------------------- entry polling ----------------------- */
@@ -1896,72 +1512,19 @@
   }
 
   /*
-   * Videos that live inside an iframe (most embedded players) are invisible to
-   * the top frame, so the PiP button also runs in any frame that owns one. The
-   * download button stays a top-frame affordance (see buildUi).
-   *
-   * An iframe with no <video> in it (ads, trackers, widgets) costs nothing but
-   * one cheap query per tick: no host, no shadow root, no native round-trips.
-   */
-  /*
-   * One document-level listener set per frame. Binding it is what lets a play,
-   * a pause or a tap on a video reach Nova at all, so it is installed as soon
-   * as a frame proves it can contain media (see ensureListenersIfVideo).
+   * One document-level listener set, installed with the host: it is what lets a
+   * tap on a video (or on the UI) reach Nova at all.
    */
   function ensureListeners() {
     if (listenersBound) return;
     listenersBound = true;
     document.addEventListener("pointerdown", onDocumentPointerDown, true);
-    for (const evt of MEDIA_EVENTS) {
-      document.addEventListener(evt, onPipMedia, true);
-    }
     document.addEventListener("fullscreenchange", onFullscreenChange, true);
     document.addEventListener("webkitfullscreenchange", onFullscreenChange, true);
-    document.addEventListener("scroll", onViewportChange, true);
-    window.addEventListener("resize", onViewportChange);
-  }
-
-  /*
-   * A frame with no <video> at all (ads, trackers, widgets) stays free of Nova's
-   * listeners. A frame that owns even a small paused video still needs the tap
-   * listener, because that tap is what brings the button up for it.
-   */
-  function ensureListenersIfVideo() {
-    if (listenersBound) return;
-    let hasVideo = false;
-    try {
-      hasVideo = !!document.querySelector("video");
-    } catch (e) {
-      hasVideo = false;
-    }
-    if (hasVideo) ensureListeners();
-  }
-
-  function bootFramePlayer() {
-    ensureListenersIfVideo();
-    frameTimer = setInterval(frameTick, 1200);
-    frameTick();
-  }
-
-  /*
-   * Frames only need the button-side of the feature: keep it on the video it
-   * belongs to and keep the switches up to date. An iframe with no <video>
-   * costs one cheap query per tick.
-   */
-  function frameTick() {
-    if (contextDead) return;
-    ensureListenersIfVideo();
-    const now = Date.now();
-    if (now - framePrefsAt > 2000) {
-      framePrefsAt = now;
-      fetchPrefs();
-    }
-    updatePip();
   }
 
   function start() {
     if (IS_TOP) boot();
-    else bootFramePlayer();
   }
 
   if (document.readyState === "loading") {

@@ -175,7 +175,6 @@ import org.mozilla.fenix.components.NovaCloseCleanup
 import org.mozilla.fenix.components.NovaDebugLog
 import org.mozilla.fenix.components.NovaKeepAlive
 import org.mozilla.fenix.components.NovaNotifications
-import org.mozilla.fenix.components.NovaPip
 import org.mozilla.fenix.settings.SupportUtils
 import org.mozilla.fenix.shortcut.NewTabShortcutIntentProcessor.Companion.ACTION_OPEN_PRIVATE_TAB
 import org.mozilla.fenix.splashscreen.ApplyExperimentsOperation
@@ -741,8 +740,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
     @CallSuper
     override fun onResume() {
         super.onResume()
-        // Nova: the window PIP mode floats (see NovaPip / the "Enable PIP mode" switch).
-        NovaPip.attach(this)
 
         // Diagnostic breadcrumb for "Display already aquired" crash:
         // https://github.com/mozilla-mobile/android-components/issues/7960
@@ -1025,7 +1022,6 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
         val startTimeProfiler = components.core.engine.profiler?.getProfilerTime()
 
         super.onDestroy()
-        NovaPip.detach(this)
 
         // Diagnostic breadcrumb for "Display already aquired" crash:
         // https://github.com/mozilla-mobile/android-components/issues/7960

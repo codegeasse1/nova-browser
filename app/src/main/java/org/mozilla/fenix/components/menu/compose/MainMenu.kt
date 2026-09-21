@@ -150,8 +150,6 @@ fun MainMenu(
     onNovaViewSource: () -> Unit = {},
     novaVideoDownloaderEnabled: Boolean = true,
     onNovaVideoDownloaderToggle: () -> Unit = {},
-    novaPipModeEnabled: Boolean = false,
-    onNovaPipModeToggle: () -> Unit = {},
     canGoBack: Boolean,
     canGoForward: Boolean,
     scrollState: ScrollState,
@@ -361,25 +359,6 @@ fun MainMenu(
                         androidx.compose.material3.Switch(
                             checked = novaVideoDownloaderEnabled,
                             onCheckedChange = { onNovaVideoDownloaderToggle() },
-                        )
-                    },
-                )
-
-                MenuItem(
-                    label = stringResource(id = R.string.browser_menu_pip_mode),
-                    description = stringResource(
-                        id = if (novaPipModeEnabled) {
-                            R.string.browser_menu_pip_mode_on
-                        } else {
-                            R.string.browser_menu_pip_mode_off
-                        },
-                    ),
-                    beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_autoplay_24),
-                    onClick = onNovaPipModeToggle,
-                    afterContent = {
-                        androidx.compose.material3.Switch(
-                            checked = novaPipModeEnabled,
-                            onCheckedChange = { onNovaPipModeToggle() },
                         )
                     },
                 )

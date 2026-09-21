@@ -671,25 +671,6 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                     Unit
                                 }
 
-                                var novaPipModeEnabled by remember {
-                                    mutableStateOf(
-                                        org.mozilla.fenix.components.NovaPipMode.isEnabled(requireContext()),
-                                    )
-                                }
-                                val onNovaPipModeToggle = {
-                                    val nextEnabled = !novaPipModeEnabled
-                                    org.mozilla.fenix.components.NovaPipMode.setEnabled(
-                                        requireContext(),
-                                        nextEnabled,
-                                    )
-                                    novaPipModeEnabled = nextEnabled
-                                    org.mozilla.fenix.components.NovaVideoDownloader.apply(
-                                        requireComponents.core.engine,
-                                        requireContext(),
-                                    )
-                                    Unit
-                                }
-
                                 var novaVideoDownloaderEnabled by remember {
                                     mutableStateOf(
                                         org.mozilla.fenix.components.NovaVideoDownloader.isEnabled(requireContext()),
@@ -704,7 +685,7 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                     novaVideoDownloaderEnabled = nextEnabled
                                     org.mozilla.fenix.components.NovaVideoDownloader.apply(
                                         requireComponents.core.engine,
-                                        requireContext(),
+                                        nextEnabled,
                                     )
                                     Unit
                                 }
@@ -766,8 +747,6 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                     onNovaViewSource = onNovaViewSource,
                                     novaVideoDownloaderEnabled = novaVideoDownloaderEnabled,
                                     onNovaVideoDownloaderToggle = onNovaVideoDownloaderToggle,
-                                    novaPipModeEnabled = novaPipModeEnabled,
-                                    onNovaPipModeToggle = onNovaPipModeToggle,
                                     isAllWebExtensionsDisabled = isAllWebExtensionsDisabled,
                                     showIPProtection = components.ipProtection.store.state.isEligible,
                                     ipProtectionMenuState = ipProtectionMenuState,

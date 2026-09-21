@@ -36,24 +36,14 @@ object NovaVideoDownloader {
     }
 
     /**
-     * True while the bundled extension has to stay enabled. The extension is
-     * also the vehicle for PIP mode, so it is only really switched off once
-     * BOTH the downloader and PIP mode are off.
-     */
-    fun isExtensionWanted(context: Context): Boolean =
-        isEnabled(context) || NovaPipMode.isEnabled(context)
-
-    /**
      * Enables or disables the bundled extension in the engine so the change
-     * takes effect without restarting the app. Which state is wanted is read
-     * from the feature switches themselves ([isExtensionWanted]).
+     * takes effect without restarting the app.
      */
     fun apply(
         engine: WebExtensionRuntime,
-        context: Context,
+        enabled: Boolean,
         onFinished: (Boolean) -> Unit = {},
     ) {
-        val wanted = isExtensionWanted(context)
         engine.listInstalledWebExtensions(
             onSuccess = { extensions ->
                 val extension = extensions.firstOrNull { it.id == ADDON_ID }
@@ -61,7 +51,7 @@ object NovaVideoDownloader {
                     onFinished(false)
                     return@listInstalledWebExtensions
                 }
-                if (wanted) {
+                if (enabled) {
                     engine.enableWebExtension(
                         extension = extension,
                         source = EnableSource.USER,

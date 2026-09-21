@@ -1,9 +1,8 @@
 # Nova Video Downloader (feature branch only)
 
 This branch (`feature/video-downloader`) adds a built-in **video/audio downloader**
-to Nova Browser, plus an optional **PIP mode**. It is intentionally self-contained
-so it can be removed by simply deleting this branch — nothing on `main` or in the
-release workflow is touched.
+to Nova Browser. It is intentionally self-contained so it can be removed by simply
+deleting this branch — nothing on `main` or in the release workflow is touched.
 
 ## What it does
 
@@ -34,70 +33,24 @@ A third bundled WebExtension (`nova-video@nova.browser`) that:
   the video itself. An "Audio only" option extracts just the audio (MP3).
 
 It also reports `<video>`/`<audio>` elements found in the page (including frames).
-
-## PIP mode (optional)
-
-The second switch, **"Enable PIP mode"**, is one small button — nothing more.
-There is **no in-page player**: Nova never moves, restyles or draws controls over
-the video, so the site's own player keeps working exactly as it did.
-
-- when the switch is on, a small **38px picture-in-picture button** sits in the
-  **top-left corner** of the `<video>` it belongs to. It uses the same *peek*
-  logic as the download button: it appears for **3s** when the video **plays**,
-  when it is **paused**, when it is **seeked/loaded**, and when the page is
-  **tapped** — then hides itself again. Play again and it peeks for another 3s;
-- tapping the button puts the video into **picture-in-picture**; tapping it again
-  while the video is already floating takes it back out;
-- the button hides itself when the video scrolls out of view, is smaller than a
-  thumbnail (~200x200 while paused — ignored until tapped), or while another
-  video's button is the active one. Nova never leaves a floating button over the
-  page in fullscreen;
-- **how picture-in-picture is entered:** if the page exposes the standard
-  `requestPictureInPicture()` API (and `document.pictureInPictureEnabled`),
-  Nova simply asks the site's video for it, and uses
-  `document.exitPictureInPicture()` next tap. GeckoView **does not expose that
-  page-facing API**, so on the real device Nova falls back to asking the
-  browser to float its own window (see `NovaPip.kt` and the gotcha below); the
-  button then reports "Picture-in-picture isn't available here" if the window
-  refuses. Either way a video that sets `disablePictureInPicture` gets a toast
-  instead of a silent no-op, and a rejected request is reported, never a crash;
-- in a **frame** (`all_frames`) the button only appears for a video that is
-  **playing** or one the user has **tapped**, so a page full of paused embeds
-  does not sprout buttons everywhere. Videos hidden inside **open shadow roots**
-  are handled too: media events are matched via `composedPath()` (not
-  `event.target`, which is retargeted to the shadow host) and a throttled, capped
-  scan reaches shadow-root videos that a plain `document.querySelectorAll("video")`
-  cannot see.
-
-Switching it off removes the button without a page reload, and a switch flip is
-picked up within ~2s (the content script polls its preferences). PIP mode is
-independent of the downloader switch — with the downloader off, PIP mode still
-works and its download button is hidden.
+Nova never draws its own player or touches the page's player: the button is the
+only thing it adds, and media elements are never moved or restyled.
 
 ## On / off switch in the 3-dot menu
 
-The features can be switched off without uninstalling anything. The browser's
-3-dot menu has two related items, both with on/off switches (same pattern as the
-existing "Allow background playback" switch):
+The feature can be switched off without uninstalling anything. The browser's
+3-dot menu has a **"Video Downloader"** item with an on/off switch (same pattern
+as the existing "Allow background playback" switch).
 
-- **"Video Downloader"** — the download icon + picker.
-- **"Enable PIP mode"** — the little picture-in-picture button over videos.
-
-Turning the downloader **on** enables the bundled extension in the engine
-(`EnableSource.USER`); turning it **off** disables the extension once PIP mode is
-off too. Turning PIP mode **on** keeps the extension enabled and makes the
-content script draw the button; turning it **off** removes it.
-
-- The extension is disabled only when **both** switches are off, because it is
-  the vehicle for both features (see `NovaVideoDownloader.isExtensionWanted`).
+- Turning it **on** enables the bundled extension in the engine
+  (`EnableSource.USER`); turning it **off** disables the extension.
 - When the extension is disabled its content scripts stop running and the
-  already-injected icon/panel/button tear themselves down (they notice the dead
+  already-injected icon/panel tear themselves down (they notice the dead
   extension context), so nothing is shown while browsing.
-- Both choices are stored in shared preferences (`NovaVideoDownloader` /
-  `novaVideoDownloaderEnabled`, default on; `NovaPipMode` /
-  `novaPipModeEnabled`, default off) and re-applied on launch, so they survive
-  restarts.
-- The content script reads them at runtime through the native bridge
+- The choice is stored in shared preferences (`NovaVideoDownloader` /
+  `novaVideoDownloaderEnabled`, default on) and re-applied on launch, so it
+  survives restarts.
+- The content script reads it at runtime through the native bridge
   (`novaVideoYtdlp`, action `prefs`), polls every few seconds and on page focus,
   so a toggle takes effect without reloading the page.
 
@@ -105,20 +58,17 @@ content script draw the button; turning it **off** removes it.
 
 | File | Change |
 | --- | --- |
-| `app/src/main/assets/extensions/nova-video/manifest.json` | new — MV2 manifest of the bundled extension (has the `nativeMessaging` **and** `geckoViewAddons` permissions); version `1.2.4`, bumped so the built-in extension is re-installed (GeckoView skips a built-in whose version is unchanged, which would leave the old `content.js` on device) |
-| `app/src/main/assets/extensions/nova-video/background.js` | new — network sniffing, playlist/manifest parsing, binary fetch fallback, yt-dlp bridge, and the `novaVideo:pip` native-PiP bridge |
-| `app/src/main/assets/extensions/nova-video/content.js` | new — download icon + picker (shadow DOM), the yt-dlp site entry, and the PIP peek button (top-left, ~3s on play/pause/seek/tap; never moves the `<video>`), incl. shadow-DOM and frame support |
-| `app/src/main/java/org/mozilla/fenix/components/NovaVideoDownloader.kt` | new — preference + engine enable/disable helper (`isExtensionWanted` checks both switches) |
-| `app/src/main/java/org/mozilla/fenix/components/NovaYtDlp.kt` | new — native yt-dlp bridge (init, downloads, progress, MediaStore publish) + the `prefs` action that reports both switch states |
-| `app/src/main/java/org/mozilla/fenix/components/NovaPipMode.kt` | new — shared-preference switch for PIP mode |
-| `app/src/main/java/org/mozilla/fenix/components/NovaPip.kt` | new — native picture-in-picture (puts Nova's window into Android PiP via `enterPictureInPictureMode`, sized to the video) + the `novaPip` background message handler |
+| `app/src/main/assets/extensions/nova-video/manifest.json` | new — MV2 manifest of the bundled extension (has the `nativeMessaging` **and** `geckoViewAddons` permissions); version `1.2.5`, bumped so the built-in extension is re-installed (GeckoView skips a built-in whose version is unchanged, which would leave an old `content.js` on device) |
+| `app/src/main/assets/extensions/nova-video/background.js` | new — network sniffing, playlist/manifest parsing, binary fetch fallback, yt-dlp bridge, and the `prefs` reply |
+| `app/src/main/assets/extensions/nova-video/content.js` | new — the peek-a-boo download icon + picker (shadow DOM), incl. the yt-dlp site entry, shadow-DOM and frame support |
+| `app/src/main/java/org/mozilla/fenix/components/NovaVideoDownloader.kt` | new — preference + engine enable/disable helper |
+| `app/src/main/java/org/mozilla/fenix/components/NovaYtDlp.kt` | new — native yt-dlp bridge (init, downloads, progress, MediaStore publish) + the `prefs` action that reports the switch to the content script |
 | `app/build.gradle` | adds the `youtubedl-android` `library` + `ffmpeg` dependencies |
 | `app/proguard-rules.pro` | keep/dontwarn rules for youtubedl-android, Jackson and commons-io |
-| `app/src/main/java/org/mozilla/fenix/FenixApplication.kt` | `NOVA_VIDEO_ADDON_ID` constant + `installBuiltInWebExtension(...)` call + re-applies the stored on/off prefs + registers the `NovaYtDlp` and `NovaPip` background handlers |
-| `app/src/main/java/org/mozilla/fenix/HomeActivity.kt` | attaches/detaches `NovaPip` (so the native PiP bridge has the current activity) |
-| `app/src/main/java/org/mozilla/fenix/components/menu/compose/MainMenu.kt` | "Video Downloader" and "Enable PIP mode" menu items with switches |
-| `app/src/main/java/org/mozilla/fenix/components/menu/MenuDialogFragment.kt` | wires the switch states + toggles the extension |
-| `app/src/main/res/values/strings.xml` | `browser_menu_video_downloader` and `browser_menu_pip_mode` (+ `_on` / `_off`) strings |
+| `app/src/main/java/org/mozilla/fenix/FenixApplication.kt` | `NOVA_VIDEO_ADDON_ID` constant + `installBuiltInWebExtension(...)` call + re-applies the stored on/off preference |
+| `app/src/main/java/org/mozilla/fenix/components/menu/compose/MainMenu.kt` | "Video Downloader" menu item with a switch |
+| `app/src/main/java/org/mozilla/fenix/components/menu/MenuDialogFragment.kt` | wires the switch state + toggles the extension |
+| `app/src/main/res/values/strings.xml` | `browser_menu_video_downloader` (+ `_on` / `_off`) strings |
 | `.github/workflows/build-video-downloader.yml` | new — builds and signs the APK and uploads it as a **workflow artifact only** (no GitHub Release) |
 | `NOVA_VIDEO_DOWNLOADER.md` | new — this file |
 
@@ -138,11 +88,10 @@ Download the artifact from the Actions run page and sideload it to test.
 1. Delete the branch (this deletes every file listed above, including the
    workflow, so no build runs anymore), **or**
 2. Revert the commit and remove the `nova-video` assets, the
-   `NovaVideoDownloader`, `NovaPipMode`, `NovaPip` and `NovaYtDlp` helpers, the
-   `NOVA_VIDEO_ADDON_ID` constant + `installBuiltInWebExtension` call, the menu
-   items / strings, the `HomeActivity` attach/detach, the workflow file, and the
-   `youtubedl-android` dependencies in `app/build.gradle` plus their Proguard
-   rules. No other code depends on them.
+   `NovaVideoDownloader` and `NovaYtDlp` helpers, the `NOVA_VIDEO_ADDON_ID`
+   constant + `installBuiltInWebExtension` call, the menu item / strings, the
+   workflow file, and the `youtubedl-android` dependencies in `app/build.gradle`
+   plus their Proguard rules. No other code depends on them.
 
 ## Notes / limitations
 
@@ -158,9 +107,6 @@ Download the artifact from the Actions run page and sideload it to test.
   and in a low-priority "Downloads" notification.
 - The bundled yt-dlp refreshes itself from the official yt-dlp release feed about
   once a week, because that is the part that breaks when a site changes.
-- PIP mode on a page that does *not* ship its own PiP handling floats the whole
-  browser window, not just the video element, because GeckoView does not expose
-  the page-facing PiP API (see the gotcha below).
 
 ## yt-dlp (YouTube and similar sites)
 
@@ -194,20 +140,23 @@ This is a sideload-only build, so Play Store policy does not apply.
 
 ## Gotchas (why the code looks the way it does)
 
-- **GeckoView does not expose the page picture-in-picture API.** Unlike desktop
-  Firefox and Chrome, Nova's engine leaves `HTMLVideoElement.prototype.requestPictureInPicture`
-  and `document.pictureInPictureEnabled` undefined. The content script therefore
-  feature-detects the API and, when it is missing or reports `false`, sends a
-  `novaVideo:pip` message to the background script, which forwards it to the
-  native `novaPip` handler. `NovaPip` asks the Activity to enter Android's own
-  picture-in-picture mode (`enterPictureInPictureMode`), sized to the video's
-  aspect ratio (clamped to Android's supported 1:2.39 – 2.39:1 range). The app
-  already declares `android:supportsPictureInPicture="true"` on `HomeActivity`.
-
-- **The two switches mirror one extension.** `novaVideo:prefs` returns
-  `{ pip, downloader }` and the extension is enabled when *either* is on, so the
-  engine does not flap the extension on/off as the user toggles them.
-
+- **`geckoViewAddons` is mandatory.** `manifest.json` must list it alongside
+  `nativeMessaging`, otherwise GeckoView's `ExtensionParent.openNative` takes the
+  desktop native-messaging path and `sendNativeMessage` fails with a generic
+  "An unexpected error occurred".
+- **Register the bridge on the main thread.** `WebExtension.registerBackgroundMessageHandler`
+  ends up in `setMessageDelegate`, which is `@UiThread`. If it throws, the
+  exception is swallowed and the extension's `sendNativeMessage` promise never
+  settles (the controller queues messages for a name with no delegate). `NovaYtDlp`
+  therefore posts registration to the main `Looper` and retries.
+- **The chrome keeps itself alive only while the script runs.** Injected DOM is
+  NOT removed when a content script is unloaded, so the icon/panel/toast carry a
+  2.6s keep-alive CSS animation that `keepAlive()` restarts on every poll. If the
+  add-on is switched off (or its context dies) the polling stops, the animation
+  finishes and everything Nova injected hides itself without a page reload.
+- **The download button is a top-frame-only affordance.** It is only created in
+  the top frame; frames still report the `<video>`/`<audio>` elements they can
+  see (that is how media inside iframes is detected), but they never draw UI.
 - **Never let the UI depend on one native reply.** The native `list`/`status`
   replies carry the page `url`, and the content script builds the job row
   *before* the bridge answers: a job without a native id yet is matched against
@@ -216,18 +165,6 @@ This is a sideload-only build, so Play Store policy does not apply.
   switches to real progress, instead of failing. Every native call is also raced
   against a timeout, and the background warms the bridge with a `ping` at
   extension load so the very first tap is fast.
-
-- **`geckoViewAddons` is mandatory.** `manifest.json` must list it alongside
-  `nativeMessaging`, otherwise GeckoView's `ExtensionParent.openNative` takes the
-  desktop native-messaging path and `sendNativeMessage` fails with a generic
-  "An unexpected error occurred".
-
-- **Register the bridge on the main thread.** `WebExtension.registerBackgroundMessageHandler`
-  ends up in `setMessageDelegate`, which is `@UiThread`. If it throws, the
-  exception is swallowed and the extension's `sendNativeMessage` promise never
-  settles (the controller queues messages for a name with no delegate). `NovaYtDlp`
-  and `NovaPip` therefore post registration to the main `Looper` and retry.
-
 - **Closing the UI never cancels.** Download state lives natively; the content
   script polls it on its own timer (`pumpYtDlp`) which runs whether or not the
   picker is open, and re-attaches via `list` after a reload. Only the row's Cancel
