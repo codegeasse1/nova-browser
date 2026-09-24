@@ -51,12 +51,10 @@ jobs:
 
       - name: Build forkRelease variant
         timeout-minutes: 90
-        env:
-          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Xms512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dev/stderr"
         run: |
           export ANDROID_HOME=$HOME/android-sdk/android-sdk-linux
           export ANDROID_SDK_ROOT=$HOME/android-sdk/android-sdk-linux
-          ./gradlew app:assembleForkRelease -PversionName=$VERSION_NAME --stacktrace --no-daemon
+          ./gradlew app:assembleForkRelease -PversionName=$VERSION_NAME -Dorg.gradle.jvmargs="-Xmx2g -Xms512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dev/stderr" --stacktrace --no-daemon
 
       - name: Setup build tool version variable
         run: |
