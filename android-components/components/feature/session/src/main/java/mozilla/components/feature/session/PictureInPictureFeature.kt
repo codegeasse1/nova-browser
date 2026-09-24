@@ -33,7 +33,7 @@ class PictureInPictureFeature(
     private val activity: Activity,
     private val crashReporting: CrashReporting? = null,
     private val tabId: String? = null,
-    private val playerView: Any? = null,
+    private val playerView: View? = null,
 ) {
     internal val logger = Logger("PictureInPictureFeature")
 
@@ -41,31 +41,33 @@ class PictureInPictureFeature(
         activity.packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
 
     fun onHomePressed(): Boolean {
-        if (!hasSystemFeature) {
+        // PiP is deliberately user-initiated from the in-video button. Do not
+        // intercept Home and unexpectedly move a video into PiP.
+        return false
+    }
+
+    /**
+     * Enters PiP from the dedicated in-video control.
+     */
+    fun enterPipMode(): Boolean {
+        if (!hasSystemFeature || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return false
         }
 
         val session = store.state.findTabOrCustomTabOrSelectedTab(tabId)
-        val fullScreenMode = session?.content?.fullScreen == true
         val mediaSession = session?.mediaSessionState
-        val contentIsPlaying = mediaSession?.playbackState == MediaSession.PlaybackState.PLAYING
-        val hasVideoTrack = mediaSession?.elementMetadata?.videoTrackCount?.let { it > 0 } == true
+        val canEnter = session?.content?.fullScreen == true &&
+            mediaSession?.playbackState == MediaSession.PlaybackState.PLAYING &&
+            mediaSession.elementMetadata?.videoTrackCount?.let { it > 0 } == true
 
-        if (!fullScreenMode || !contentIsPlaying || !hasVideoTrack) {
+        if (!canEnter) {
             return false
         }
 
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                updatePipParams(session)
-                true
-            } else {
-                enterPipModeCompat(session)
-            }
+            updatePipParams(session)
+            activity.enterPictureInPictureMode(buildPipParams(session))
         } catch (e: IllegalStateException) {
-            // On certain Samsung devices, if accessibility mode is enabled, this will throw an
-            // IllegalStateException even if we check for the system feature beforehand. So let's
-            // catch it, log it, and not enter PiP. See https://stackoverflow.com/q/55288858
             logger.warn("Entering PipMode failed", e)
             crashReporting?.submitCaughtException(e)
             false
@@ -109,7 +111,7 @@ class PictureInPictureFeature(
                 }
             }
 
-            (playerView as? View)?.let { view ->
+            playerView?.let { view ->
                 val sourceRect = Rect()
                 if (view.getGlobalVisibleRect(sourceRect)) {
                     builder.setSourceRectHint(sourceRect)
@@ -117,7 +119,7 @@ class PictureInPictureFeature(
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                builder.setAutoEnterEnabled(true)
+                builder.setAutoEnterEnabled(false)
                 builder.setSeamlessResizeEnabled(true)
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
