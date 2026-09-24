@@ -23,6 +23,7 @@ import android.view.ViewGroup
 import android.view.accessibility.AccessibilityManager
 import android.graphics.drawable.GradientDrawable
 import android.widget.ImageButton
+import android.widget.FrameLayout
 import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.CallSuper
 import androidx.annotation.VisibleForTesting
@@ -75,6 +76,7 @@ import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
 import mozilla.components.concept.base.crash.Breadcrumb
 import mozilla.components.concept.engine.permission.SitePermissions
 import mozilla.components.concept.engine.prompt.ShareData
+import mozilla.components.concept.engine.mediasession.MediaSession
 import mozilla.components.concept.storage.Address
 import mozilla.components.concept.storage.CreditCardEntry
 import mozilla.components.concept.storage.Login
@@ -1342,6 +1344,7 @@ abstract class BaseBrowserFragment :
                     listOf(
                         tab.content.pictureInPictureEnabled,
                         tab.content.fullScreen,
+                        media?.fullscreen,
                         media?.playbackState,
                         media?.elementMetadata?.width,
                         media?.elementMetadata?.height,
@@ -1349,6 +1352,13 @@ abstract class BaseBrowserFragment :
                     )
                 }
                 .collect { tab ->
+                    val mediaFullscreen = tab.mediaSessionState?.fullscreen == true
+                    if (!tab.content.pictureInPictureEnabled &&
+                        mediaFullscreen != tab.content.fullScreen
+                    ) {
+                        fullScreenChanged(mediaFullscreen)
+                    }
+
                     pipModeChanged(tab)
                     pipFeature?.updatePipParams(tab)
                     if (tab.content.pictureInPictureEnabled) {
@@ -2039,6 +2049,13 @@ abstract class BaseBrowserFragment :
 
     @CallSuper
     override fun onBackPressed(): Boolean {
+        val activeSession = store.state.findTabOrCustomTabOrSelectedTab(customTabSessionId)
+        if (activeSession?.mediaSessionState?.fullscreen == true) {
+            requireComponents.useCases.sessionUseCases.exitFullscreen(activeSession.id)
+            fullScreenChanged(false)
+            return true
+        }
+
         return findInPageIntegration.onBackPressed() ||
                 fullScreenFeature.onBackPressed() ||
                 promptsFeature.onBackPressed() ||
@@ -2244,9 +2261,9 @@ abstract class BaseBrowserFragment :
             }
         }
 
-        binding.browserLayout.addView(
+        binding.engineView.addView(
             button,
-            CoordinatorLayout.LayoutParams(size, size).apply {
+            FrameLayout.LayoutParams(size, size).apply {
                 gravity = Gravity.TOP or Gravity.END
                 topMargin = margin
                 marginEnd = margin
@@ -2261,7 +2278,6 @@ abstract class BaseBrowserFragment :
         val hasVideo = mediaSession?.elementMetadata?.videoTrackCount?.let { it > 0 } == true
         val playbackState = mediaSession?.playbackState
         val shouldShow = org.mozilla.fenix.components.NovaPictureInPicture.isEnabled(requireContext()) &&
-            session.content.fullScreen &&
             hasVideo &&
             playbackState in listOf(
                 mozilla.components.concept.engine.mediasession.MediaSession.PlaybackState.PLAYING,
@@ -2299,7 +2315,19 @@ abstract class BaseBrowserFragment :
     }
 
     final override fun onPictureInPictureModeChanged(isInPipMode: Boolean) {
-        if (isInPipMode) MediaState.pictureInPicture.record(NoExtras())
+        if (isInPipMode) {
+            MediaState.pictureInPicture.record(NoExtras())
+            hidePipButton()
+            expandBrowserView()
+        } else {
+            val session = store.state.findTabOrCustomTabOrSelectedTab(customTabSessionId)
+            if (session?.content?.fullScreen != true) {
+                activity?.exitImmersiveMode(
+                    unregisterOnApplyWindowInsetsListener = binding.engineView::removeWindowInsetsListener,
+                )
+                collapseBrowserView()
+            }
+        }
         pipFeature?.onPictureInPictureModeChanged(isInPipMode)
     }
 
@@ -2445,7 +2473,7 @@ abstract class BaseBrowserFragment :
         )
 
         pipButtonHandler.removeCallbacks(hidePipButtonRunnable)
-        pipButton?.let { binding.browserLayout.removeView(it) }
+        pipButton?.let { binding.engineView.removeView(it) }
         pipButton = null
 
         binding.engineView.setActivityContext(null)
