@@ -45,7 +45,7 @@ jobs:
 
       - name: Create version name
         run: |
-          VERSION_NAME="${{ github.event.inputs.version_name || '3.1.0-video' }}"
+          VERSION_NAME="${{ github.event.inputs.version_name || '1.4.6-pip-test' }}"
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
           echo "Building Nova PiP test APK, version $VERSION_NAME"
 
@@ -80,13 +80,13 @@ jobs:
             --ks-pass env:KEY_STORE_PASSWORD \
             --key-pass env:KEY_PASSWORD \
             --out nova-pip-video-test.apk "$APK_PATH"
-          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner verify --print-certs nova-video-downloader.apk
-          ls -alh nova-video-downloader.apk
-          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/aapt dump badging nova-video-downloader.apk | head -3
+          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner verify --print-certs nova-pip-video-test.apk
+          ls -alh nova-pip-video-test.apk
+          $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/aapt dump badging nova-pip-video-test.apk | head -3
 
       - name: Upload test APK as artifact (no release)
         uses: actions/upload-artifact@v4
         with:
-          name: nova-video-downloader.apk
-          path: nova-video-downloader.apk
+          name: nova-pip-video-test.apk
+          path: nova-pip-video-test.apk
           retention-days: 30
