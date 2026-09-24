@@ -2,6 +2,17 @@
 
 All notable changes to Nova Browser are listed here, newest first.
 
+## [1.4.6] - 2026-09-24
+
+### Changed
+- **Video downloader only.** The experimental Nova PiP mode has been removed, leaving the built-in video downloader as the only Nova feature added to video pages.
+- **Cleaner video pages.** The old PiP button, native PiP bridge, PiP setting, and related UI have been removed.
+- **Downloader updated.** The bundled video extension was bumped to ensure the updated downloader code is installed correctly.
+
+### Notes
+- This release is based on the latest successful video-downloader build from the feature branch.
+- Package is `com.nova.browser`.
+
 ## [1.4.5] - 2026-09-13
 
 ### Added

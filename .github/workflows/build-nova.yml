@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version_name:
-        description: 'Version name (e.g. 1.4.5)'
+        description: 'Version name (e.g. 1.4.6)'
         required: true
-        default: '1.4.5'
+        default: '1.4.6'
   push:
     branches: [ main ]
     paths-ignore:
@@ -50,7 +50,7 @@ jobs:
           elif [ -f VERSION ]; then
             VERSION_NAME="$(tr -d '[:space:]' < VERSION)"
           else
-            VERSION_NAME="1.4.5"
+            VERSION_NAME="1.4.6"
           fi
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
           echo "Building $VERSION_NAME"
