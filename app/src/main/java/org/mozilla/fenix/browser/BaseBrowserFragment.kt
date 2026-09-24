@@ -11,6 +11,8 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.storage.StorageManager
 import android.provider.Settings
 import android.util.Log
@@ -19,6 +21,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.accessibility.AccessibilityManager
+import android.graphics.drawable.GradientDrawable
+import android.widget.ImageButton
 import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.CallSuper
 import androidx.annotation.VisibleForTesting
@@ -340,6 +344,13 @@ abstract class BaseBrowserFragment :
     }
 
     private var pipFeature: PictureInPictureFeature? = null
+    private var pipButton: ImageButton? = null
+    private val pipButtonHandler = Handler(Looper.getMainLooper())
+    private val hidePipButtonRunnable = Runnable {
+        pipButton?.animate()?.alpha(0f)?.setDuration(180)?.withEndAction {
+            pipButton?.visibility = View.GONE
+        }?.start()
+    }
 
     var customTabSessionId: String? = null
         private set
@@ -914,8 +925,10 @@ abstract class BaseBrowserFragment :
             activity = requireActivity(),
             crashReporting = context.components.analytics.crashReporter,
             tabId = customTabSessionId,
-            playerView = binding.engineView,
+            playerView = binding.browserLayout,
+            isEnabled = { NovaPictureInPicture.isEnabled(requireContext()) },
         )
+        setupPipButton()
 
         biometricPromptFeature.set(
             feature = BiometricPromptFeature(
@@ -1338,6 +1351,11 @@ abstract class BaseBrowserFragment :
                 .collect { tab ->
                     pipModeChanged(tab)
                     pipFeature?.updatePipParams(tab)
+                    if (tab.content.pictureInPictureEnabled) {
+                        hidePipButton()
+                    } else {
+                        updatePipButton(tab)
+                    }
                 }
         }
 
@@ -2197,6 +2215,79 @@ abstract class BaseBrowserFragment :
 
     override fun onHomePressed() = pipFeature?.onHomePressed() ?: false
 
+    private fun setupPipButton() {
+        if (pipButton != null) return
+
+        val density = resources.displayMetrics.density
+        val size = (48 * density).toInt()
+        val margin = (16 * density).toInt()
+        val button = ImageButton(requireContext()).apply {
+            setImageResource(R.drawable.nova_ic_picture_in_picture)
+            setColorFilter(android.graphics.Color.WHITE)
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(0xCC000000.toInt())
+            }
+            contentDescription = getString(R.string.nova_pip_button_content_description)
+            setPadding(
+                (12 * density).toInt(),
+                (12 * density).toInt(),
+                (12 * density).toInt(),
+                (12 * density).toInt(),
+            )
+            elevation = 8 * density
+            alpha = 0f
+            visibility = View.GONE
+            setOnClickListener {
+                hidePipButton()
+                pipFeature?.enterPipMode()
+            }
+        }
+
+        binding.browserLayout.addView(
+            button,
+            CoordinatorLayout.LayoutParams(size, size).apply {
+                gravity = Gravity.TOP or Gravity.END
+                topMargin = margin
+                marginEnd = margin
+            },
+        )
+        pipButton = button
+    }
+
+    private fun updatePipButton(session: SessionState) {
+        val button = pipButton ?: return
+        val mediaSession = session.mediaSessionState
+        val hasVideo = mediaSession?.elementMetadata?.videoTrackCount?.let { it > 0 } == true
+        val playbackState = mediaSession?.playbackState
+        val shouldShow = NovaPictureInPicture.isEnabled(requireContext()) &&
+            session.content.fullScreen &&
+            hasVideo &&
+            playbackState in listOf(
+                mozilla.components.concept.engine.mediasession.MediaSession.PlaybackState.PLAYING,
+                mozilla.components.concept.engine.mediasession.MediaSession.PlaybackState.PAUSED,
+            )
+
+        if (!shouldShow) {
+            hidePipButton()
+            return
+        }
+
+        pipButtonHandler.removeCallbacks(hidePipButtonRunnable)
+        button.animate().cancel()
+        button.visibility = View.VISIBLE
+        button.alpha = 0f
+        button.animate().alpha(1f).setDuration(160).start()
+        pipButtonHandler.postDelayed(hidePipButtonRunnable, 2000)
+    }
+
+    private fun hidePipButton() {
+        pipButtonHandler.removeCallbacks(hidePipButtonRunnable)
+        pipButton?.animate()?.cancel()
+        pipButton?.visibility = View.GONE
+        pipButton?.alpha = 0f
+    }
+
     /**
      * Exit fullscreen mode when exiting PIP mode
      */
@@ -2352,6 +2443,10 @@ abstract class BaseBrowserFragment :
         breadcrumb(
             message = "onDestroyView()",
         )
+
+        pipButtonHandler.removeCallbacks(hidePipButtonRunnable)
+        pipButton?.let { binding.browserLayout.removeView(it) }
+        pipButton = null
 
         binding.engineView.setActivityContext(null)
         requireContext().accessibilityManager.removeAccessibilityStateChangeListener(this)
