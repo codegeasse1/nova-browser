@@ -62,7 +62,7 @@ class PictureInPictureFeature(
                 MediaSession.PlaybackState.PLAYING,
                 MediaSession.PlaybackState.PAUSED,
             ) &&
-            mediaSession.elementMetadata?.videoTrackCount?.let { it > 0 } == true
+            mediaSession?.elementMetadata?.videoTrackCount?.let { it > 0 } == true
 
         if (!canEnter) {
             return false
@@ -102,7 +102,7 @@ class PictureInPictureFeature(
         val builder = PictureInPictureParams.Builder()
 
         if (isVideoPlaying) {
-            val metadata = mediaSession.elementMetadata
+            val metadata = mediaSession?.elementMetadata
             val width = metadata?.width ?: 0L
             val height = metadata?.height ?: 0L
 
