@@ -97,7 +97,7 @@ class PictureInPictureFeature(
                 MediaSession.PlaybackState.PLAYING,
                 MediaSession.PlaybackState.PAUSED,
             ) &&
-            mediaSession.elementMetadata?.videoTrackCount?.let { it > 0 } == true
+            mediaSession?.elementMetadata?.videoTrackCount?.let { it > 0 } == true
 
         val builder = PictureInPictureParams.Builder()
 
