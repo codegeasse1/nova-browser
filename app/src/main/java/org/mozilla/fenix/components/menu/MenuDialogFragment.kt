@@ -690,6 +690,21 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                     Unit
                                 }
 
+                                var novaPictureInPictureEnabled by remember {
+                                    mutableStateOf(
+                                        org.mozilla.fenix.components.NovaPictureInPicture.isEnabled(requireContext()),
+                                    )
+                                }
+                                val onNovaPictureInPictureToggle = {
+                                    val nextEnabled = !novaPictureInPictureEnabled
+                                    org.mozilla.fenix.components.NovaPictureInPicture.setEnabled(
+                                        requireContext(),
+                                        nextEnabled,
+                                    )
+                                    novaPictureInPictureEnabled = nextEnabled
+                                    Unit
+                                }
+
 
 
 
@@ -747,6 +762,8 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                     onNovaViewSource = onNovaViewSource,
                                     novaVideoDownloaderEnabled = novaVideoDownloaderEnabled,
                                     onNovaVideoDownloaderToggle = onNovaVideoDownloaderToggle,
+                                    novaPictureInPictureEnabled = novaPictureInPictureEnabled,
+                                    onNovaPictureInPictureToggle = onNovaPictureInPictureToggle,
                                     isAllWebExtensionsDisabled = isAllWebExtensionsDisabled,
                                     showIPProtection = components.ipProtection.store.state.isEligible,
                                     ipProtectionMenuState = ipProtectionMenuState,

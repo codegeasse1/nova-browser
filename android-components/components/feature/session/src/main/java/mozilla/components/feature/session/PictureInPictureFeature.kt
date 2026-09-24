@@ -7,7 +7,9 @@ package mozilla.components.feature.session
 import android.app.Activity
 import android.app.PictureInPictureParams
 import android.content.pm.PackageManager
+import android.os.Build
 import mozilla.components.browser.state.action.ContentAction
+import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.selector.findTabOrCustomTabOrSelectedTab
 import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.store.BrowserStore
@@ -29,6 +31,7 @@ class PictureInPictureFeature(
     private val activity: Activity,
     private val crashReporting: CrashReporting? = null,
     private val tabId: String? = null,
+    private val isEnabled: () -> Boolean = { true },
 ) {
     internal val logger = Logger("PictureInPictureFeature")
 
@@ -36,19 +39,36 @@ class PictureInPictureFeature(
         activity.packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
 
     fun onHomePressed(): Boolean {
-        if (!hasSystemFeature) {
+        // PiP is deliberately user-initiated from the in-video button. Do not
+        // intercept Home and unexpectedly move a video into PiP.
+        return false
+    }
+
+    /**
+     * Enters PiP from the dedicated in-video control.
+     */
+    fun enterPipMode(): Boolean {
+        if (!isEnabled() || !hasSystemFeature || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return false
         }
 
         val session = store.state.findTabOrCustomTabOrSelectedTab(tabId)
-        val fullScreenMode = session?.content?.fullScreen == true
-        val contentIsPlaying = session?.mediaSessionState?.playbackState == MediaSession.PlaybackState.PLAYING
-        return fullScreenMode && contentIsPlaying && try {
-            enterPipModeCompat()
+        val mediaSession = session?.mediaSessionState
+        val canEnter =
+            mediaSession?.playbackState in listOf(
+                MediaSession.PlaybackState.PLAYING,
+                MediaSession.PlaybackState.PAUSED,
+            ) &&
+            mediaSession?.elementMetadata?.videoTrackCount?.let { it > 0 } == true
+
+        if (!canEnter) {
+            return false
+        }
+
+        return try {
+            updatePipParams(session)
+            activity.enterPictureInPictureMode(buildPipParams(session))
         } catch (e: IllegalStateException) {
-            // On certain Samsung devices, if accessibility mode is enabled, this will throw an
-            // IllegalStateException even if we check for the system feature beforehand. So let's
-            // catch it, log it, and not enter PiP. See https://stackoverflow.com/q/55288858
             logger.warn("Entering PipMode failed", e)
             crashReporting?.submitCaughtException(e)
             false
@@ -58,13 +78,89 @@ class PictureInPictureFeature(
     /**
      * Enter Picture-in-Picture mode.
      */
-    fun enterPipModeCompat() = when {
+    fun enterPipModeCompat(session: SessionState? = null) = when {
         !hasSystemFeature -> false
-        else -> enterPipModeForO()
+        else -> enterPipModeForO(session)
     }
 
-    private fun enterPipModeForO() =
-        activity.enterPictureInPictureMode(PictureInPictureParams.Builder().build())
+    fun updatePipParams(session: SessionState?) {
+        if (!hasSystemFeature) {
+            return
+        }
+
+        val mediaSession = session?.mediaSessionState
+        val isVideoPlaying =
+            mediaSession?.playbackState in listOf(
+                MediaSession.PlaybackState.PLAYING,
+                MediaSession.PlaybackState.PAUSED,
+            ) &&
+            mediaSession?.elementMetadata?.videoTrackCount?.let { it > 0 } == true
+
+        val builder = PictureInPictureParams.Builder()
+
+        if (isVideoPlaying) {
+            val metadata = mediaSession?.elementMetadata
+            val width = metadata?.width ?: 0L
+            val height = metadata?.height ?: 0L
+
+            if (width > 0L && height > 0L) {
+                val ratio = width.toDouble() / height.toDouble()
+                if (ratio in (1.0 / 2.39)..2.39) {
+                    builder.setAspectRatio(
+                        android.util.Rational(
+                            width.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                            height.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                        ),
+                    )
+                }
+            }
+
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                builder.setAutoEnterEnabled(false)
+                builder.setSeamlessResizeEnabled(true)
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            builder.setAutoEnterEnabled(false)
+        }
+
+        activity.setPictureInPictureParams(builder.build())
+    }
+
+    private fun enterPipModeForO(session: SessionState?) =
+        activity.enterPictureInPictureMode(buildPipParams(session))
+
+    private fun buildPipParams(session: SessionState?): PictureInPictureParams {
+        val builder = PictureInPictureParams.Builder()
+        val metadata = session?.mediaSessionState?.elementMetadata
+        val width = metadata?.width ?: 0L
+        val height = metadata?.height ?: 0L
+
+        if (width > 0L && height > 0L) {
+            val ratio = width.toDouble() / height.toDouble()
+            if (ratio in (1.0 / 2.39)..2.39) {
+                builder.setAspectRatio(
+                    android.util.Rational(
+                        width.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                        height.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                    ),
+                )
+            }
+        }
+
+        playerView?.let { view ->
+            val sourceRect = Rect()
+            if (view.getGlobalVisibleRect(sourceRect)) {
+                builder.setSourceRectHint(sourceRect)
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            builder.setSeamlessResizeEnabled(true)
+        }
+
+        return builder.build()
+    }
 
     /**
      * Should be called when the system informs you of changes to and from picture-in-picture mode.
