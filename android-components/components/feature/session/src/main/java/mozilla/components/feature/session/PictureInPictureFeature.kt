@@ -34,6 +34,7 @@ class PictureInPictureFeature(
     private val crashReporting: CrashReporting? = null,
     private val tabId: String? = null,
     private val playerView: View? = null,
+    private val isEnabled: () -> Boolean = { true },
 ) {
     internal val logger = Logger("PictureInPictureFeature")
 
@@ -50,7 +51,7 @@ class PictureInPictureFeature(
      * Enters PiP from the dedicated in-video control.
      */
     fun enterPipMode(): Boolean {
-        if (!hasSystemFeature || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        if (!isEnabled() || !hasSystemFeature || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return false
         }
 
