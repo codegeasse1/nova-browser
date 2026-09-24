@@ -102,7 +102,7 @@ class PictureInPictureFeature(
         val builder = PictureInPictureParams.Builder()
 
         if (isVideoPlaying) {
-            val metadata = mediaSession?.elementMetadata
+            val metadata = mediaSession.elementMetadata
             val width = metadata?.width ?: 0L
             val height = metadata?.height ?: 0L
 
@@ -157,7 +157,7 @@ class PictureInPictureFeature(
             }
         }
 
-        (playerView as? View)?.let { view ->
+        playerView?.let { view ->
             val sourceRect = Rect()
             if (view.getGlobalVisibleRect(sourceRect)) {
                 builder.setSourceRectHint(sourceRect)
