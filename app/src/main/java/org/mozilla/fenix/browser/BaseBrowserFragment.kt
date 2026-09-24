@@ -926,7 +926,7 @@ abstract class BaseBrowserFragment :
             crashReporting = context.components.analytics.crashReporter,
             tabId = customTabSessionId,
             playerView = binding.browserLayout,
-            isEnabled = { NovaPictureInPicture.isEnabled(requireContext()) },
+            isEnabled = { org.mozilla.fenix.components.NovaPictureInPicture.isEnabled(requireContext()) },
         )
         setupPipButton()
 
@@ -2260,7 +2260,7 @@ abstract class BaseBrowserFragment :
         val mediaSession = session.mediaSessionState
         val hasVideo = mediaSession?.elementMetadata?.videoTrackCount?.let { it > 0 } == true
         val playbackState = mediaSession?.playbackState
-        val shouldShow = NovaPictureInPicture.isEnabled(requireContext()) &&
+        val shouldShow = org.mozilla.fenix.components.NovaPictureInPicture.isEnabled(requireContext()) &&
             session.content.fullScreen &&
             hasVideo &&
             playbackState in listOf(
