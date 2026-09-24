@@ -7,9 +7,7 @@ package mozilla.components.feature.session
 import android.app.Activity
 import android.app.PictureInPictureParams
 import android.content.pm.PackageManager
-import android.graphics.Rect
 import android.os.Build
-import android.view.View
 import mozilla.components.browser.state.action.ContentAction
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.selector.findTabOrCustomTabOrSelectedTab
@@ -33,7 +31,6 @@ class PictureInPictureFeature(
     private val activity: Activity,
     private val crashReporting: CrashReporting? = null,
     private val tabId: String? = null,
-    private val playerView: View? = null,
     private val isEnabled: () -> Boolean = { true },
 ) {
     internal val logger = Logger("PictureInPictureFeature")
@@ -118,12 +115,6 @@ class PictureInPictureFeature(
                 }
             }
 
-            playerView?.let { view ->
-                val sourceRect = Rect()
-                if (view.getGlobalVisibleRect(sourceRect)) {
-                    builder.setSourceRectHint(sourceRect)
-                }
-            }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 builder.setAutoEnterEnabled(false)
