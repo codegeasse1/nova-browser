@@ -6,8 +6,10 @@
  * Every frame reports the <video>/<audio> elements it can see to the
  * background script. The top frame additionally shows a single small download
  * button - and only while the page actually has a downloadable video/audio.
- * Tapping it opens a compact picker. There is no other chrome: to turn the
- * whole feature off use the "Video Downloader" switch in the browser menu.
+ * Tapping it opens a compact picker.
+ *
+ * There is no other chrome: to turn the feature off use the "Video Downloader"
+ * switch in the browser menu.
  */
 
 (function () {
@@ -106,10 +108,9 @@
   document.addEventListener("play", reportElements, true);
   document.addEventListener("loadeddata", reportElements, true);
 
-  if (!IS_TOP) return;
-
   /* ---------------------------------------------------------------- */
-  /* Top frame: UI                                                     */
+  /* UI                                                                */
+  /* The download button is a top-frame-only affordance (see start()).  */
   /* ---------------------------------------------------------------- */
 
   let entries = [];
@@ -123,16 +124,22 @@
   let hlsInfo = new Map();
   let dashInfo = new Map();
   let ytdlpJobs = new Map();
-  let idleTimer = null;
+  let hideTimer = null;
+  let prefsTimer = null;
+  let prefs = { downloader: true };
+  let prefsBusy = false;
+  let lastAliveAt = 0;
   let pollTimer = null;
   let pos = null;
+  let listenersBound = false;
 
   function teardown() {
     contextDead = true;
     instance.beat = 0;
     clearInterval(reportTimer);
     clearInterval(pollTimer);
-    clearTimeout(idleTimer);
+    clearTimeout(hideTimer);
+    clearTimeout(prefsTimer);
     if (host && host.parentNode) host.parentNode.removeChild(host);
     host = null;
     shadow = null;
@@ -159,11 +166,12 @@
       transition: opacity .3s ease;
       opacity: .92;
     }
-    .nv-btn.nv-idle { opacity: .35; }
+    .nv-btn.nv-hide { opacity: 0; pointer-events: none; }
     .nv-btn svg { width: 20px; height: 20px; fill: #7f9dff; pointer-events: none; }
     .nv-panel {
       position: fixed; width: 300px; max-width: calc(100vw - 20px);
       max-height: min(40vh, 340px);
+      z-index: 2147483647;
       background: #1b1c21; color: #e9e9ef;
       border: 1px solid #34363f; border-radius: 13px; overflow: hidden;
       box-shadow: 0 12px 34px rgba(0,0,0,.6);
@@ -232,6 +240,7 @@
     .nv-toast {
       position: fixed; max-width: 280px; background: #26272e; color: #e9e9ef;
       border: 1px solid #3a3c47; border-radius: 10px; padding: 9px 12px;
+      z-index: 2147483647;
       font: 12px/1.4 -apple-system, system-ui, sans-serif;
       box-shadow: 0 8px 24px rgba(0,0,0,.5);
     }
@@ -262,6 +271,7 @@
    * so this is the only way to guarantee the icon disappears without a reload.
    */
   function keepAlive() {
+    lastAliveAt = Date.now();
     const els = [btnEl, panelEl, shadow && shadow.querySelector(".nv-toast")];
     for (const el of els) {
       if (!el) continue;
@@ -274,13 +284,21 @@
   const ICON =
     '<svg viewBox="0 0 24 24"><path d="M12 16.5l-5.5-5.5h3.25V3h4.5v8H17.5L12 16.5zM5 18h14v2.5H5V18z"/></svg>';
 
-  function buildUi() {
+  /* The host + shadow root holds the download button (top frame only). */
+  function buildHost() {
+    if (host) return;
     host = document.createElement("div");
     host.id = "nova-video-host";
     host.style.cssText =
       "all:initial;position:fixed;top:0;left:0;width:0;height:0;z-index:2147483647;";
     shadow = host.attachShadow({ mode: "open" });
     applyStyles(shadow);
+    (document.body || document.documentElement).appendChild(host);
+    ensureListeners();
+  }
+
+  function buildUi() {
+    buildHost();
 
     btnEl = document.createElement("div");
     btnEl.className = "nv-btn";
@@ -312,21 +330,63 @@
     closeBtn.addEventListener("touchend", doClose);
     closeBtn.addEventListener("pointerup", doClose);
 
-    document.addEventListener("pointerdown", onDocumentPointerDown, true);
-
-    (document.body || document.documentElement).appendChild(host);
     setupDrag();
-    document.addEventListener("fullscreenchange", onFullscreenChange, true);
     window.addEventListener("resize", positionPanel);
     positionButton();
     keepAlive();
   }
 
+  function videoAtPoint(x, y) {
+    let best = null;
+    let bestArea = Infinity;
+    let nodes;
+    try {
+      nodes = allVideos();
+    } catch (e) {
+      return null;
+    }
+    for (const v of nodes) {
+      const rect = v.getBoundingClientRect();
+      const area = rect.width * rect.height;
+      if (area <= 0) continue;
+      if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) continue;
+      if (area < bestArea) {
+        bestArea = area;
+        best = v;
+      }
+    }
+    return best;
+  }
+
   function onDocumentPointerDown(e) {
-    if (!panelOpen) return;
     const path = typeof e.composedPath === "function" ? e.composedPath() : [];
-    if (path.indexOf(panelEl) > -1 || path.indexOf(btnEl) > -1) return;
-    closePanel();
+    const insideUi = path.indexOf(panelEl) > -1 || path.indexOf(btnEl) > -1;
+    if (insideUi) return;
+    if (panelOpen) closePanel();
+    /*
+     * A tap on the video itself is the clearest "use this one" signal - and the
+     * composed path also reaches a <video> that lives inside a shadow root,
+     * which the light-DOM query in videoAtPoint cannot see.
+     */
+    let hit = null;
+    for (const node of path) {
+      const tag = node && node.tagName;
+      if (tag === "VIDEO" || tag === "AUDIO") {
+        hit = node;
+        break;
+      }
+    }
+    /*
+     * Most players (YouTube, Vimeo, news sites...) draw their own controls on
+     * top of the <video>, so the tap never reaches the video node itself.
+     * A tap inside the video's box means "the user is using this video", so
+     * that is what hands it to Nova. The tap also asks for the preference: a
+     * frame whose only video is small and paused never hits the poll.
+     */
+    if (!hit && typeof e.clientX === "number") hit = videoAtPoint(e.clientX, e.clientY);
+    if (!hit) return;
+    /* A tap on (or in) the video is the user asking for the button back. */
+    if (btnEl && !btnEl.hidden) showButton();
   }
 
   /* -------------------------- drag -------------------------------- */
@@ -384,6 +444,7 @@
         return;
       }
       snapToEdge();
+      scheduleIdle();
     });
 
     btnEl.addEventListener("pointercancel", function () {
@@ -391,8 +452,7 @@
     });
 
     btnEl.addEventListener("pointerenter", function () {
-      btnEl.classList.remove("nv-idle");
-      clearTimeout(idleTimer);
+      showButtonNow();
     });
     btnEl.addEventListener("pointerleave", function () {
       scheduleIdle();
@@ -431,11 +491,44 @@
     positionPanel();
   }
 
+  const AUTO_HIDE_MS = 2500;
+
+  /*
+   * The download button is a "peek" affordance: it appears for a couple of
+   * seconds and then fades away, and comes back whenever something happens
+   * that the user might want it for (a video starts or pauses, the page is
+   * tapped, the pointer is resting on it, it was just dragged, ...). It stays
+   * put while the picker is open, because the picker is anchored to it.
+   */
+  function showButtonNow() {
+    if (!btnEl) return;
+    btnEl.classList.remove("nv-hide");
+    clearTimeout(hideTimer);
+  }
+
+  function hideIfIdle() {
+    if (!btnEl || panelOpen || btnEl.hidden) return;
+    let hovering = false;
+    try {
+      hovering = btnEl.matches(":hover");
+    } catch (e) {
+      /* ignore */
+    }
+    if (hovering) {
+      scheduleIdle();
+      return;
+    }
+    btnEl.classList.add("nv-hide");
+  }
+
   function scheduleIdle() {
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(function () {
-      if (!panelOpen && btnEl) btnEl.classList.add("nv-idle");
-    }, 3500);
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(hideIfIdle, AUTO_HIDE_MS);
+  }
+
+  function showButton() {
+    showButtonNow();
+    scheduleIdle();
   }
 
   /* -------------------------- panel ------------------------------- */
@@ -450,8 +543,8 @@
     panelOpen = true;
     panelEl.hidden = false;
     keepAlive();
-    btnEl.classList.remove("nv-idle");
-    clearTimeout(idleTimer);
+    showButtonNow();
+    /* The picker draws above the bar; leave the bar where it is. */
     renderList();
     positionPanel();
     requestAnimationFrame(positionPanel);
@@ -472,7 +565,7 @@
   }
 
   function positionPanel() {
-    if (!panelEl || panelEl.hidden) return;
+    if (!panelEl || panelEl.hidden || !btnEl) return;
     const margin = 10;
     const rect = btnEl.getBoundingClientRect();
     const panelRect = panelEl.getBoundingClientRect();
@@ -493,12 +586,22 @@
     panelEl.style.bottom = "auto";
   }
 
+  /*
+   * While the page itself is fullscreen (a site moving its own <video> there)
+   * the download button is put away. The entries are untouched, so it comes
+   * straight back when fullscreen ends. Nova never touches the video itself.
+   */
   function onFullscreenChange() {
     if (!host) return;
-    if (document.fullscreenElement) {
-      host.style.display = "none";
-    } else {
-      host.style.display = "";
+    let el = null;
+    try {
+      el = document.fullscreenElement || document.webkitFullscreenElement || null;
+    } catch (e) {
+      el = null;
+    }
+    if (btnEl) btnEl.hidden = !!el || entries.length === 0 || prefs.downloader === false;
+    if (el && panelOpen) closePanel();
+    if (!el) {
       positionButton();
       positionPanel();
     }
@@ -507,18 +610,27 @@
   function checkVisibility() {
     if (!host || !btnEl) return;
     keepAlive();
-    if (!entries.length) {
-      btnEl.hidden = true;
-      closePanel();
-      return;
+    const wanted = prefs.downloader !== false && entries.length > 0;
+    if (!wanted) {
+      if (!btnEl.hidden) {
+        btnEl.hidden = true;
+        closePanel();
+      }
+    } else {
+      const wasHidden = btnEl.hidden;
+      btnEl.hidden = false;
+      positionButton();
+      /*
+       * Only pop the button back up on a real no-media -> media transition.
+       * Doing it on every poll would restart the auto-hide timer forever, so
+       * the button would never actually disappear.
+       */
+      if (wasHidden) showButton();
     }
-    positionButton();
-    btnEl.hidden = false;
-    scheduleIdle();
   }
 
   function toast(message) {
-    if (!shadow) return;
+    if (!shadow || !IS_TOP) return;
     let el = shadow.querySelector(".nv-toast");
     if (!el) {
       el = document.createElement("div");
@@ -1299,6 +1411,68 @@
     send("novaVideo:ytdlp", { action: "cancel", id: job.id });
   }
 
+  /*
+   * The downloader switch lives in Android shared preferences, so it is read
+   * through the background script (which owns the native bridge). Polled
+   * lazily: on boot, when the page regains focus, and every few seconds, so a
+   * menu toggle is picked up without the user having to reload the page.
+   */
+  function fetchPrefs() {
+    if (contextDead || prefsBusy) return;
+    prefsBusy = true;
+    send("novaVideo:prefs", {}).then(function (res) {
+      prefsBusy = false;
+      if (contextDead) return;
+      if (!res || !res.ok) return;
+      const nextDownloader = res.downloader !== false;
+      if (nextDownloader !== prefs.downloader) {
+        prefs.downloader = nextDownloader;
+        applyPrefs();
+      }
+    });
+  }
+
+  function applyPrefs() {
+    if (btnEl && prefs.downloader === false && !btnEl.hidden) {
+      btnEl.hidden = true;
+      closePanel();
+    }
+    checkVisibility();
+  }
+
+  /* ------------------------- video binding ------------------------ */
+
+  /*
+   * Every <video> the frame can reach, including ones inside open shadow roots.
+   * `document.querySelectorAll("video")` does not pierce shadow boundaries, and
+   * a lot of modern players keep the video in one. The shadow walk is throttled
+   * and capped because it is O(elements); the cheap light-DOM query runs always.
+   */
+  let shadowScanAt = 0;
+  function allVideos() {
+    const out = [];
+    try {
+      for (const v of document.querySelectorAll("video")) out.push(v);
+    } catch (e) {
+      /* ignore */
+    }
+    const now = Date.now();
+    if (now - shadowScanAt < 2400) return out;
+    shadowScanAt = now;
+    try {
+      const nodes = document.querySelectorAll("*");
+      const limit = Math.min(nodes.length, 8000);
+      for (let i = 0; i < limit; i++) {
+        const root = nodes[i].shadowRoot;
+        if (!root) continue;
+        for (const v of root.querySelectorAll("video")) out.push(v);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    return out;
+  }
+
   /* -------------------------- entry polling ----------------------- */
 
   function refreshEntries(force) {
@@ -1313,6 +1487,9 @@
         });
       entries = next;
       checkVisibility();
+      if (changed && entries.length && prefs.downloader !== false && btnEl && !btnEl.hidden) {
+        showButton();
+      }
       if (panelOpen && (changed || force)) renderList();
     });
   }
@@ -1323,12 +1500,36 @@
     buildUi();
     refreshEntries(true);
     restoreYtdlpJobs();
+    fetchPrefs();
     pollTimer = setInterval(refreshEntries, 1200);
+    prefsTimer = setInterval(fetchPrefs, 2000);
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) fetchPrefs();
+    });
+    window.addEventListener("focus", function () {
+      fetchPrefs();
+    });
+  }
+
+  /*
+   * One document-level listener set, installed with the host: it is what lets a
+   * tap on a video (or on the UI) reach Nova at all.
+   */
+  function ensureListeners() {
+    if (listenersBound) return;
+    listenersBound = true;
+    document.addEventListener("pointerdown", onDocumentPointerDown, true);
+    document.addEventListener("fullscreenchange", onFullscreenChange, true);
+    document.addEventListener("webkitfullscreenchange", onFullscreenChange, true);
+  }
+
+  function start() {
+    if (IS_TOP) boot();
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot, { once: true });
+    document.addEventListener("DOMContentLoaded", start, { once: true });
   } else {
-    boot();
+    start();
   }
 })();

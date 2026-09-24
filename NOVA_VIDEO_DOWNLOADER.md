@@ -2,19 +2,21 @@
 
 This branch (`feature/video-downloader`) adds a built-in **video/audio downloader**
 to Nova Browser. It is intentionally self-contained so it can be removed by simply
-deleting this branch â nothing on `main` or in the release workflow is touched.
+deleting this branch — nothing on `main` or in the release workflow is touched.
 
 ## What it does
 
 A third bundled WebExtension (`nova-video@nova.browser`) that:
 
-- watches network traffic and detects media the page loads â direct files
+- watches network traffic and detects media the page loads — direct files
   (`Content-Type: video/*` / `audio/*`, or a known extension) and streaming
   manifests (HLS `.m3u8`, DASH `.mpd`);
-- shows **one small (38px) download-arrow icon**, and only while the page actually
-  has a downloadable video/audio. There is no other on-screen chrome: no floating
-  panel, no "Rescan" button, no "Hide here" dialog. The icon is draggable and hides
-  itself while a video is fullscreen;
+- shows **one small (38px) download-arrow icon**, but only as a brief *peek*: it
+  fades in for ~2.5s when the page discovers media and then fades out again. It
+  comes back for ~2.5s whenever a video starts or pauses, when the page is tapped
+  (or the pointer rests on it), and while the picker is open. There is no other
+  on-screen chrome: no floating panel, no "Rescan" button, no "Hide here" dialog.
+  The icon is draggable and hides itself while a video is fullscreen;
 - tapping the icon opens a compact picker (at most 40% of the screen height) listing
   the detected items, with a 32px `X` to close it and tap-outside-to-close.
   Closing the picker never cancels a download: a yt-dlp download keeps running in
@@ -31,40 +33,44 @@ A third bundled WebExtension (`nova-video@nova.browser`) that:
   the video itself. An "Audio only" option extracts just the audio (MP3).
 
 It also reports `<video>`/`<audio>` elements found in the page (including frames).
+Nova never draws its own player or touches the page's player: the button is the
+only thing it adds, and media elements are never moved or restyled.
 
 ## On / off switch in the 3-dot menu
 
-The whole feature can be switched off without uninstalling anything:
+The feature can be switched off without uninstalling anything. The browser's
+3-dot menu has a **"Video Downloader"** item with an on/off switch (same pattern
+as the existing "Allow background playback" switch).
 
-- The browser's 3-dot menu has a **"Video Downloader"** item with an on/off switch
-  (same pattern as the existing "Allow background playback" switch).
-- Turning it **on** enables the bundled extension in the engine (`EnableSource.USER`),
-  so the small download icon appears on pages that have a video.
-- Turning it **off** disables the extension: the content script stops running and
-  removes the icon/panel on the page it is already loaded in (it notices the dead
-  extension context and tears itself down within a few seconds). Nothing is shown
-  while browsing.
+- Turning it **on** enables the bundled extension in the engine
+  (`EnableSource.USER`); turning it **off** disables the extension.
+- When the extension is disabled its content scripts stop running and the
+  already-injected icon/panel tear themselves down (they notice the dead
+  extension context), so nothing is shown while browsing.
 - The choice is stored in shared preferences (`NovaVideoDownloader` /
   `novaVideoDownloaderEnabled`, default on) and re-applied on launch, so it
   survives restarts.
+- The content script reads it at runtime through the native bridge
+  (`novaVideoYtdlp`, action `prefs`), polls every few seconds and on page focus,
+  so a toggle takes effect without reloading the page.
 
 ## Files added / changed
 
 | File | Change |
 | --- | --- |
-| `app/src/main/assets/extensions/nova-video/manifest.json` | new â MV2 manifest of the bundled extension (has the `nativeMessaging` **and** `geckoViewAddons` permissions) |
-| `app/src/main/assets/extensions/nova-video/background.js` | new â network sniffing, playlist/manifest parsing, binary fetch fallback, yt-dlp bridge |
-| `app/src/main/assets/extensions/nova-video/content.js` | new â icon-only UI + downloader picker (shadow DOM), incl. the yt-dlp site entry |
-| `app/src/main/java/org/mozilla/fenix/components/NovaVideoDownloader.kt` | new â preference + engine enable/disable helper |
-| `app/src/main/java/org/mozilla/fenix/components/NovaYtDlp.kt` | new â native yt-dlp bridge (init, downloads, progress, MediaStore publish) |
+| `app/src/main/assets/extensions/nova-video/manifest.json` | new — MV2 manifest of the bundled extension (has the `nativeMessaging` **and** `geckoViewAddons` permissions); version `1.2.5`, bumped so the built-in extension is re-installed (GeckoView skips a built-in whose version is unchanged, which would leave an old `content.js` on device) |
+| `app/src/main/assets/extensions/nova-video/background.js` | new — network sniffing, playlist/manifest parsing, binary fetch fallback, yt-dlp bridge, and the `prefs` reply |
+| `app/src/main/assets/extensions/nova-video/content.js` | new — the peek-a-boo download icon + picker (shadow DOM), incl. the yt-dlp site entry, shadow-DOM and frame support |
+| `app/src/main/java/org/mozilla/fenix/components/NovaVideoDownloader.kt` | new — preference + engine enable/disable helper |
+| `app/src/main/java/org/mozilla/fenix/components/NovaYtDlp.kt` | new — native yt-dlp bridge (init, downloads, progress, MediaStore publish) + the `prefs` action that reports the switch to the content script |
 | `app/build.gradle` | adds the `youtubedl-android` `library` + `ffmpeg` dependencies |
 | `app/proguard-rules.pro` | keep/dontwarn rules for youtubedl-android, Jackson and commons-io |
 | `app/src/main/java/org/mozilla/fenix/FenixApplication.kt` | `NOVA_VIDEO_ADDON_ID` constant + `installBuiltInWebExtension(...)` call + re-applies the stored on/off preference |
-| `app/src/main/java/org/mozilla/fenix/components/menu/compose/MainMenu.kt` | new "Video Downloader" menu item with a switch |
+| `app/src/main/java/org/mozilla/fenix/components/menu/compose/MainMenu.kt` | "Video Downloader" menu item with a switch |
 | `app/src/main/java/org/mozilla/fenix/components/menu/MenuDialogFragment.kt` | wires the switch state + toggles the extension |
 | `app/src/main/res/values/strings.xml` | `browser_menu_video_downloader` (+ `_on` / `_off`) strings |
-| `.github/workflows/build-video-downloader.yml` | new â builds and signs the APK and uploads it as a **workflow artifact only** (no GitHub Release) |
-| `NOVA_VIDEO_DOWNLOADER.md` | new â this file |
+| `.github/workflows/build-video-downloader.yml` | new — builds and signs the APK and uploads it as a **workflow artifact only** (no GitHub Release) |
+| `NOVA_VIDEO_DOWNLOADER.md` | new — this file |
 
 ## How to build / test
 
@@ -81,11 +87,11 @@ Download the artifact from the Actions run page and sideload it to test.
 
 1. Delete the branch (this deletes every file listed above, including the
    workflow, so no build runs anymore), **or**
-2. Revert the commit and remove the `nova-video` assets, the `NovaVideoDownloader`
-   and `NovaYtDlp` helpers, the `NOVA_VIDEO_ADDON_ID` constant +
-   `installBuiltInWebExtension` call, the menu item / strings, the workflow file,
-   and the `youtubedl-android` dependencies in `app/build.gradle` plus their
-   Proguard rules. No other code depends on them.
+2. Revert the commit and remove the `nova-video` assets, the
+   `NovaVideoDownloader` and `NovaYtDlp` helpers, the `NOVA_VIDEO_ADDON_ID`
+   constant + `installBuiltInWebExtension` call, the menu item / strings, the
+   workflow file, and the `youtubedl-android` dependencies in `app/build.gradle`
+   plus their Proguard rules. No other code depends on them.
 
 ## Notes / limitations
 
@@ -114,8 +120,8 @@ CPython and ffmpeg. `NovaYtDlp`:
 - registers a GeckoView background message handler under the name
   **`novaVideoYtdlp`** (via `WebExtension.registerBackgroundMessageHandler`), so
   the extension's background script can call
-  `browser.runtime.sendNativeMessage("novaVideoYtdlp", â¦)`;
-- supports `action`s `ping` / `start` / `status` / `cancel` / `list`. `start`
+  `browser.runtime.sendNativeMessage("novaVideoYtdlp", …)`;
+- supports `action`s `ping` / `prefs` / `start` / `status` / `cancel` / `list`. `start`
   returns a job id immediately and runs the download on a worker thread; the
   content script polls `status` for progress and uses `list` to re-attach to a
   running download after a page reload or after the picker was closed;
@@ -143,6 +149,14 @@ This is a sideload-only build, so Play Store policy does not apply.
   exception is swallowed and the extension's `sendNativeMessage` promise never
   settles (the controller queues messages for a name with no delegate). `NovaYtDlp`
   therefore posts registration to the main `Looper` and retries.
+- **The chrome keeps itself alive only while the script runs.** Injected DOM is
+  NOT removed when a content script is unloaded, so the icon/panel/toast carry a
+  2.6s keep-alive CSS animation that `keepAlive()` restarts on every poll. If the
+  add-on is switched off (or its context dies) the polling stops, the animation
+  finishes and everything Nova injected hides itself without a page reload.
+- **The download button is a top-frame-only affordance.** It is only created in
+  the top frame; frames still report the `<video>`/`<audio>` elements they can
+  see (that is how media inside iframes is detected), but they never draw UI.
 - **Never let the UI depend on one native reply.** The native `list`/`status`
   replies carry the page `url`, and the content script builds the job row
   *before* the bridge answers: a job without a native id yet is matched against
