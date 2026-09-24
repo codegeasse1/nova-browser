@@ -914,6 +914,7 @@ abstract class BaseBrowserFragment :
             activity = requireActivity(),
             crashReporting = context.components.analytics.crashReporter,
             tabId = customTabSessionId,
+            playerView = binding.engineView,
         )
 
         biometricPromptFeature.set(
@@ -1323,8 +1324,21 @@ abstract class BaseBrowserFragment :
 
         store.flowScoped(viewLifecycleOwner, Dispatchers.Main) { flow ->
             flow.mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(customTabSessionId) }
-                .distinctUntilChangedBy { tab -> tab.content.pictureInPictureEnabled }
-                .collect { tab -> pipModeChanged(tab) }
+                .distinctUntilChangedBy { tab ->
+                    val media = tab.mediaSessionState
+                    listOf(
+                        tab.content.pictureInPictureEnabled,
+                        tab.content.fullScreen,
+                        media?.playbackState,
+                        media?.elementMetadata?.width,
+                        media?.elementMetadata?.height,
+                        media?.elementMetadata?.videoTrackCount,
+                    )
+                }
+                .collect { tab ->
+                    pipModeChanged(tab)
+                    pipFeature?.updatePipParams(tab)
+                }
         }
 
         binding.swipeRefresh.isEnabled = shouldPullToRefreshBeEnabled(false)

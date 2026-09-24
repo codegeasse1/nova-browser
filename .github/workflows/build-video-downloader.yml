@@ -1,14 +1,14 @@
-name: Build Nova Video Downloader (feature branch)
+name: Build Nova PiP Video Test (feature branch)
 
 on:
   workflow_dispatch:
     inputs:
       version_name:
-        description: 'Version name (e.g. 3.1.0-video)'
+        description: 'Version name for the PiP test build'
         required: true
-        default: '3.1.0-video'
+        default: '1.4.6-pip-test'
   push:
-    branches: [ feature/video-downloader ]
+    branches: [ feature/video-downloader, feature/pip-video-test ]
     paths-ignore:
       - 'README.md'
       - 'screenshots/**'
@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build Nova Video Downloader APK
+    name: Build Nova PiP Video Test APK
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
@@ -47,7 +47,7 @@ jobs:
         run: |
           VERSION_NAME="${{ github.event.inputs.version_name || '3.1.0-video' }}"
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
-          echo "Building video-downloader test APK, version $VERSION_NAME"
+          echo "Building Nova PiP test APK, version $VERSION_NAME"
 
       - name: Build forkRelease variant
         timeout-minutes: 90
@@ -79,7 +79,7 @@ jobs:
             --ks-key-alias "$ALIAS" \
             --ks-pass env:KEY_STORE_PASSWORD \
             --key-pass env:KEY_PASSWORD \
-            --out nova-video-downloader.apk "$APK_PATH"
+            --out nova-pip-video-test.apk "$APK_PATH"
           $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/apksigner verify --print-certs nova-video-downloader.apk
           ls -alh nova-video-downloader.apk
           $HOME/android-sdk/android-sdk-linux/build-tools/$BUILD_TOOL_VERSION/aapt dump badging nova-video-downloader.apk | head -3

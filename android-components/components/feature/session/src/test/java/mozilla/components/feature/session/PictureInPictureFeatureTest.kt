@@ -135,6 +135,11 @@ class PictureInPictureFeatureTest {
             mediaSessionState = MediaSessionState(
                 playbackState = MediaSession.PlaybackState.PLAYING,
                 controller = controller,
+                elementMetadata = MediaSession.ElementMetadata(
+                    width = 1920,
+                    height = 1080,
+                    videoTrackCount = 1,
+                ),
             ),
         ).copyWithFullScreen(true)
         val store = BrowserStore(
@@ -187,6 +192,11 @@ class PictureInPictureFeatureTest {
             mediaSessionState = MediaSessionState(
                 playbackState = MediaSession.PlaybackState.PLAYING,
                 controller = controller,
+                elementMetadata = MediaSession.ElementMetadata(
+                    width = 1920,
+                    height = 1080,
+                    videoTrackCount = 1,
+                ),
             ),
         ).copyWithFullScreen(true)
         val store = BrowserStore(
@@ -228,6 +238,11 @@ class PictureInPictureFeatureTest {
             mediaSessionState = MediaSessionState(
                 playbackState = MediaSession.PlaybackState.PLAYING,
                 controller = controller,
+                elementMetadata = MediaSession.ElementMetadata(
+                    width = 1920,
+                    height = 1080,
+                    videoTrackCount = 1,
+                ),
             ),
         ).copyWithFullScreen(true)
         val store = BrowserStore(
