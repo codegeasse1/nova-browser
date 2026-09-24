@@ -52,7 +52,7 @@ jobs:
       - name: Build forkRelease variant
         timeout-minutes: 90
         env:
-          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx7g -Xms1g -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dev/stderr"
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Xms512m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/dev/stderr"
         run: |
           export ANDROID_HOME=$HOME/android-sdk/android-sdk-linux
           export ANDROID_SDK_ROOT=$HOME/android-sdk/android-sdk-linux
