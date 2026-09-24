@@ -927,7 +927,6 @@ abstract class BaseBrowserFragment :
             activity = requireActivity(),
             crashReporting = context.components.analytics.crashReporter,
             tabId = customTabSessionId,
-            playerView = binding.browserLayout,
             isEnabled = { org.mozilla.fenix.components.NovaPictureInPicture.isEnabled(requireContext()) },
         )
         setupPipButton()
