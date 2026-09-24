@@ -57,7 +57,7 @@ class PictureInPictureFeature(
 
         val session = store.state.findTabOrCustomTabOrSelectedTab(tabId)
         val mediaSession = session?.mediaSessionState
-        val canEnter = session?.content?.fullScreen == true &&
+        val canEnter =
             mediaSession?.playbackState in listOf(
                 MediaSession.PlaybackState.PLAYING,
                 MediaSession.PlaybackState.PAUSED,
@@ -92,7 +92,7 @@ class PictureInPictureFeature(
         }
 
         val mediaSession = session?.mediaSessionState
-        val isVideoPlaying = session?.content?.fullScreen == true &&
+        val isVideoPlaying =
             mediaSession?.playbackState in listOf(
                 MediaSession.PlaybackState.PLAYING,
                 MediaSession.PlaybackState.PAUSED,
@@ -102,7 +102,7 @@ class PictureInPictureFeature(
         val builder = PictureInPictureParams.Builder()
 
         if (isVideoPlaying) {
-            val metadata = mediaSession.elementMetadata
+            val metadata = mediaSession?.elementMetadata
             val width = metadata?.width ?: 0L
             val height = metadata?.height ?: 0L
 
