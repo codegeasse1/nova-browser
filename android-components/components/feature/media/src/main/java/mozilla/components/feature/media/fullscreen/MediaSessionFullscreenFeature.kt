@@ -58,20 +58,35 @@ class MediaSessionFullscreenFeature(
 
     @Suppress("SourceLockedOrientationActivity") // We deliberately want to lock the orientation here.
     private fun setOrientationForTabState(activeTabState: SessionState) {
-        when (activeTabState.mediaSessionState?.elementMetadata?.portrait) {
-            true ->
-                activity.requestedOrientation =
+        val metadata = activeTabState.mediaSessionState?.elementMetadata
+
+        if (activity.isInPictureInPictureMode) {
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            return
+        }
+
+        when {
+            // Prefer the actual media dimensions. This avoids a temporary
+            // portrait lock while a landscape player is still reporting its
+            // metadata during fullscreen entry.
+            metadata != null && metadata.width > 0L && metadata.height > 0L -> {
+                activity.requestedOrientation = if (metadata.height > metadata.width) {
                     ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
-
-            false ->
-                if (activity.isInPictureInPictureMode) {
-                    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 } else {
-                    activity.requestedOrientation =
-                        ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                 }
+            }
 
-            null -> activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
+            // A video fullscreen session without dimensions should still
+            // enter landscape instead of briefly switching to portrait.
+            metadata?.videoTrackCount?.let { it > 0 } == true -> {
+                activity.requestedOrientation =
+                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            }
+
+            else -> {
+                activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
+            }
         }
     }
 
