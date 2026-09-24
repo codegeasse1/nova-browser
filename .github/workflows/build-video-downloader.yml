@@ -8,6 +8,8 @@ on:
         description: 'Version name for the PiP test build'
         required: true
         default: '1.4.6-pip-test'
+  pull_request:
+    branches: [ main ]
   push:
     branches: [ feature/video-downloader, feature/pip-video-test ]
     paths-ignore:
